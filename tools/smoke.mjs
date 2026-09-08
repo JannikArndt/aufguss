@@ -418,6 +418,25 @@ ok('more: it points at the sources', text('moreBody').includes('Aromen'));
     }
   }
   ok('modules: nothing imports main.js', !bad.length, bad.join(', '));
+
+  /* An import nobody uses is a module boundary that has quietly moved, and
+     the reader has to prove it is dead before ignoring it. */
+  const stale = [];
+  for (const dir of ['src', 'src/core', 'src/ui']) {
+    for (const f of fs.readdirSync(path.join(ROOT, dir))) {
+      if (!f.endsWith('.js')) continue;
+      const src = read(dir + '/' + f);
+      const body = src.replace(/^import[^;]*;/gm, '');
+      for (const m of src.matchAll(/import \{([^}]*)\} from/g)) {
+        for (const raw of m[1].split(',')) {
+          const name = raw.trim();
+          if (!name || name === '$') continue;      /* \b does not bound $ */
+          if (!new RegExp('\\b' + name + '\\b').test(body)) stale.push(dir + '/' + f + ': ' + name);
+        }
+      }
+    }
+  }
+  ok('modules: no import goes unused', !stale.length, stale.join(', '));
 }
 {
   /* The one promise this app makes about privacy. */

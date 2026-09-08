@@ -6,7 +6,7 @@
 
 import { $, el, clear, notice, agoText } from '../core/util.js';
 import { Store } from '../core/store.js';
-import { all, byId, search, families, noteName, customOil, invalidate } from '../core/catalog.js';
+import { byId, search, families, noteName, customOil, invalidate } from '../core/catalog.js';
 import { NOTES, DOSAGE, leadNote } from '../core/blend.js';
 import { history } from '../core/suggest.js';
 import { oilRow, noteChip, field, card } from './parts.js';

@@ -11,13 +11,13 @@
    that quietly throws away the Aufguss you just poured. The foot carries
    "Fertig", which only closes the screen. */
 
-import { $, el, clear, uid, todayISO, nearestHour, longDate, agoText, notice } from '../core/util.js';
+import { $, el, clear, uid, todayISO, nearestHour, agoText, notice } from '../core/util.js';
 import { Store } from '../core/store.js';
-import { all, byId, search, why, customOil, invalidate, noteName, families } from '../core/catalog.js';
+import { byId, search, why, customOil, invalidate, noteName, families } from '../core/catalog.js';
 import { THEMES, INTENSITIES } from '../data/themes.js';
 import { RATIOS, DOSAGE, pourOrder, balance, remarks, drops, leadNote } from '../core/blend.js';
 import { suggest, history } from '../core/suggest.js';
-import { noteChip, oilRow, balanceBar, autocomplete, field, card } from './parts.js';
+import { oilRow, balanceBar, autocomplete, field, card } from './parts.js';
 
 var entry = null;      /* the one being edited */
 var isNew = false;

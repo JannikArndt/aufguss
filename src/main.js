@@ -14,7 +14,7 @@
    Nothing else in src/ imports this file. That is what keeps the core modules
    loadable in Node without a DOM, which is what tools/smoke.mjs relies on. */
 
-import { $, el, notice } from './core/util.js';
+import { $, el } from './core/util.js';
 import { Store } from './core/store.js';
 import * as Journal from './ui/journal.js';
 import * as Entry from './ui/entry.js';

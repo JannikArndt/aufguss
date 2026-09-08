@@ -8,11 +8,10 @@
    around the thirtieth Aufguss, and you can watch it happen. */
 
 import { $, el, clear } from '../core/util.js';
-import { Store } from '../core/store.js';
-import { byId, noteName } from '../core/catalog.js';
+import { byId } from '../core/catalog.js';
 import { pourOrder, leadNote } from '../core/blend.js';
 import { setsFromFavourites, favouritePairs, history } from '../core/suggest.js';
-import { oilRow, card, balanceBar } from './parts.js';
+import { card } from './parts.js';
 
 export function render() {
   var body = $('mixBody');
