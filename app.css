@@ -1,0 +1,316 @@
+/* Aufguss — every colour in the app is defined once, here, on :root.
+   A hex literal anywhere else is a bug; tools/smoke.mjs checks. */
+
+:root {
+  color-scheme: light dark;
+
+  /* Warm, because the room is. Light is the default and dark follows below. */
+  --ground:   #f7f2ec;   /* the page */
+  --card:     #fffdfa;   /* anything raised off it */
+  --card-2:   #f1e9df;   /* a well: inputs, quiet rows */
+  --line:     #e3d8c9;   /* hairlines */
+  --ink:      #241c16;   /* text */
+  --ink-2:    #6b5b4d;   /* secondary text */
+  --ink-3:    #9a8879;   /* labels, placeholders */
+  --ember:    #b4562a;   /* the one accent: löwe, glut, aufguss */
+  --ember-in: #ffffff;   /* text on the ember */
+  --ember-bg: #f6e3d8;   /* the ember at 12 %, for chips */
+
+  /* The three intensities, taken from the icons on Bäderland's own plans:
+     yellow, orange, red. See sources/aufgussplan.md. */
+  --sanft:  #e9c40a;
+  --mittel: #f38f00;
+  --stark:  #e94f0a;
+  /* Text on those three. They are the plan's own colours and do not change
+     between light and dark, so neither does what reads on them. */
+  --on-warm: #241c16;
+  --on-hot:  #ffffff;
+
+  /* The three notes. Light on top, warm in the middle, dark underneath —
+     the same order the app pours them in. */
+  --top:    #4f8a76;
+  --heart:  #b4562a;
+  --base:   #6a4b7a;
+
+  --radius: 14px;
+  --tap: 44px;              /* nothing tappable is smaller */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --app-h: 100vh;           /* main.js keeps this at what the browser shows */
+
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground:   #17120f;
+    --card:     #201a15;
+    --card-2:   #2a221c;
+    --line:     #362c24;
+    --ink:      #f2e9df;
+    --ink-2:    #b3a294;
+    --ink-3:    #837466;
+    --ember:    #e0763f;
+    --ember-in: #1a1310;
+    --ember-bg: #33221a;
+    --top:      #6fb49b;
+    --heart:    #e0763f;
+    --base:     #a481b8;
+  }
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--ground); color: var(--ink);
+  font: 16px/1.45 var(--sans);
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
+}
+body { height: var(--app-h); overflow: hidden; }
+
+#app { height: 100%; }
+
+/* ── A screen: a head that stays, a middle that scrolls, a foot that stays ──
+   Buttons live in the foot so a small phone can never push them off. */
+.screen { display: flex; flex-direction: column; height: 100%; }
+.screen[hidden] { display: none; }
+
+.top {
+  display: flex; align-items: center; gap: 8px;
+  padding: calc(var(--safe-t) + 10px) calc(var(--safe-r) + 16px) 10px calc(var(--safe-l) + 16px);
+  border-bottom: 1px solid var(--line);
+  background: var(--ground);
+}
+.top h1 {
+  flex: 1; margin: 0; font: 600 20px/1.2 var(--serif);
+  letter-spacing: .2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.top .back, .top .icon {
+  min-height: var(--tap); min-width: var(--tap);
+  border: 0; background: none; color: var(--ember);
+  font: 500 16px/1 var(--sans); cursor: pointer; padding: 0 4px;
+}
+.top .icon { font-size: 22px; }
+.top .icon.fav.on { color: var(--mittel); }
+.top .back { margin-left: -4px; text-align: left; }
+
+.body {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 14px calc(var(--safe-r) + 16px) 24px calc(var(--safe-l) + 16px);
+}
+
+.foot {
+  padding: 10px calc(var(--safe-r) + 16px) calc(var(--safe-b) + 10px) calc(var(--safe-l) + 16px);
+  border-top: 1px solid var(--line); background: var(--ground);
+  display: flex; gap: 10px;
+}
+.foot:empty { display: none; }
+
+/* ── Tab bar ───────────────────────────────────────────────────────────── */
+.tabs {
+  display: flex; border-top: 1px solid var(--line); background: var(--ground);
+  padding: 4px calc(var(--safe-r) + 6px) calc(var(--safe-b) + 4px) calc(var(--safe-l) + 6px);
+}
+.tabs button {
+  flex: 1; border: 0; background: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 2px; min-height: var(--tap);
+  color: var(--ink-3); font: 500 11px/1.2 var(--sans);
+}
+.tabs button .g { font-size: 19px; line-height: 1; }
+.tabs button.on { color: var(--ember); }
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+button.btn {
+  flex: 1; min-height: var(--tap); border-radius: var(--radius);
+  border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  font: 600 16px/1 var(--sans); cursor: pointer; padding: 0 14px;
+}
+button.btn.primary { background: var(--ember); color: var(--ember-in); border-color: var(--ember); }
+button.btn.quiet { background: none; color: var(--ink-2); }
+button.btn.danger { color: var(--stark); }
+button.btn:disabled { opacity: .45; }
+
+/* ── Fields ────────────────────────────────────────────────────────────── */
+.field { margin: 0 0 12px; }
+.field > label {
+  display: block; font: 600 11px/1.4 var(--sans); letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-3); margin: 0 0 5px 2px;
+}
+input, textarea, select {
+  width: 100%; font: 16px/1.35 var(--sans); color: var(--ink);
+  background: var(--card-2); border: 1px solid var(--line);
+  border-radius: 11px; padding: 11px 12px; min-height: var(--tap);
+  -webkit-appearance: none; appearance: none;
+}
+input::placeholder, textarea::placeholder { color: var(--ink-3); }
+input:focus, textarea:focus, select:focus { outline: 2px solid var(--ember); outline-offset: 1px; }
+textarea { min-height: 84px; resize: vertical; }
+.field.search input { background: var(--card-2); border-radius: 11px; }
+.field.sticky { position: sticky; top: 0; z-index: 3; background: var(--ground); padding-top: 2px; margin-bottom: 8px; }
+.row2 { display: flex; gap: 10px; }
+.row2 > * { flex: 1; min-width: 0; }
+
+/* ── Chips: filters, families, notes ──────────────────────────────────── */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.chip {
+  border: 1px solid var(--line); background: var(--card);
+  border-radius: 999px; padding: 7px 12px; min-height: 34px;
+  font: 500 13px/1.2 var(--sans); color: var(--ink-2); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.chip.on { background: var(--ember); border-color: var(--ember); color: var(--ember-in); }
+.chip.plain { cursor: default; }
+
+/* Two rows that scroll sideways. Ten families wrapped over four rows pushed
+   the list itself off a phone screen, which is the wrong thing to hide. */
+.chiprow {
+  display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  padding: 0 0 6px; margin: 0 calc(-1 * (var(--safe-l) + 16px)) 0 0;
+  scrollbar-width: none;
+}
+.chiprow::-webkit-scrollbar { display: none; }
+.chiprow .chip { flex: none; }
+
+.note-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+.note-top   { background: var(--top); }
+.note-heart { background: var(--heart); }
+.note-base  { background: var(--base); }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font: 600 11px/1 var(--sans); letter-spacing: .05em; text-transform: uppercase;
+  padding: 4px 8px; border-radius: 999px; background: var(--card-2); color: var(--ink-2);
+}
+.pill.sanft  { background: var(--sanft);  color: var(--on-warm); }
+.pill.mittel { background: var(--mittel); color: var(--on-warm); }
+.pill.stark  { background: var(--stark);  color: var(--on-hot); }
+
+/* ── Cards and lists ───────────────────────────────────────────────────── */
+.card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 14px; margin: 0 0 12px;
+}
+.card > h2 {
+  margin: 0 0 10px; font: 600 11px/1.4 var(--sans);
+  letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3);
+}
+.daymark {
+  font: 600 12px/1.4 var(--sans); letter-spacing: .05em; text-transform: uppercase;
+  color: var(--ink-3); margin: 16px 2px 7px;
+}
+.daymark:first-child { margin-top: 2px; }
+
+.item {
+  display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 11px 13px; margin: 0 0 7px; min-height: var(--tap);
+  color: var(--ink); font: 16px/1.3 var(--sans); cursor: pointer;
+}
+.item .grow { flex: 1; min-width: 0; }
+.item .t { font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .s { display: block; color: var(--ink-2); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .when { color: var(--ink-3); font: 600 13px/1 var(--sans); flex: none; font-variant-numeric: tabular-nums; }
+.item .star { flex: none; color: var(--mittel); font-size: 15px; }
+.item.flat { background: none; border: 0; padding: 9px 2px; margin: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+.item .pill { flex: none; padding: 3px 7px; font-size: 10px; }
+.setdots { display: flex; gap: 3px; flex: none; }
+
+.empty { color: var(--ink-3); text-align: center; padding: 36px 20px; line-height: 1.7; }
+.muted { color: var(--ink-2); }
+.small { font-size: 13px; }
+.tiny  { font-size: 12px; color: var(--ink-3); }
+
+/* ── The set of oils in one Aufguss ────────────────────────────────────── */
+.setrow {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 11px 0; border-bottom: 1px solid var(--line);
+}
+.setrow:last-child { border-bottom: 0; }
+.setrow .step {
+  flex: none; width: 24px; height: 24px; border-radius: 50%; margin-top: 2px;
+  display: flex; align-items: center; justify-content: center;
+  font: 700 12px/1 var(--sans); color: var(--ember-in); background: var(--ink-3);
+}
+.setrow.n-top   .step { background: var(--top); }
+.setrow.n-heart .step { background: var(--heart); }
+.setrow.n-base  .step { background: var(--base); }
+.setrow .grow { flex: 1; min-width: 0; }
+.setrow .name { font-weight: 600; }
+.setrow .lat { font: italic 13px/1.4 var(--serif); color: var(--ink-3); }
+.setrow .ml { flex: none; width: 76px; }
+.setrow .ml input { text-align: right; padding: 7px 9px; min-height: 36px; font-size: 15px; }
+.setrow .ml .unit { text-align: right; padding-right: 2px; margin-top: 2px; }
+.setrow .drop { flex: none; border: 0; background: none; color: var(--ink-3); font-size: 19px;
+  min-width: 34px; min-height: 34px; cursor: pointer; }
+
+/* ── Autocomplete ──────────────────────────────────────────────────────── */
+.ac { position: relative; }
+.ac-list {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  max-height: 46vh; overflow-y: auto; box-shadow: 0 12px 30px rgba(0,0,0,.18);
+}
+.ac-list:empty { display: none; }
+.ac-item {
+  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+  background: none; border: 0; border-bottom: 1px solid var(--line);
+  padding: 10px 13px; min-height: var(--tap); color: var(--ink);
+  font: 15px/1.3 var(--sans); cursor: pointer;
+}
+.ac-item:last-child { border-bottom: 0; }
+.ac-item.sel { background: var(--ember-bg); }
+.ac-item .grow { flex: 1; min-width: 0; }
+.ac-item .t { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ac-item .s { display: block; color: var(--ink-2); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ac-item mark { background: none; color: var(--ember); font-weight: 700; }
+
+/* ── The balance bar: how much top, heart and base is in the set ───────── */
+.bal { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: var(--card-2); margin: 4px 0 9px; }
+.bal i { display: block; }
+.bal i.t { background: var(--top); }
+.bal i.h { background: var(--heart); }
+.bal i.b { background: var(--base); }
+.balkey { display: flex; gap: 13px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); }
+.balkey span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ── Prose inside a card ───────────────────────────────────────────────── */
+.prose { font: 15px/1.6 var(--sans); color: var(--ink-2); }
+.prose p { margin: 0 0 10px; }
+.prose p:last-child { margin-bottom: 0; }
+.prose a, .link { color: var(--ember); }
+dl.kv { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 14.5px; }
+dl.kv dt { color: var(--ink-3); }
+dl.kv dd { margin: 0; }
+dl.kv dd i { font-family: var(--serif); }
+
+/* ── Notice ────────────────────────────────────────────────────────────── */
+#notice {
+  position: fixed; left: 50%; transform: translateX(-50%) translateY(14px);
+  bottom: calc(var(--safe-b) + 74px); z-index: 60;
+  background: var(--ink); color: var(--ground);
+  padding: 10px 16px; border-radius: 999px; font: 500 14px/1.3 var(--sans);
+  max-width: 84vw; text-align: center; opacity: 0; pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+#notice.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Sheet ─────────────────────────────────────────────────────────────── */
+#sheet {
+  position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.4);
+  display: flex; align-items: flex-end;
+}
+#sheet[hidden] { display: none; }
+.sheet-in {
+  width: 100%; max-height: 88%; overflow-y: auto;
+  background: var(--ground); border-radius: 20px 20px 0 0;
+  padding: 18px calc(var(--safe-r) + 16px) calc(var(--safe-b) + 18px) calc(var(--safe-l) + 16px);
+}
+.sheet-in h2 { margin: 0 0 12px; font: 600 18px/1.2 var(--serif); }
+
+@media (prefers-reduced-motion: reduce) { * { transition-duration: .01ms !important; } }

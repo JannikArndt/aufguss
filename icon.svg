@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Aufguss">
+  <!-- A ladle, and steam coming off the stones. The whole app in one picture. -->
+  <rect width="512" height="512" rx="114" fill="#17120f"/>
+  <g fill="none" stroke="#e0763f" stroke-width="21" stroke-linecap="round">
+    <path d="M168 118c0 28 24 28 24 56s-24 28-24 56"/>
+    <path d="M256 100c0 28 24 28 24 56s-24 28-24 56"/>
+    <path d="M344 118c0 28 24 28 24 56s-24 28-24 56"/>
+  </g>
+  <g fill="none" stroke="#f2e9df" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M112 318h132"/>
+    <path d="M112 318a66 66 0 0 0 132 0"/>
+    <path d="M238 306l160-88"/>
+  </g>
+</svg>

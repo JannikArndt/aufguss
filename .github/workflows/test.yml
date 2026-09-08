@@ -1,0 +1,39 @@
+# Runs the smoke test on every push and pull request.
+#
+# This is NOT a deploy workflow and must not become one: GitHub Pages publishes
+# the repository root exactly as it is committed, with nothing generated. See
+# CLAUDE.md §8. The only thing here is `node tools/smoke.mjs`, which is what a
+# contributor runs locally anyway — the point is that a push breaking the wiring
+# says so, rather than being found on a phone in a sauna corridor.
+#
+# tools/check-sources.mjs is deliberately not run here. It talks to aromen.be
+# and baederland.de, so it would fail on a bad day at either rather than on a
+# bad commit.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # No install step: the app and its tools have no dependencies, which is
+      # the constraint this job exists partly to keep honest.
+      - name: no dependencies crept in
+        run: |
+          if [ -f package.json ] || [ -f package-lock.json ] || [ -d node_modules ]; then
+            echo "This project has no dependencies and no build step (CLAUDE.md §2)."
+            exit 1
+          fi
+
+      - name: the whole app, in Node
+        run: node tools/smoke.mjs
