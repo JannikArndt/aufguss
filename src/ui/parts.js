@@ -8,6 +8,7 @@
 import { el, fold } from '../core/util.js';
 import { noteName } from '../core/catalog.js';
 import { leadNote } from '../core/blend.js';
+import { INTENSITIES } from '../data/themes.js';
 
 /* Kopf, Herz, Basis as a coloured dot plus its name. The dot alone would be
    colour carrying meaning on its own, which is no good to anyone who cannot
@@ -25,9 +26,25 @@ export function noteChip(oil, opts) {
   return el('span', 'pill', kids);
 }
 
+/* Stärke, as Kellen. Bäderland's plan gives three levels as a coloured icon
+   (sources/aufgussplan.md); the app keeps those three ids everywhere, since
+   that is the sourced fact, and only shows them here as the number of ladles
+   a Saunameister would actually pour for that level — one spoon for sanft, up
+   to three for stark. */
+var KELLEN = { sanft: 1, mittel: 2, stark: 3 };
+export function kellenOf(id) { return KELLEN[id] || 0; }
+export function spoons(n) {
+  var s = '';
+  for (var i = 0; i < n; i++) s += '🥄';
+  return s;
+}
+
 export function intensityPill(id) {
   if (!id) return null;
-  return el('span', 'pill ' + id, id);
+  var p = el('span', 'pill ' + id, spoons(kellenOf(id)));
+  var iv = INTENSITIES.filter(function (x) { return x.id === id; })[0];
+  if (iv) p.title = iv.de;
+  return p;
 }
 
 /* One oil as a tappable row. `sub` overrides the second line, which is

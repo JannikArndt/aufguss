@@ -16,9 +16,11 @@ var currentOil = null;
 
 /* ── The list ────────────────────────────────────────────────────────────── */
 export function renderList() {
-  /* Two rows that scroll sideways rather than four that push the list off the
-     screen. Notes and favourites on top because those are the two questions
-     asked in front of a shelf; the ten families under them. */
+  /* Notes and favourites on top, because those are the two questions asked in
+     front of a shelf, and there are few enough of them to scroll sideways.
+     The ten families underneath wrap onto their own lines instead — scrolling
+     that many off the right edge hid most of them, and a filter that cannot
+     be seen cannot be picked. */
   var chips = $('oilFilters');
   clear(chips);
 
@@ -33,7 +35,7 @@ export function renderList() {
   });
   chips.appendChild(top);
 
-  var fams = el('div', 'chiprow');
+  var fams = el('div', 'chiprow wrap');
   families().forEach(function (f) {
     fams.appendChild(chip(f.de, state.families.indexOf(f.id) >= 0, function () {
       toggle(state.families, f.id); renderList();
@@ -119,9 +121,6 @@ export function renderOne(id) {
       (o.goodDe && o.goodDe.length) ? el('dd', null, o.goodDe.join(', ')) : null,
       el('dt', null, 'Menge'), el('dd', null, DOSAGE.mlPerOil[0] + '–' + DOSAGE.mlPerOil[1] + ' ml'),
     ].filter(Boolean)),
-    el('p', 'tiny', 'Als Anhaltspunkt ' + DOSAGE.dropsPerLitre[0] + '–' + DOSAGE.dropsPerLitre[1] +
-      ' Tropfen pro Liter Aufgusswasser (saunawelt-oso.de). Was auf die Steine kommt, ' +
-      'entscheidest du und das Haus.'),
   ]));
 
   if (o.about) {
@@ -235,7 +234,7 @@ function usageCard(o) {
     location.hash = '#/neu?oil=' + encodeURIComponent(o.id);
   });
   kids.push(use);
-  return card('In deinem Journal', kids);
+  return card('In deinen Aufgüssen', kids);
 }
 
 export function wireOne() {

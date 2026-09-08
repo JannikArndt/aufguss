@@ -186,8 +186,8 @@ type(themeInput, 'Waldf');
 eq('new: picking a theme names the screen', text('entryTitle'), 'Waldfunkeln');
 {
   const chips = findAll('.chip', $('entryBody')).filter((c) => c.className.includes('on'));
-  ok('new: and takes the intensity off the plan too',
-    chips.some((c) => c.textContent === 'Starker Aufguss'));
+  ok('new: and takes the intensity off the plan too, as three Kellen',
+    chips.some((c) => c.title === 'Starker Aufguss' && c.textContent === '🥄🥄🥄'));
 }
 
 /* Three oils, by three different kinds of name. */

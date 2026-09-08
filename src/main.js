@@ -26,7 +26,7 @@ import * as More from './ui/more.js';
    The same four tabs on every screen that has them, built from one table so
    they cannot drift apart. */
 var TABS = [
-  { hash: '#/',        glyph: '≡', label: 'Journal' },
+  { hash: '#/',        glyph: '≡', label: 'Aufgüsse' },
   { hash: '#/neu',     glyph: '+', label: 'Neu' },
   { hash: '#/oele',    glyph: '\u25cb', label: 'Öle' },
   { hash: '#/mischen', glyph: '✦', label: 'Mischen' },
@@ -47,6 +47,13 @@ function buildTabs(node, active) {
 var SCREENS = ['scJournal', 'scEntry', 'scOils', 'scOil', 'scMix', 'scMore'];
 function show(id) {
   for (var i = 0; i < SCREENS.length; i++) $(SCREENS[i]).hidden = SCREENS[i] !== id;
+}
+/* Only a screen whose content just became a specific, possibly different
+   thing — a chosen Aufguss, a chosen oil — starts back at the top. A list
+   screen keeps whatever scroll it already had, because it never stopped
+   showing the same list: coming back from an oil with Zurück should land
+   where that oil was tapped from, not scroll the shelf back to the start. */
+function resetScroll(id) {
   var body = $(id).querySelector('.body');
   if (body) body.scrollTop = 0;
 }
@@ -80,12 +87,12 @@ function route() {
       return { oilId: decodeURIComponent(id), ml: Store.prefs().defaultMl };
     }) : null;
     Entry.open(null, { oils: oils, onClose: function () { go('#/'); } });
-    show('scEntry');
+    show('scEntry'); resetScroll('scEntry');
 
   } else if (h.indexOf('#/e/') === 0) {
     var id = decodeURIComponent(h.slice(4));
     Entry.open(id, { onClose: function () { go('#/'); } });
-    show('scEntry');
+    show('scEntry'); resetScroll('scEntry');
 
   } else if (h === '#/oele') {
     cameFrom = '#/oele';
@@ -95,7 +102,7 @@ function route() {
 
   } else if (h.indexOf('#/oel/') === 0) {
     Oils.renderOne(decodeURIComponent(h.slice(6)));
-    show('scOil');
+    show('scOil'); resetScroll('scOil');
 
   } else if (h === '#/mischen') {
     cameFrom = '#/mischen';

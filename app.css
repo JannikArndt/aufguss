@@ -71,7 +71,13 @@ html, body {
   -webkit-text-size-adjust: 100%;
   overscroll-behavior-y: none;
 }
-body { height: var(--app-h); overflow: hidden; }
+/* Fixed rather than left in normal flow: focusing a field near the foot makes
+   iOS Safari scroll the page itself to bring it into view, which is a scroll
+   this app has nowhere to put — main.js already resizes --app-h to whatever
+   the visual viewport shows once the keyboard is up, and a fixed body cannot
+   be panned out from under that, so the foot stays right above the keyboard
+   instead of a gap opening below it. */
+body { height: var(--app-h); overflow: hidden; position: fixed; top: 0; left: 0; right: 0; }
 
 #app { height: 100%; }
 
@@ -167,8 +173,10 @@ textarea { min-height: 84px; resize: vertical; }
 .chip.on { background: var(--ember); border-color: var(--ember); color: var(--ember-in); }
 .chip.plain { cursor: default; }
 
-/* Two rows that scroll sideways. Ten families wrapped over four rows pushed
-   the list itself off a phone screen, which is the wrong thing to hide. */
+/* The top row (favourites, notes) scrolls sideways — four chips, no reason to
+   break a line for them. Ten families is a different amount: scrolling made
+   most of them invisible off the right edge, so that row wraps instead and
+   costs a few extra pixels of height rather than nine hidden filters. */
 .chiprow {
   display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
   padding: 0 0 6px; margin: 0 calc(-1 * (var(--safe-l) + 16px)) 0 0;
@@ -176,6 +184,7 @@ textarea { min-height: 84px; resize: vertical; }
 }
 .chiprow::-webkit-scrollbar { display: none; }
 .chiprow .chip { flex: none; }
+.chiprow.wrap { flex-wrap: wrap; overflow-x: visible; margin-right: 0; }
 
 .note-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
 .note-top   { background: var(--top); }
@@ -225,6 +234,14 @@ textarea { min-height: 84px; resize: vertical; }
 .muted { color: var(--ink-2); }
 .small { font-size: 13px; }
 .tiny  { font-size: 12px; color: var(--ink-3); }
+
+/* ── A round: one ice ball, one or more oils on it ─────────────────────── */
+.round { margin: 0 0 14px; }
+.round:last-of-type { margin-bottom: 4px; }
+.roundhead {
+  font: 600 11px/1.4 var(--sans); letter-spacing: .09em; text-transform: uppercase;
+  color: var(--ink-3); margin: 0 0 4px 2px;
+}
 
 /* ── The set of oils in one Aufguss ────────────────────────────────────── */
 .setrow {
