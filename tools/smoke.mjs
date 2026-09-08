@@ -363,6 +363,15 @@ ok('more: it points at the sources', text('moreBody').includes('Aromen'));
   ok('shell: the worker only ever fetches this origin',
     sw.includes('url.origin !== self.location.origin'));
   ok('shell: and never skips waiting', !/skipWaiting\(\)/.test(sw.replace(/\/\*[\s\S]*?\*\//g, '')));
+
+  /* The worker is registered by a relative path — a leading slash would put
+     its scope at the domain root, where a project page cannot register it —
+     and whether the context is secure enough is the browser's call, not a
+     hostname check of our own. That check was wrong for 127.0.0.1. */
+  const m = read('src/main.js');
+  ok('shell: the worker is registered relatively', /register\('\.\/sw\.js'/.test(m));
+  ok('shell: and the browser decides what is secure', /isSecureContext/.test(m) &&
+    !/hostname !== 'localhost'/.test(m));
 }
 {
   /* Every id the app reaches for has to exist in the markup, or it throws in

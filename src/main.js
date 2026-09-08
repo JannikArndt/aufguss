@@ -158,7 +158,10 @@ function wire() {
    registered last so a browser that refuses it still gets a working app. */
 function registerWorker() {
   if (!('serviceWorker' in navigator)) return;
-  if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+  /* A worker needs a secure context, and the browser is the authority on what
+     counts as one — https, localhost, and 127.0.0.1, which a hand-written
+     hostname check gets wrong and did. */
+  if (window.isSecureContext === false) return;
   navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
     .catch(function () { /* no offline copy; nothing else changes */ });
 }
