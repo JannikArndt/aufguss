@@ -4,9 +4,9 @@
 
    Write the note for someone who has never read the code. */
 export var RELEASE = {
-  v: '0.2.0',
-  date: '2026-09-08',
-  text: 'Aufgüsse statt Journal. Öle gehen jetzt rundenweise auf die Eiskugel, ' +
-        'Stärke wird in Kellen angezeigt, die Duftgruppen brechen um statt zu ' +
-        'scrollen, und die Öl-Seite merkt sich die Scrollposition beim Zurückgehen.',
+  v: '0.2.1',
+  date: '2026-09-09',
+  text: 'Update jetzt: unter Mehr wartet eine neue Version, statt bis zum ' +
+        'nächsten Kaltstart, wenn du sie so haben willst. Und ein Changelog, ' +
+        'falls dich interessiert, was sich seit wann geändert hat.',
 };
