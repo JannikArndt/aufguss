@@ -95,6 +95,36 @@ the meantime the app already has the right door for this: Öle → **+** adds an
 oil under your own name, with whatever family and note you give it, and nothing
 here has to wait on a source for that.
 
+### Checked Purelia on 9 September 2026, at the owner's word they're from there
+
+Purelia's real shop is <https://purelia.eu>, not `.de`. Its "Ätherische Öle"
+category (<https://purelia.eu/produkt-kategorie/aetherische-oele/>) lists 16
+single oils — Eukalyptus, Fichtennadel, Kiefernnadel, Lavendel, Lemongras,
+Limette, Melisse, Orange, Bergamotte, Grapefruit, Pfefferminz, Zedernholz,
+Zirbelkiefer, Rosmarin, Sternanis, Zitrone — and Kampfer, Tigerminze and
+Polarminze are not among them.
+
+- **Tigerminze** exists, but as a *Saunaaufguss-Konzentrat*
+  (<https://purelia.eu/produkt/saunaaufguss-konzentrat-tigerminze/>), not a
+  single oil: its own ingredient list reads "Äthylalkohol Bio, Eukalyptus
+  Globulus Oil, Menthol, Mentha Arvensis Oil, Citrus Limonum Oil" — a
+  four-oil blend in an alcohol base. That is a different kind of thing from
+  everything else in this catalogue, which is one species per entry; folding
+  a blend in under one botanical name would be the invented fact the whole
+  point of `sources/` is to rule out.
+- **Kampfer** and **Polarminze** are not on purelia.eu at all — not as an
+  oil, not as a concentrate. `saunaaufguss-konzentrat-kampfer` and
+  `saunaaufguss-konzentrat-polarminze` both 404, and neither name turns up
+  in the concentrate category either (which does have an "Eisminze" —
+  ice-mint — that is close in spirit to Polarminze but not the same name).
+
+So this doesn't resolve to "add three Purelia oils" — the site doesn't carry
+them under these names, single or blended. **What would settle it:** the
+actual label off the bottle (name, and whether it says *ätherisches Öl* or
+*Aufgusskonzentrat*), or a photo of it. Until then, Öle → **+** stays the
+honest way to get these three into a journal — each with whatever the label
+in hand actually says, which is worth more than a guess at a matching URL.
+
 ## What "intensity" means for a scent
 
 Bäderland's three levels describe the **Aufguss** — how hot, how much steam, how

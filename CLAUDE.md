@@ -61,7 +61,6 @@ other; they survived being split into files and should stay.
 | `src/ui/entry.js` | 6. one Aufguss — the screen the app exists for |
 | `src/ui/journal.js` | 7. the journal list |
 | `src/ui/oils.js` | 8. the catalogue, and one oil |
-| `src/ui/mix.js` | 9. combinations from favourites and from history |
 | `src/ui/more.js` | 10. settings, backup, sources |
 | `src/main.js` | 11. routing, tabs, viewport height, service worker |
 

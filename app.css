@@ -71,13 +71,15 @@ html, body {
   -webkit-text-size-adjust: 100%;
   overscroll-behavior-y: none;
 }
-/* Fixed rather than left in normal flow: focusing a field near the foot makes
-   iOS Safari scroll the page itself to bring it into view, which is a scroll
-   this app has nowhere to put — main.js already resizes --app-h to whatever
-   the visual viewport shows once the keyboard is up, and a fixed body cannot
-   be panned out from under that, so the foot stays right above the keyboard
-   instead of a gap opening below it. */
-body { height: var(--app-h); overflow: hidden; position: fixed; top: 0; left: 0; right: 0; }
+/* html gets the same overflow:hidden as body — with only one of the two
+   locked down, iOS Safari still found something to scroll when a field near
+   the foot was focused, and that scroll is what left the gap above the
+   keyboard. Nothing here is meant to move on its own; main.js resizes
+   --app-h to whatever the visual viewport shows once the keyboard is up,
+   and main.js's own focus handler nudges the field into view within .body
+   afterwards, which is the only scrolling this app ever does. */
+html { height: 100%; overflow: hidden; }
+body { height: var(--app-h); overflow: hidden; }
 
 #app { height: 100%; }
 
@@ -200,6 +202,17 @@ textarea { min-height: 84px; resize: vertical; }
 .pill.mittel { background: var(--mittel); color: var(--on-warm); }
 .pill.stark  { background: var(--stark);  color: var(--on-hot); }
 
+/* The Stärke chips take their level's colour only once chosen — same rule as
+   every other chip group, neutral until picked, so the palette marks a
+   choice rather than shouting at three unpicked buttons. */
+.chip.sanft.on  { background: var(--sanft);  border-color: var(--sanft);  color: var(--on-warm); }
+.chip.mittel.on { background: var(--mittel); border-color: var(--mittel); color: var(--on-warm); }
+.chip.stark.on  { background: var(--stark);  border-color: var(--stark);  color: var(--on-hot); }
+
+/* One ladle icon, or several — Kellen, and the note glyphs on a set row. */
+.kellen { display: inline-flex; align-items: center; gap: 2px; }
+.kellen svg { display: block; }
+
 /* ── Cards and lists ───────────────────────────────────────────────────── */
 .card {
   background: var(--card); border: 1px solid var(--line);
@@ -228,27 +241,29 @@ textarea { min-height: 84px; resize: vertical; }
 .item .star { flex: none; color: var(--mittel); font-size: 15px; }
 .item.flat { background: none; border: 0; padding: 9px 2px; margin: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
 .item .pill { flex: none; padding: 3px 7px; font-size: 10px; }
-.setdots { display: flex; gap: 3px; flex: none; }
 
 .empty { color: var(--ink-3); text-align: center; padding: 36px 20px; line-height: 1.7; }
 .muted { color: var(--ink-2); }
 .small { font-size: 13px; }
 .tiny  { font-size: 12px; color: var(--ink-3); }
 
-/* ── A round: one ice ball, one or more oils on it ─────────────────────── */
+/* ── A round: one ice ball, one or more oils on it ───────────────────────
+   The line goes between Kugeln, not between two oils sharing a ball — a
+   ball's oils are one thing, and the border inside .setrow would have said
+   otherwise. */
 .round { margin: 0 0 14px; }
 .round:last-of-type { margin-bottom: 4px; }
+.round + .round { border-top: 1px solid var(--line); padding-top: 12px; }
 .roundhead {
   font: 600 11px/1.4 var(--sans); letter-spacing: .09em; text-transform: uppercase;
   color: var(--ink-3); margin: 0 0 4px 2px;
 }
 
-/* ── The set of oils in one Aufguss ────────────────────────────────────── */
-.setrow {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 11px 0; border-bottom: 1px solid var(--line);
-}
-.setrow:last-child { border-bottom: 0; }
+/* ── The set of oils in one Aufguss ──────────────────────────────────────
+   Compact on purpose — four rows fit a phone screen without the ml field
+   this used to carry, and the step circle now names the note by shape, not
+   by a number nobody read as anything but "which oil is this". */
+.setrow { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; }
 .setrow .step {
   flex: none; width: 24px; height: 24px; border-radius: 50%; margin-top: 2px;
   display: flex; align-items: center; justify-content: center;
@@ -260,9 +275,6 @@ textarea { min-height: 84px; resize: vertical; }
 .setrow .grow { flex: 1; min-width: 0; }
 .setrow .name { font-weight: 600; }
 .setrow .lat { font: italic 13px/1.4 var(--serif); color: var(--ink-3); }
-.setrow .ml { flex: none; width: 76px; }
-.setrow .ml input { text-align: right; padding: 7px 9px; min-height: 36px; font-size: 15px; }
-.setrow .ml .unit { text-align: right; padding-right: 2px; margin-top: 2px; }
 .setrow .drop { flex: none; border: 0; background: none; color: var(--ink-3); font-size: 19px;
   min-width: 34px; min-height: 34px; cursor: pointer; }
 
