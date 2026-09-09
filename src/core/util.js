@@ -102,3 +102,13 @@ export function notice(text) {
   if (noticeTimer) clearTimeout(noticeTimer);
   noticeTimer = setTimeout(function () { n.className = ''; }, 2600);
 }
+
+/* A new version, downloaded in the background and waiting to take over. Main
+   sets `ready` and `apply` once one turns up; the Mehr screen only ever reads
+   them, since main.js is the one thing nothing else may import. Nothing here
+   sets `ready` on its own — until someone taps the button this stays exactly
+   what it was, the same promise sw.js makes by never skipping waiting itself. */
+export var AppUpdate = {
+  ready: false,
+  apply: function () {},
+};

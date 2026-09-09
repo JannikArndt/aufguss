@@ -9,6 +9,7 @@ import { $, el, clear, longDate, todayISO, daysBetween } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { byId } from '../core/catalog.js';
 import { fold } from '../core/util.js';
+import { intensityPill } from './parts.js';
 
 var query = '';
 
@@ -52,7 +53,7 @@ function row(e) {
       el('span', 't', e.theme || 'Ohne Thema'),
       el('span', 's', names.length ? names.join(' · ') : 'Keine Öle notiert'),
     ]),
-    e.intensity ? el('span', 'pill ' + e.intensity, e.intensity) : null,
+    intensityPill(e.intensity),
     e.rating ? el('span', 'star', '★') : null,
   ]);
   item.type = 'button';

@@ -23,7 +23,7 @@ export function render() {
       'Die Reihenfolge und die Verhältnisse stammen von aroma1x1.com und ' +
       'floria-natural.com, die Duftgruppen-Tabelle ebenfalls, die Tropfenzahl ' +
       'pro Liter von saunawelt-oso.de. Alles nachzulesen in sources/blending.md. ' +
-      'Es ist Handwerk, keine Wissenschaft — dein eigenes Journal ist der bessere Zeuge.'),
+      'Es ist Handwerk, keine Wissenschaft — deine eigenen Aufgüsse sind der bessere Zeuge.'),
   ]));
 }
 
@@ -75,7 +75,7 @@ function fromHistory() {
   if (!pairs.length) {
     return card('Was du wirklich zusammen gießt', [
       el('p', 'prose small', 'Noch nichts — das füllt sich von selbst, sobald ein paar ' +
-        'Aufgüsse im Journal stehen.'),
+        'Aufgüsse aufgeschrieben sind.'),
     ]);
   }
   var kids = pairs.map(function (p) {

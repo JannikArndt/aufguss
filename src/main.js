@@ -14,7 +14,7 @@
    Nothing else in src/ imports this file. That is what keeps the core modules
    loadable in Node without a DOM, which is what tools/smoke.mjs relies on. */
 
-import { $, el } from './core/util.js';
+import { $, el, AppUpdate } from './core/util.js';
 import { Store } from './core/store.js';
 import * as Journal from './ui/journal.js';
 import * as Entry from './ui/entry.js';
@@ -26,7 +26,7 @@ import * as More from './ui/more.js';
    The same four tabs on every screen that has them, built from one table so
    they cannot drift apart. */
 var TABS = [
-  { hash: '#/',        glyph: '≡', label: 'Journal' },
+  { hash: '#/',        glyph: '≡', label: 'Aufgüsse' },
   { hash: '#/neu',     glyph: '+', label: 'Neu' },
   { hash: '#/oele',    glyph: '\u25cb', label: 'Öle' },
   { hash: '#/mischen', glyph: '✦', label: 'Mischen' },
@@ -47,6 +47,13 @@ function buildTabs(node, active) {
 var SCREENS = ['scJournal', 'scEntry', 'scOils', 'scOil', 'scMix', 'scMore'];
 function show(id) {
   for (var i = 0; i < SCREENS.length; i++) $(SCREENS[i]).hidden = SCREENS[i] !== id;
+}
+/* Only a screen whose content just became a specific, possibly different
+   thing — a chosen Aufguss, a chosen oil — starts back at the top. A list
+   screen keeps whatever scroll it already had, because it never stopped
+   showing the same list: coming back from an oil with Zurück should land
+   where that oil was tapped from, not scroll the shelf back to the start. */
+function resetScroll(id) {
   var body = $(id).querySelector('.body');
   if (body) body.scrollTop = 0;
 }
@@ -80,12 +87,12 @@ function route() {
       return { oilId: decodeURIComponent(id), ml: Store.prefs().defaultMl };
     }) : null;
     Entry.open(null, { oils: oils, onClose: function () { go('#/'); } });
-    show('scEntry');
+    show('scEntry'); resetScroll('scEntry');
 
   } else if (h.indexOf('#/e/') === 0) {
     var id = decodeURIComponent(h.slice(4));
     Entry.open(id, { onClose: function () { go('#/'); } });
-    show('scEntry');
+    show('scEntry'); resetScroll('scEntry');
 
   } else if (h === '#/oele') {
     cameFrom = '#/oele';
@@ -95,7 +102,7 @@ function route() {
 
   } else if (h.indexOf('#/oel/') === 0) {
     Oils.renderOne(decodeURIComponent(h.slice(6)));
-    show('scOil');
+    show('scOil'); resetScroll('scOil');
 
   } else if (h === '#/mischen') {
     cameFrom = '#/mischen';
@@ -163,7 +170,38 @@ function registerWorker() {
      hostname check gets wrong and did. */
   if (window.isSecureContext === false) return;
   navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+    .then(watchForUpdate)
     .catch(function () { /* no offline copy; nothing else changes */ });
+
+  /* Reloading is the only way a tab actually starts running the new worker's
+     files, and it only happens once someone has asked for it — either just
+     now, or on an earlier visit that downloaded the update but never applied
+     it, in which case it is still sitting there the next time this runs. */
+  var reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (reloaded) return;
+    reloaded = true;
+    location.reload();
+  });
+}
+
+/* Sees a new worker finish installing and offers it, instead of taking it —
+   sw.js never calls skipWaiting() on its own, which is what keeps a version
+   change from landing mid-Aufguss. AppUpdate.apply is what the Mehr screen
+   calls when a person actually taps the button; it is the one message this
+   app's own worker ever answers to, and it never fires by itself. */
+function watchForUpdate(reg) {
+  if (reg.waiting) AppUpdate.ready = true;
+  reg.addEventListener('updatefound', function () {
+    var worker = reg.installing;
+    if (!worker) return;
+    worker.addEventListener('statechange', function () {
+      if (worker.state === 'installed' && navigator.serviceWorker.controller) AppUpdate.ready = true;
+    });
+  });
+  AppUpdate.apply = function () {
+    if (reg.waiting) reg.waiting.postMessage('skipWaiting');
+  };
 }
 
 wire();

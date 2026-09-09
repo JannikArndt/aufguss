@@ -17,7 +17,7 @@
    keep them in step, so tools/smoke.mjs asserts it, along with SHELL listing
    exactly the files on disk. */
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.1';
 const CACHE = 'aufguss-' + VERSION;
 
 const SHELL = [
@@ -47,10 +47,16 @@ const SHELL = [
 ];
 
 self.addEventListener('install', (e) => {
-  /* No skipWaiting(). Swapping the code out from under someone who is halfway
-     through writing an Aufguss down is worse than being one version behind;
-     the new worker waits, and the next cold start takes it. */
+  /* No skipWaiting() here. Swapping the code out from under someone who is
+     halfway through writing an Aufguss down is worse than being one version
+     behind; this worker waits, and the next cold start takes it — unless the
+     'message' handler below is asked to skip that wait, which only happens
+     when a person taps "Update jetzt" on the Mehr screen. */
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
+});
+
+self.addEventListener('message', (e) => {
+  if (e.data === 'skipWaiting') self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {

@@ -4,9 +4,9 @@
 
    Write the note for someone who has never read the code. */
 export var RELEASE = {
-  v: '0.1.0',
-  date: '2026-09-08',
-  text: 'Erste Fassung. Journal, 133 Öle von Aromen mit Duftgruppe, Note und ' +
-        'Beschreibung, 62 Aufguss-Themen aus Bäderlands Plänen, Vorschläge aus ' +
-        'Note, Duftgruppe und deinem eigenen Journal.',
+  v: '0.2.1',
+  date: '2026-09-09',
+  text: 'Update jetzt: unter Mehr wartet eine neue Version, statt bis zum ' +
+        'nächsten Kaltstart, wenn du sie so haben willst. Und ein Changelog, ' +
+        'falls dich interessiert, was sich seit wann geändert hat.',
 };

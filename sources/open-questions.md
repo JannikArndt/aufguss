@@ -71,6 +71,30 @@ family harmony 22, and pouring two oils together once is worth 9 up to a cap of
 the table", which is a defensible thing to believe and not a measured one. They
 are in one object at the top of the file so they can be argued with.
 
+## Kampfer, Tigerminze, Polarminze — not in Aromen's range
+
+Asked for on 8 September 2026, the same day the catalogue was fetched, so this
+is a same-day re-check rather than a stale one:
+
+- **Kampfer.** An article code `E6` exists in Aromen's numbering (`E1`–`E11`
+  skips only `E6` and `E9` in the current 133), and a search engine still
+  turns up old product pages —
+  <https://www.aromen.be/shop/e6-camphor-100ml-4312> and `…-50ml-4311` — but
+  both now answer 404, and Aromen's own site search finds nothing for
+  "kampfer" or "camphor", inside the single-oils category or across the whole
+  shop. It looks discontinued rather than merely unlisted from this category.
+- **Tigerminze** and **Polarminze.** No hit anywhere on aromen.be, in German
+  or English, in or out of the single-oils category. Whatever these are —
+  house names, another supplier's range — they are not something Aromen
+  currently sells under that name.
+
+None of the three went into `src/data/oils.js`, because there is nothing at a
+URL to put next to them. **What would settle it:** Aromen relisting Kampfer,
+or a source for Tigerminze/Polarminze naming a supplier and a product page. In
+the meantime the app already has the right door for this: Öle → **+** adds an
+oil under your own name, with whatever family and note you give it, and nothing
+here has to wait on a source for that.
+
 ## What "intensity" means for a scent
 
 Bäderland's three levels describe the **Aufguss** — how hot, how much steam, how

@@ -186,8 +186,8 @@ type(themeInput, 'Waldf');
 eq('new: picking a theme names the screen', text('entryTitle'), 'Waldfunkeln');
 {
   const chips = findAll('.chip', $('entryBody')).filter((c) => c.className.includes('on'));
-  ok('new: and takes the intensity off the plan too',
-    chips.some((c) => c.textContent === 'Starker Aufguss'));
+  ok('new: and takes the intensity off the plan too, as three Kellen',
+    chips.some((c) => c.title === 'Starker Aufguss' && c.textContent === '🥄🥄🥄'));
 }
 
 /* Three oils, by three different kinds of name. */
@@ -362,7 +362,19 @@ ok('more: it points at the sources', text('moreBody').includes('Aromen'));
   ok('shell: and nothing it lists is gone', !ghosts.length, ghosts.join(', '));
   ok('shell: the worker only ever fetches this origin',
     sw.includes('url.origin !== self.location.origin'));
-  ok('shell: and never skips waiting', !/skipWaiting\(\)/.test(sw.replace(/\/\*[\s\S]*?\*\//g, '')));
+  {
+    /* skipWaiting() itself is not banned — a person can ask for the update on
+       the Mehr screen, which posts a message the worker answers to — only
+       calling it from install, which would apply a new version to everyone
+       mid-Aufguss without being asked. */
+    const stripped = sw.replace(/\/\*[\s\S]*?\*\//g, '');
+    const installIdx = stripped.indexOf("addEventListener('install'");
+    const nextIdx = stripped.indexOf("addEventListener(", installIdx + 1);
+    const installBody = stripped.slice(installIdx, nextIdx < 0 ? undefined : nextIdx);
+    ok('shell: and never skips waiting on install', !/skipWaiting\(\)/.test(installBody));
+    ok('shell: skipping waiting takes an explicit message, not an install',
+      /addEventListener\('message'/.test(stripped) && /skipWaiting\(\)/.test(stripped));
+  }
 
   /* The worker is registered by a relative path — a leading slash would put
      its scope at the domain root, where a project page cannot register it —
@@ -454,7 +466,7 @@ ok('more: it points at the sources', text('moreBody').includes('Aromen'));
 }
 {
   /* Every source file the docs point at is really there. */
-  const missing = ['README.md', 'sources/README.md', 'sources/oils.md', 'sources/blending.md',
+  const missing = ['README.md', 'CHANGELOG.md', 'sources/README.md', 'sources/oils.md', 'sources/blending.md',
     'sources/aufgussplan.md', 'sources/botanical-names.md', '.nojekyll', 'manifest.webmanifest',
     'icon.svg', 'icon.png'].filter((f) => !fs.existsSync(path.join(ROOT, f)));
   ok('repo: the files the app and the docs promise exist', !missing.length, missing.join(', '));

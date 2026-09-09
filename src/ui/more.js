@@ -7,7 +7,7 @@
    whole backup story, and it is honest to say so on this screen rather than
    after the fact. */
 
-import { $, el, clear, notice, todayISO } from '../core/util.js';
+import { $, el, clear, notice, todayISO, AppUpdate } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { all } from '../core/catalog.js';
 import { RATIOS, DOSAGE } from '../core/blend.js';
@@ -58,10 +58,24 @@ export function render() {
   body.appendChild(card('Diese Version', [
     el('p', 'prose small', RELEASE.v + ' · ' + RELEASE.date),
     el('p', 'prose small', RELEASE.text),
+    linkP('Was sich geändert hat', 'https://github.com/JannikArndt/aufguss/blob/main/CHANGELOG.md'),
+    AppUpdate.ready ? updateCard() : null,
     Store.available ? null : el('p', 'prose small',
       'Achtung: dieses Gerät lässt den Speicher gerade nicht zu (' + Store.lastError +
       '). Was du eingibst, hält nur bis zum Schließen.'),
   ]));
+}
+
+/* Only shown once a new version has actually finished downloading in the
+   background. Tapping it is the one thing that ever makes the worker skip
+   its wait — see sw.js's 'message' handler. */
+function updateCard() {
+  var b = el('button', 'btn primary', 'Update jetzt laden');
+  b.addEventListener('click', function () { AppUpdate.apply(); });
+  return el('div', null, [
+    el('p', 'prose small', 'Eine neue Version ist heruntergeladen und wartet.'),
+    b,
+  ]);
 }
 
 function prefsFields() {

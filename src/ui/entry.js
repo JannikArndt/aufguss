@@ -17,7 +17,7 @@ import { byId, search, why, customOil, invalidate, noteName, families } from '..
 import { THEMES, INTENSITIES } from '../data/themes.js';
 import { RATIOS, DOSAGE, pourOrder, balance, remarks, drops, leadNote } from '../core/blend.js';
 import { suggest, history } from '../core/suggest.js';
-import { oilRow, balanceBar, autocomplete, field, card } from './parts.js';
+import { oilRow, balanceBar, autocomplete, field, card, kellenOf, spoons } from './parts.js';
 
 var entry = null;      /* the one being edited */
 var isNew = false;
@@ -33,15 +33,29 @@ export function open(id, opts) {
       id: uid(),
       date: todayISO(), time: nearestHour(),
       theme: '', themeKind: '', intensity: '', sauna: Store.prefs().venue,
-      oils: [], ratio: Store.prefs().ratio, notes: '', rating: 0,
+      oils: [], rounds: ROUNDS_DEFAULT, ratio: Store.prefs().ratio, notes: '', rating: 0,
       written: new Date().toISOString(),
     };
     if (o.oils) entry.oils = o.oils.slice();
     if (o.theme) applyTheme(o.theme);
   }
+  normaliseRounds();
   $('entryTitle').textContent = isNew ? 'Neuer Aufguss' : (entry.theme || 'Aufguss');
   $('entryDelete').hidden = isNew;
   render();
+}
+
+/* Three ice balls is the usual Aufguss — a round per Guss. Older entries were
+   written before rounds existed, so every oil in them counts as round 1, and
+   the round count grows to fit whatever the highest one actually used. */
+var ROUNDS_DEFAULT = 3;
+function normaliseRounds() {
+  var max = 0;
+  entry.oils.forEach(function (x) {
+    if (!x.round) x.round = 1;
+    if (x.round > max) max = x.round;
+  });
+  entry.rounds = Math.max(ROUNDS_DEFAULT, entry.rounds || 0, max);
 }
 
 function applyTheme(t) {
@@ -66,14 +80,14 @@ function render() {
 
   body.appendChild(whenAndWhat());
   body.appendChild(lastTimeCard());
-  body.appendChild(oilsCard(oils));
+  body.appendChild(oilsCard());
   if (oils.length) body.appendChild(setCard(oils));
   if (oils.length < 6) body.appendChild(suggestCard(oils));
   body.appendChild(notesCard());
 
   var foot = $('entryFoot');
   clear(foot);
-  var done = el('button', 'btn primary', isNew ? 'Fertig' : 'Zurück zum Journal');
+  var done = el('button', 'btn primary', isNew ? 'Fertig' : 'Zurück zu den Aufgüssen');
   done.addEventListener('click', function () { save(); onClose(); });
   foot.appendChild(done);
 }
@@ -108,8 +122,11 @@ function whenAndWhat() {
   });
 
   var kinds = el('div', 'chips', INTENSITIES.map(function (iv) {
-    var c = el('button', 'chip' + (entry.intensity === iv.id ? ' on' : ''), iv.de);
+    var n = kellenOf(iv.id);
+    var c = el('button', 'chip' + (entry.intensity === iv.id ? ' on' : ''), spoons(n));
     c.type = 'button';
+    c.title = iv.de;
+    c.setAttribute('aria-label', iv.de + ', ' + n + (n === 1 ? ' Kelle' : ' Kellen'));
     c.addEventListener('click', function () {
       entry.intensity = entry.intensity === iv.id ? '' : iv.id;
       save(); render();
@@ -152,7 +169,7 @@ function findThemes(q) {
     return {
       title: t.name, value: t,
       sub: [t.kind, t.venue, t.time].filter(Boolean).join(' · '),
-      lead: t.intensity ? el('span', 'pill ' + t.intensity, t.intensity) : null,
+      lead: t.intensity ? el('span', 'pill ' + t.intensity, spoons(kellenOf(t.intensity))) : null,
     };
   });
 }
@@ -184,7 +201,8 @@ function lastTimeCard() {
   }).filter(Boolean);
   var again = el('button', 'btn quiet', 'Dieselben Öle übernehmen');
   again.addEventListener('click', function () {
-    entry.oils = (prev.oils || []).slice().map(function (x) { return { oilId: x.oilId, ml: x.ml }; });
+    entry.oils = (prev.oils || []).slice().map(function (x) { return { oilId: x.oilId, ml: x.ml, round: x.round || 1 }; });
+    normaliseRounds();
     save(); render(); notice('Übernommen. Ändern geht natürlich noch.');
   });
   wrap.appendChild(card('Beim letzten Mal · ' + agoText(prev.date), [
@@ -195,11 +213,42 @@ function lastTimeCard() {
   return wrap;
 }
 
-/* ── The oils ────────────────────────────────────────────────────────────── */
-function oilsCard(oils) {
+/* ── The oils, one ice ball (Kugel) per round ────────────────────────────────
+   A round is what goes on one ice ball for one Guss. Three rounds and one oil
+   each is the usual shape, so that is what a new Aufguss opens with — each
+   round keeps its own search field, so adding a second or third oil to the
+   same ball is no different from adding the first, and "Weitere Kugel" grows
+   the set past three without touching what is already poured. */
+function oilsCard() {
+  var kids = [];
+  var fams = themeFamilies();
+  if (fams.length) {
+    kids.push(el('p', 'tiny', 'Der Plan sagt zu diesem Thema: ' + fams.map(famDe).join(' oder ') + '.'));
+  }
+  for (var r = 1; r <= entry.rounds; r++) kids.push(roundBlock(r));
+
+  var addRound = el('button', 'btn quiet', 'Weitere Kugel');
+  addRound.type = 'button';
+  addRound.addEventListener('click', function () { entry.rounds++; save(); render(); });
+  kids.push(addRound);
+
+  if (entry.oils.length) {
+    kids.push(el('p', 'tiny', 'In dieser Reihenfolge in die Kelle: Basis zuerst und sparsam, dann Herz, dann Kopf.'));
+  }
+  return card('Öle', kids);
+}
+
+function roundBlock(r) {
+  var oils = entry.oils.filter(function (x) { return x.round === r; })
+    .map(function (x) { return byId(x.oilId); }).filter(Boolean);
+  var ordered = pourOrder(oils);
+
+  var rows = el('div');
+  ordered.forEach(function (oil, i) { rows.appendChild(setRow(oil, i + 1)); });
+
   var input = el('input');
   input.type = 'search';
-  input.placeholder = oils.length ? 'Noch ein Öl …' : 'Öl suchen — Name, Latein, Duftgruppe';
+  input.placeholder = oils.length ? 'Noch ein Öl für diese Kugel …' : 'Öl suchen — Name, Latein, Duftgruppe';
   input.autocomplete = 'off';
   var oilAc = autocomplete(input, {
     find: function (q) {
@@ -218,29 +267,20 @@ function oilsCard(oils) {
       return rows;
     },
     onPick: function (v) {
-      if (v.newOil) { addCustom(v.newOil); return; }
-      addOil(v.id);
+      if (v.newOil) { addCustom(v.newOil, r); return; }
+      addOil(v.id, r);
       input.value = '';
     },
   });
 
-  var rows = el('div');
-  var ordered = pourOrder(oils);
-  ordered.forEach(function (oil, i) {
-    rows.appendChild(setRow(oil, i + 1, ordered.length));
-  });
-
-  var fams = themeFamilies();
-  return card('Öle', [
-    fams.length ? el('p', 'tiny', 'Der Plan sagt zu diesem Thema: ' +
-      fams.map(famDe).join(' oder ') + '.') : null,
+  return el('div', 'round', [
+    el('div', 'roundhead', 'Kugel ' + r),
     rows,
     field(null, oilAc.node),
-    oils.length ? el('p', 'tiny', 'In dieser Reihenfolge in die Kelle: Basis zuerst und sparsam, dann Herz, dann Kopf.') : null,
   ]);
 }
 
-function setRow(oil, step, total) {
+function setRow(oil, step) {
   var rec = null;
   for (var i = 0; i < entry.oils.length; i++) if (entry.oils[i].oilId === oil.id) rec = entry.oils[i];
   var n = leadNote(oil);
@@ -294,17 +334,17 @@ function famDe(id) {
   return id;
 }
 
-function addOil(id) {
+function addOil(id, round) {
   for (var i = 0; i < entry.oils.length; i++) if (entry.oils[i].oilId === id) return;
-  entry.oils.push({ oilId: id, ml: Store.prefs().defaultMl });
+  entry.oils.push({ oilId: id, ml: Store.prefs().defaultMl, round: round || 1 });
   save(); render();
 }
 
-function addCustom(name) {
+function addCustom(name, round) {
   var oil = customOil(name);
   Store.putCustomOil(oil);
   invalidate();
-  addOil(oil.id);
+  addOil(oil.id, round);
   notice('„' + name + '“ angelegt. Duftgruppe und Note kannst du unter Öle ergänzen.');
 }
 
@@ -362,7 +402,7 @@ function suggestCard(oils) {
   });
   return card(oils.length ? 'Passt dazu' : 'Womit anfangen', rows.concat([
     el('p', 'tiny', oils.length
-      ? 'Tippen fügt hinzu. Der Grund steht dabei — Note, Duftgruppe oder dein eigenes Journal.'
+      ? 'Tippen fügt hinzu. Der Grund steht dabei — Note, Duftgruppe oder deine eigenen Aufgüsse.'
       : 'Ohne ein erstes Öl sind das deine Lieblinge und die, die du oft nimmst.'),
   ]));
 }
