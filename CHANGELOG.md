@@ -1,10 +1,39 @@
 # Changelog
 
-Every entry here matches a `RELEASE.v` in `src/release.js`, and both move
+Every entry here matches `RELEASES[0].v` in `src/release.js`, and both move
 together with `VERSION` in `sw.js` — see `CLAUDE.md` §6 for why, and §8 for
 what a version bump means to a phone that already has the app installed:
 cache-first, so the change lands on the next cold start, unless it is taken
-early from Mehr → **Update jetzt laden**.
+early from Mehr → **Update jetzt laden**. Mehr also shows the last few
+entries below this list in short; this file is the whole history.
+
+## 0.3.0 — 2026-09-09
+
+- Removed the ml field from a set row entirely; the row now shows the note
+  as a small coloured shape (▲ Kopf, ● Herz, ■ Basis) instead of the word,
+  so four oils fit a phone screen without scrolling.
+- The divider now sits between Kugeln, not between two oils sharing one.
+- "Öl hinzufügen" replaces the longer "Noch ein Öl für diese Kugel …".
+- "Passt dazu" is gated behind a "Passende Öle vorschlagen" button instead
+  of always showing — it stays open for the rest of that Aufguss once asked
+  for.
+- "Beim letzten Mal" is gone entirely when there is no previous entry under
+  the theme, instead of saying so. When there is, it lists up to five past
+  Aufgüsse with a "Mehr …" for further ones, each with its oils grouped by
+  the round (Kugel) they were combined on, and each tappable to take those
+  oils again.
+- Removed the Mischen tab and everything behind it (`src/ui/mix.js`, the
+  unused `setsFromFavourites`/`favouritePairs` in `suggest.js`) — nothing
+  else linked into it, and it never earned the tab.
+- Replaced the spoon emoji for Kellen with a small inline SVG ladle icon,
+  in the spirit of the coloured icons on Bäderland's own Aufgusspläne.
+- The changelog now shows more than the latest entry in Mehr, and this file
+  now has a full history rather than just the newest note.
+- Narrowed the iOS keyboard gap further and fixed a new gap that had opened
+  below the tab bar (both from the same `position: fixed` experiment in
+  0.2.0, now reverted in favour of `overflow: hidden` on `html` as well as
+  `body`, an extra `visualViewport` `scroll` listener, and a focus handler
+  that nudges the field into view once the keyboard has settled).
 
 ## 0.2.1 — 2026-09-09
 

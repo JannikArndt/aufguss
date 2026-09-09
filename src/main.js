@@ -8,7 +8,6 @@
      #/e/<id>      one Aufguss
      #/oele        the catalogue
      #/oel/<id>    one oil
-     #/mischen     combinations
      #/mehr        settings, backup, sources
 
    Nothing else in src/ imports this file. That is what keeps the core modules
@@ -19,7 +18,6 @@ import { Store } from './core/store.js';
 import * as Journal from './ui/journal.js';
 import * as Entry from './ui/entry.js';
 import * as Oils from './ui/oils.js';
-import * as Mix from './ui/mix.js';
 import * as More from './ui/more.js';
 
 /* ── The tab bar ───────────────────────────────────────────────────────────
@@ -29,7 +27,6 @@ var TABS = [
   { hash: '#/',        glyph: '≡', label: 'Aufgüsse' },
   { hash: '#/neu',     glyph: '+', label: 'Neu' },
   { hash: '#/oele',    glyph: '\u25cb', label: 'Öle' },
-  { hash: '#/mischen', glyph: '✦', label: 'Mischen' },
   { hash: '#/mehr',    glyph: '⋯', label: 'Mehr' },
 ];
 function buildTabs(node, active) {
@@ -44,7 +41,7 @@ function buildTabs(node, active) {
   });
 }
 
-var SCREENS = ['scJournal', 'scEntry', 'scOils', 'scOil', 'scMix', 'scMore'];
+var SCREENS = ['scJournal', 'scEntry', 'scOils', 'scOil', 'scMore'];
 function show(id) {
   for (var i = 0; i < SCREENS.length; i++) $(SCREENS[i]).hidden = SCREENS[i] !== id;
 }
@@ -104,12 +101,6 @@ function route() {
     Oils.renderOne(decodeURIComponent(h.slice(6)));
     show('scOil'); resetScroll('scOil');
 
-  } else if (h === '#/mischen') {
-    cameFrom = '#/mischen';
-    buildTabs($('tabsMix'), '#/mischen');
-    Mix.render();
-    show('scMix');
-
   } else if (h === '#/mehr') {
     cameFrom = '#/mehr';
     buildTabs($('tabsMore'), '#/mehr');
@@ -139,6 +130,20 @@ function fitHeight() {
   document.documentElement.style.setProperty('--app-h', h + 'px');
 }
 
+/* The keyboard opening moves the field a fixed layout would otherwise leave
+   right where it was — half hidden above it, however tight --app-h already
+   is. Nudging the field into view inside its own .body, after the keyboard
+   has had a moment to finish animating, is the same thing a native app gets
+   for free; a plain scrollIntoView while the sheet is still resizing just
+   scrolls to where the field will not be. */
+function nudgeFieldIntoView(ev) {
+  var t = ev.target;
+  if (!t || (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA')) return;
+  setTimeout(function () {
+    if (t.scrollIntoView) t.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, 300);
+}
+
 function wire() {
   Journal.wire();
   Oils.wireList();
@@ -155,7 +160,11 @@ function wire() {
 
   window.addEventListener('hashchange', route);
   window.addEventListener('resize', fitHeight);
-  if (window.visualViewport) window.visualViewport.addEventListener('resize', fitHeight);
+  window.addEventListener('focusin', nudgeFieldIntoView);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', fitHeight);
+    window.visualViewport.addEventListener('scroll', fitHeight);
+  }
   fitHeight();
   route();
 }

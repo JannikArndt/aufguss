@@ -17,16 +17,19 @@ import { byId, search, why, customOil, invalidate, noteName, families } from '..
 import { THEMES, INTENSITIES } from '../data/themes.js';
 import { RATIOS, DOSAGE, pourOrder, balance, remarks, drops, leadNote } from '../core/blend.js';
 import { suggest, history } from '../core/suggest.js';
-import { oilRow, balanceBar, autocomplete, field, card, kellenOf, spoons } from './parts.js';
+import { oilRow, balanceBar, autocomplete, field, card, kellenOf, kellenIcon, noteGlyph } from './parts.js';
 
 var entry = null;      /* the one being edited */
 var isNew = false;
 var onClose = null;
+var suggestOpen = false;   /* "Passt dazu" starts collapsed on every fresh open */
 
 export function open(id, opts) {
   var o = opts || {};
   onClose = o.onClose || function () {};
   isNew = !id;
+  suggestOpen = false;
+  lastTimeShown = 5;
   entry = id ? Store.entry(id) : null;
   if (!entry) {
     entry = {
@@ -123,7 +126,7 @@ function whenAndWhat() {
 
   var kinds = el('div', 'chips', INTENSITIES.map(function (iv) {
     var n = kellenOf(iv.id);
-    var c = el('button', 'chip' + (entry.intensity === iv.id ? ' on' : ''), spoons(n));
+    var c = el('button', 'chip ' + iv.id + (entry.intensity === iv.id ? ' on' : ''), kellenIcon(n));
     c.type = 'button';
     c.title = iv.de;
     c.setAttribute('aria-label', iv.de + ', ' + n + (n === 1 ? ' Kelle' : ' Kellen'));
@@ -169,12 +172,18 @@ function findThemes(q) {
     return {
       title: t.name, value: t,
       sub: [t.kind, t.venue, t.time].filter(Boolean).join(' · '),
-      lead: t.intensity ? el('span', 'pill ' + t.intensity, spoons(kellenOf(t.intensity))) : null,
+      lead: t.intensity ? el('span', 'pill ' + t.intensity, kellenIcon(kellenOf(t.intensity))) : null,
     };
   });
 }
 
-/* ── What you did last time under this theme ─────────────────────────────── */
+/* ── What you did last time under this theme ─────────────────────────────
+   Nothing shown at all when there is nothing to show — a card that only ever
+   says "never written down before" is a card worth skipping. Up to five past
+   Aufgüsse once there are some, each oils grouped by the ball they were on
+   together rather than flattened into one list, because "combined" is the
+   thing this is meant to answer. */
+var lastTimeShown = 5;
 function refreshLastTime() {
   var old = $('lastTime');
   if (!old) return;
@@ -185,32 +194,49 @@ function lastTimeCard() {
   var wrap = el('div');
   wrap.id = 'lastTime';
   if (!entry.theme) return wrap;
-  var prev = null, list = Store.entries();
-  for (var i = 0; i < list.length; i++) {
-    if (list[i].id === entry.id) continue;
-    if (list[i].theme && list[i].theme.toLowerCase() === entry.theme.toLowerCase()) { prev = list[i]; break; }
+  var matches = Store.entries().filter(function (e) {
+    return e.id !== entry.id && e.theme && e.theme.toLowerCase() === entry.theme.toLowerCase();
+  });
+  if (!matches.length) return wrap;
+
+  var shown = matches.slice(0, lastTimeShown);
+  var kids = shown.map(pastRow);
+  if (matches.length > shown.length) {
+    var more = el('button', 'btn quiet', 'Mehr …');
+    more.type = 'button';
+    more.addEventListener('click', function () { lastTimeShown += 5; refreshLastTime(); });
+    kids.push(more);
   }
-  if (!prev) {
-    wrap.appendChild(card('Beim letzten Mal', [
-      el('p', 'prose', 'Noch nie unter diesem Thema aufgeschrieben.'),
-    ]));
-    return wrap;
-  }
-  var names = (prev.oils || []).map(function (x) {
-    var o = byId(x.oilId); return o ? o.de : null;
-  }).filter(Boolean);
-  var again = el('button', 'btn quiet', 'Dieselben Öle übernehmen');
-  again.addEventListener('click', function () {
-    entry.oils = (prev.oils || []).slice().map(function (x) { return { oilId: x.oilId, ml: x.ml, round: x.round || 1 }; });
+  wrap.appendChild(card('Beim letzten Mal', kids));
+  return wrap;
+}
+
+/* One past Aufguss, oils grouped by round. Tapping the row takes the same
+   oils, on the same balls — the fastest way to repeat one that worked. */
+function pastRow(e) {
+  var groups = {};
+  (e.oils || []).forEach(function (x) {
+    var o = byId(x.oilId);
+    if (!o) return;
+    var r = x.round || 1;
+    (groups[r] = groups[r] || []).push(o.de);
+  });
+  var rounds = Object.keys(groups).sort(function (a, b) { return a - b; });
+  var text = rounds.map(function (r) { return groups[r].join(' + '); }).join('  ·  ');
+
+  var row = el('button', 'item flat', [
+    el('span', 'grow', [
+      el('span', 't', text || 'Keine Öle notiert'),
+      el('span', 's', agoText(e.date) + (e.notes ? ' · „' + e.notes + '“' : '')),
+    ]),
+  ]);
+  row.type = 'button';
+  row.addEventListener('click', function () {
+    entry.oils = (e.oils || []).slice().map(function (x) { return { oilId: x.oilId, ml: x.ml, round: x.round || 1 }; });
     normaliseRounds();
     save(); render(); notice('Übernommen. Ändern geht natürlich noch.');
   });
-  wrap.appendChild(card('Beim letzten Mal · ' + agoText(prev.date), [
-    el('p', 'prose', names.length ? names.join(', ') : 'Keine Öle notiert.'),
-    prev.notes ? el('p', 'prose small', '„' + prev.notes + '“') : null,
-    names.length ? again : null,
-  ]));
-  return wrap;
+  return row;
 }
 
 /* ── The oils, one ice ball (Kugel) per round ────────────────────────────────
@@ -244,11 +270,11 @@ function roundBlock(r) {
   var ordered = pourOrder(oils);
 
   var rows = el('div');
-  ordered.forEach(function (oil, i) { rows.appendChild(setRow(oil, i + 1)); });
+  ordered.forEach(function (oil) { rows.appendChild(setRow(oil)); });
 
   var input = el('input');
   input.type = 'search';
-  input.placeholder = oils.length ? 'Noch ein Öl für diese Kugel …' : 'Öl suchen — Name, Latein, Duftgruppe';
+  input.placeholder = oils.length ? 'Öl hinzufügen' : 'Öl suchen — Name, Latein, Duftgruppe';
   input.autocomplete = 'off';
   var oilAc = autocomplete(input, {
     find: function (q) {
@@ -280,22 +306,11 @@ function roundBlock(r) {
   ]);
 }
 
-function setRow(oil, step) {
-  var rec = null;
-  for (var i = 0; i < entry.oils.length; i++) if (entry.oils[i].oilId === oil.id) rec = entry.oils[i];
+function setRow(oil) {
   var n = leadNote(oil);
 
-  var ml = el('input');
-  ml.type = 'number'; ml.min = '0'; ml.max = '20'; ml.step = '0.5';
-  ml.inputMode = 'decimal';
-  ml.value = rec && rec.ml != null ? String(rec.ml) : '';
-  ml.placeholder = 'ml';
-  ml.setAttribute('aria-label', 'Milliliter ' + oil.de);
-  ml.addEventListener('change', function () {
-    var v = parseFloat(ml.value.replace(',', '.'));
-    rec.ml = isFinite(v) ? v : null;
-    save(); refreshSet();
-  });
+  var glyph = el('span', 'step', noteGlyph(n));
+  glyph.title = (noteName(n || '') || 'Note unbekannt') + (oil.noteEstimated ? ' (geschätzt)' : '');
 
   var drop = el('button', 'drop', '×');
   drop.type = 'button';
@@ -310,22 +325,14 @@ function setRow(oil, step) {
   open.style.cssText = 'background:none;border:0;text-align:left;padding:0;color:inherit;font:inherit;min-width:0';
   open.appendChild(el('span', 'name', oil.de));
   if (oil.latin) open.appendChild(el('div', 'lat', oil.latin));
-  open.appendChild(el('div', 'tiny', [
-    noteName(n || '') || 'Note unbekannt',
-    oil.noteEstimated ? ' (geschätzt)' : '',
-    oil.familyDe ? ' · ' + oil.familyDe : '',
-    (oil.goodDe && oil.goodDe.length) ? ' · ' + oil.goodDe.slice(0, 2).join(', ') : '',
-  ].join('')));
+  var detail = [oil.familyDe, (oil.goodDe && oil.goodDe.length) ? oil.goodDe.slice(0, 2).join(', ') : null]
+    .filter(Boolean).join(' · ');
+  if (detail) open.appendChild(el('div', 'tiny', detail));
   open.addEventListener('click', function () {
     location.hash = '#/oel/' + encodeURIComponent(oil.id);
   });
 
-  return el('div', 'setrow' + (n ? ' n-' + n : ''), [
-    el('span', 'step', String(step)),
-    open,
-    el('span', 'ml', [ml, el('div', 'tiny unit', 'ml')]),
-    drop,
-  ]);
+  return el('div', 'setrow' + (n ? ' n-' + n : ''), [glyph, open, drop]);
 }
 
 function famDe(id) {
@@ -349,12 +356,6 @@ function addCustom(name, round) {
 }
 
 /* ── What the set adds up to ─────────────────────────────────────────────── */
-function refreshSet() {
-  var old = $('setCard');
-  if (!old) return;
-  var oils = entry.oils.map(function (x) { return byId(x.oilId); }).filter(Boolean);
-  old.parentNode.replaceChild(setCard(oils), old);
-}
 function setCard(oils) {
   var totalMl = entry.oils.reduce(function (s, x) { return s + (x.ml || 0); }, 0);
   var bal = balance(oils, entry.ratio);
@@ -385,8 +386,17 @@ function setCard(oils) {
   return wrap;
 }
 
-/* ── What would go with it ───────────────────────────────────────────────── */
+/* ── What would go with it ─────────────────────────────────────────────────
+   Collapsed by default: a suggestion nobody asked for is one more thing on a
+   screen that is already trying to fit four oils without scrolling. One tap
+   opens it, and it stays open for the rest of this Aufguss. */
 function suggestCard(oils) {
+  if (!suggestOpen) {
+    var toggle = el('button', 'btn quiet', 'Passende Öle vorschlagen');
+    toggle.type = 'button';
+    toggle.addEventListener('click', function () { suggestOpen = true; render(); });
+    return toggle;
+  }
   var hist = history();
   var fams = themeFamilies();
   var picks = suggest(oils, entry.ratio, { history: hist, limit: 5, families: fams });

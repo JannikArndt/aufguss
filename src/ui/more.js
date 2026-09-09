@@ -12,7 +12,7 @@ import { Store } from '../core/store.js';
 import { all } from '../core/catalog.js';
 import { RATIOS, DOSAGE } from '../core/blend.js';
 import { card, field } from './parts.js';
-import { RELEASE } from '../release.js';
+import { RELEASE, RELEASES } from '../release.js';
 
 export function render() {
   var body = $('moreBody');
@@ -58,11 +58,25 @@ export function render() {
   body.appendChild(card('Diese Version', [
     el('p', 'prose small', RELEASE.v + ' · ' + RELEASE.date),
     el('p', 'prose small', RELEASE.text),
-    linkP('Was sich geändert hat', 'https://github.com/JannikArndt/aufguss/blob/main/CHANGELOG.md'),
     AppUpdate.ready ? updateCard() : null,
     Store.available ? null : el('p', 'prose small',
       'Achtung: dieses Gerät lässt den Speicher gerade nicht zu (' + Store.lastError +
       '). Was du eingibst, hält nur bis zum Schließen.'),
+  ]));
+
+  body.appendChild(changelogCard());
+}
+
+/* The current version in full above; a few before it in short, so "was hat
+   sich geändert" doesn't mean leaving the app. Everything older than that is
+   what CHANGELOG.md in the repository is for. */
+function changelogCard() {
+  var older = RELEASES.slice(1, 4);
+  if (!older.length) return el('div');
+  return card('Frühere Versionen', older.map(function (r) {
+    return el('p', 'prose small', r.v + ' · ' + r.date + ' — ' + r.text);
+  }).concat([
+    linkP('Ganzer Changelog im Repository', 'https://github.com/JannikArndt/aufguss/blob/main/CHANGELOG.md'),
   ]));
 }
 

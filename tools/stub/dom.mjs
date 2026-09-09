@@ -249,6 +249,11 @@ export function install(htmlPath) {
     querySelector: (s) => root.querySelector(s),
     querySelectorAll: (s) => root.querySelectorAll(s),
     createElement: (t) => new Element(t),
+    /* The namespace itself is not modelled — this stub has one kind of
+       element — but the app's one bit of inline SVG (the Kellen icon in
+       ui/parts.js) needs the call to exist at all, or loading it in Node
+       throws before a single check runs. */
+    createElementNS: (ns, t) => new Element(t),
     createTextNode: (t) => new Text(t),
   };
 

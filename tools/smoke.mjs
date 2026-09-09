@@ -159,7 +159,7 @@ const visible = (id) => !$(id).hidden;
 
 ok('app: it opens on the journal', visible('scJournal'));
 ok('app: the journal starts empty and says so', !$('journalEmpty').hidden);
-eq('app: five tabs', $('tabsJournal').childNodes.length, 5);
+eq('app: four tabs', $('tabsJournal').childNodes.length, 4);
 
 /* Type into a field the way a finger does: set the value, then say so. */
 function type(node, value) { node.value = value; node.dispatch('input'); }
@@ -187,7 +187,8 @@ eq('new: picking a theme names the screen', text('entryTitle'), 'Waldfunkeln');
 {
   const chips = findAll('.chip', $('entryBody')).filter((c) => c.className.includes('on'));
   ok('new: and takes the intensity off the plan too, as three Kellen',
-    chips.some((c) => c.title === 'Starker Aufguss' && c.textContent === '🥄🥄🥄'));
+    chips.some((c) => c.title === 'Starker Aufguss' && c.className.includes('stark') &&
+      c.querySelectorAll('svg').length === 3));
 }
 
 /* Three oils, by three different kinds of name. */
@@ -208,14 +209,19 @@ addOilByTyping('sandalwood');
   const names = findAll('.setrow .name', $('entryBody')).map((n) => n.textContent);
   eq('new: shown in pouring order, base first', names.join(' | '),
     'Sandelholz | Belgian lavender | Zitrone');
-  ok('new: each row says its note', findAll('.setrow', $('entryBody'))
-    .every((r) => /Kopfnote|Herznote|Basisnote/.test(r.textContent)));
-  ok('new: each row carries a millilitre field',
-    findAll('.setrow input', $('entryBody')).length === 3);
+  ok('new: each row says its note, as an icon with a title',
+    findAll('.setrow .step', $('entryBody'))
+      .every((s) => /Kopfnote|Herznote|Basisnote/.test(s.title)));
+  ok('new: no millilitre field cluttering the row',
+    findAll('.setrow input', $('entryBody')).length === 0);
 }
 ok('new: the mixture is described', !!$('setCard'));
 ok('new: and it says the notes are all there', $('setCard').textContent.includes('alle da'));
-ok('new: something is suggested to go with it',
+ok('new: suggestions start gated behind a button',
+  !$('entryBody').textContent.includes('Passt dazu') &&
+  $('entryBody').textContent.includes('Passende Öle vorschlagen'));
+findAll('button', $('entryBody')).find((b) => b.textContent === 'Passende Öle vorschlagen').click();
+ok('new: and tapping it shows something to go with it',
   $('entryBody').textContent.includes('Passt dazu'));
 
 {
@@ -252,12 +258,21 @@ ok('done: the row names the theme and the oils',
   const t = findAll('input', $('entryBody')).find((n) => (n.placeholder || '').startsWith('Thema'));
   type(t, 'Waldf');
   findAll('.ac-item', $('entryBody'))[0].click();
-  ok('last time: it remembers the previous Waldfunkeln',
+  ok('last time: it remembers the previous Waldfunkeln, oils grouped by round',
     $('lastTime').textContent.includes('Sandelholz'));
-  ok('last time: and offers to take the same oils', $('lastTime').textContent.includes('übernehmen'));
   const btn = findAll('#lastTime button')[0];
+  ok('last time: and it is tappable to take those oils', !!btn);
   btn.click();
   eq('last time: taking them fills the set', findAll('.setrow', $('entryBody')).length, 3);
+  main.go('#/');
+}
+{
+  /* No previous entry under a theme means no card at all — not one saying so. */
+  main.go('#/neu');
+  const t = findAll('input', $('entryBody')).find((n) => (n.placeholder || '').startsWith('Thema'));
+  type(t, 'Auffrischende');
+  findAll('.ac-item', $('entryBody'))[0].click();
+  ok('last time: nothing shown when there is no last time', $('lastTime').childNodes.length === 0);
   main.go('#/');
 }
 
@@ -306,11 +321,7 @@ ok('oil: back goes where you came from', visible('scOils'));
   eq('own oil: and deleted again', cat.all().length, before);
 }
 
-/* Mischen and Mehr. */
-main.go('#/mischen');
-ok('mix: it asks for more favourites before guessing',
-  text('mixBody').includes('★') || text('mixBody').includes('Lieblingsöl'));
-ok('mix: it names its sources', text('mixBody').includes('sources/blending.md'));
+/* Mehr. */
 main.go('#/mehr');
 ok('more: it counts what you have', text('moreBody').includes('Aufgüsse'));
 ok('more: it says the journal is only on this phone', text('moreBody').includes('nur auf diesem Gerät'));

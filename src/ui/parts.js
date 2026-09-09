@@ -10,6 +10,15 @@ import { noteName } from '../core/catalog.js';
 import { leadNote } from '../core/blend.js';
 import { INTENSITIES } from '../data/themes.js';
 
+/* Kopf, Herz, Basis as a shape, for the rows where a set is already read by
+   its colour (the step circle in a set row is already top/heart/base
+   coloured) and the word next to it would not fit four oils on a screen. A
+   shape rather than just a fuller dot, because colour alone tells nobody who
+   cannot see it apart which note it is — light and rising for Kopf, a full
+   circle at the centre for Herz, a square that grounds it for Basis. */
+var NOTE_GLYPH = { top: '▲', heart: '●', base: '■' };
+export function noteGlyph(n) { return NOTE_GLYPH[n] || '?'; }
+
 /* Kopf, Herz, Basis as a coloured dot plus its name. The dot alone would be
    colour carrying meaning on its own, which is no good to anyone who cannot
    tell the three apart — so the word is always next to it. */
@@ -28,20 +37,38 @@ export function noteChip(oil, opts) {
 
 /* Stärke, as Kellen. Bäderland's plan gives three levels as a coloured icon
    (sources/aufgussplan.md); the app keeps those three ids everywhere, since
-   that is the sourced fact, and only shows them here as the number of ladles
-   a Saunameister would actually pour for that level — one spoon for sanft, up
-   to three for stark. */
+   that is the sourced fact, and only shows the count here — one ladle for
+   sanft, up to three for stark — in a small glyph in the same spirit as the
+   plan's own icon, not a copy of it. */
 var KELLEN = { sanft: 1, mittel: 2, stark: 3 };
 export function kellenOf(id) { return KELLEN[id] || 0; }
-export function spoons(n) {
-  var s = '';
-  for (var i = 0; i < n; i++) s += '🥄';
+
+var SVG_NS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs) {
+  var n = document.createElementNS(SVG_NS, tag);
+  for (var k in attrs) n.setAttribute(k, attrs[k]);
+  return n;
+}
+/* A pour, into a ladle: a short wave and the bowl it lands in. currentColor
+   so it takes whatever colour the wrapping pill or chip already sets. */
+function ladle() {
+  var s = svgEl('svg', { viewBox: '0 0 20 14', width: '13', height: '9', 'aria-hidden': 'true' });
+  s.appendChild(svgEl('path', {
+    d: 'M1 9c2-6 4-6 6 0', fill: 'none', stroke: 'currentColor',
+    'stroke-width': '2', 'stroke-linecap': 'round',
+  }));
+  s.appendChild(svgEl('ellipse', { cx: '14.5', cy: '7', rx: '4.5', ry: '4', fill: 'currentColor' }));
   return s;
+}
+export function kellenIcon(n) {
+  var wrap = el('span', 'kellen');
+  for (var i = 0; i < n; i++) wrap.appendChild(ladle());
+  return wrap;
 }
 
 export function intensityPill(id) {
   if (!id) return null;
-  var p = el('span', 'pill ' + id, spoons(kellenOf(id)));
+  var p = el('span', 'pill ' + id, kellenIcon(kellenOf(id)));
   var iv = INTENSITIES.filter(function (x) { return x.id === id; })[0];
   if (iv) p.title = iv.de;
   return p;
