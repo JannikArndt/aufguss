@@ -27,6 +27,70 @@ each one. **What would settle it:** the note printed on the bottle, or Aromen
 answering. Fixing one is a two-word edit in `src/data/oils.js` plus dropping
 its `noteEstimated`.
 
+## RBM's Bergamottminze has neither a note nor a botanical name
+
+<https://www.rbm-wellness.de/Bergamottminze-p473058551> is the one RBM product
+page out of 81 with no `Duftnote:` and no `Botanischer Name:` line. Its whole
+description is *"Mentha-Citrataöl / Charakter: frisch, spritzig, minzig,
+süßlich / Harmonie: Zitrone, Limette, Kamille, Ylang Ylang, Cedernholz,
+Edeltannennadel"*.
+
+The note is estimated from the family and marked, the same way Aromen's eight
+are. The botanical name is left **empty** rather than read out of
+"Mentha-Citrataöl": that word is a trade name in the position where the other
+80 pages put a labelled botanical name, and turning it into a binomial would be
+a guess wearing a reading's clothes. It is the only oil in the app with no
+Latin name at all, and `tools/smoke.mjs` pins that at exactly one so it cannot
+quietly become two.
+
+**What would settle it:** the label on the bottle, or RBM filling the two lines
+in.
+
+## Ten of RBM's botanical names are shared by two or three of their oils
+
+Read off their product pages on 10 September 2026, verbatim:
+
+| botanical name on their pages | oils carrying it |
+|---|---|
+| *Cedrus atlantica* | Cedernholz amerikanisch, Cedernholz atlas, Cedernholz Virginia |
+| *Citrus reticulata* | Mandarine grün italienisch, Mandarine rot italienisch, Tangerine |
+| *Boswellia carteri* | Cedernholz chinesisch, Weihrauch |
+| *Cinnamomum camphora* | Hobaum, Kampfer |
+| *Mentha arvensis* | Minze chinesisch, Minze indisch |
+| *Citrus sinensis* | Blutorange, Orange süß italienisch |
+| *Citrus aurantifolia* | Limette destilliert, Limette gepresst |
+| *Citrus aurantium* | Orange bitter italienisch, Petitgrain südamerikanisch |
+| *Anthemis nobilis* | Kamille blau, Kamille petitgrain römisch |
+| *Lavandula angustifolia* | Lavendel bulgarisch, Lavendel moldawisch |
+
+Some of these are obviously one species distilled two ways or grown in two
+places — the two Limetten, the two Lavendel, the two Minzen — and some are
+harder to read that way: one bottle called *Cedernholz chinesisch* and another
+called *Weihrauch* sharing a name, or three cedars from three continents all
+being *Cedrus atlantica*.
+
+Nothing here decides which. They are copied as RBM writes them, because the
+alternative is replacing what the supplier says with what somebody else
+believes, and this repository does not do that. Their spelling is kept for the
+same reason (`Albies alba`, `Uniperus communis`, `Illicum verum`).
+
+**What would settle it:** the labels, or their batch documentation.
+
+## RBM has no group for conifers, Aromen does
+
+Aromen sorts oils into ten scent groups and one of them is *Conifers*. RBM
+sorts into five and puts every needle and every wood in *Hölzer*. So the app
+holds Fichtennadel twice: Aromen's as Conifers/Nadelholz, RBM's as
+Woody/Hölzer. Both are their own supplier's word, verbatim, which is the rule
+this repository runs on — but it does mean the family filter and the harmony
+table treat the same tree differently depending on which bottle is in hand.
+
+Nothing was invented to smooth that over. Reclassifying RBM's needles as
+Conifers would be the app deciding something neither supplier said.
+
+**What would settle it:** nothing, really — it is two shops with two taxonomies
+and both are published. Worth knowing when reading a remark about Duftgruppen.
+
 ## Four botanical names stop at the genus
 
 *Cymbopogon* (Zitronegras) · *Monarda* · *Tilia* (Lindenblüte) · *Thuja*.
@@ -89,7 +153,16 @@ is a same-day re-check rather than a stale one:
   currently sells under that name.
 
 None of the three went into `src/data/oils.js`, because there is nothing at a
-URL to put next to them. **What would settle it:** Aromen relisting Kampfer,
+URL to put next to them.
+
+**Kampfer is settled, as of 10 September 2026:** RBM sells it
+(<https://www.rbm-wellness.de/Kampfer-p472801955>, article 106 - 109,
+*Cinnamomum camphora*, Herznote), and it is in `src/data/oils-rbm.js`. On the
+same day `tools/check-sources.mjs` also reported `e6-kampfer` back in Aromen's
+own listing — that has **not** been added, because adding it means reading its
+product page the way the other 133 were read, and that is a regeneration of
+`src/data/oils.js`, not a line. Tigerminze and Polarminze are still nowhere:
+not in RBM's range either, single or blended. **What would settle it:** Aromen relisting Kampfer,
 or a source for Tigerminze/Polarminze naming a supplier and a product page. In
 the meantime the app already has the right door for this: Öle → **+** adds an
 oil under your own name, with whatever family and note you give it, and nothing

@@ -6,12 +6,12 @@
 
 import { $, el, clear, notice, agoText } from '../core/util.js';
 import { Store } from '../core/store.js';
-import { byId, search, families, noteName, customOil, invalidate } from '../core/catalog.js';
+import { byId, search, families, suppliers, noteName, customOil, invalidate } from '../core/catalog.js';
 import { NOTES, DOSAGE, leadNote } from '../core/blend.js';
 import { history } from '../core/suggest.js';
 import { oilRow, noteChip, field, card } from './parts.js';
 
-var state = { q: '', families: [], notes: [], favsOnly: false };
+var state = { q: '', families: [], suppliers: [], notes: [], favsOnly: false };
 var currentOil = null;
 
 /* ── The list ────────────────────────────────────────────────────────────── */
@@ -36,6 +36,14 @@ export function renderList() {
   chips.appendChild(top);
 
   var fams = el('div', 'chiprow wrap');
+  /* The two ranges sit on the same row as the families, because "nur RBM" is
+     the same kind of narrowing as "nur Holzig" — and because with both ranges
+     in one list, the shelf you are standing in front of is a real filter. */
+  suppliers().forEach(function (s) {
+    fams.appendChild(chip(s.id, state.suppliers.indexOf(s.id) >= 0, function () {
+      toggle(state.suppliers, s.id); renderList();
+    }));
+  });
   families().forEach(function (f) {
     fams.appendChild(chip(f.de, state.families.indexOf(f.id) >= 0, function () {
       toggle(state.families, f.id); renderList();
@@ -45,7 +53,8 @@ export function renderList() {
 
   var hist = history();
   var hits = search(state.q, {
-    families: state.families, notes: state.notes, favsOnly: state.favsOnly,
+    families: state.families, suppliers: state.suppliers,
+    notes: state.notes, favsOnly: state.favsOnly,
   });
 
   var list = $('oilList');
@@ -112,13 +121,18 @@ export function renderOne(id) {
     el('div', 'chips', [
       noteChip(o),
       o.familyDe ? el('span', 'pill', o.familyDe) : null,
+      o.supplier ? el('span', 'pill', o.supplier) : null,
       o.code ? el('span', 'pill', o.code) : null,
     ]),
     el('dl', 'kv', [
       o.en ? el('dt', null, 'Englisch') : null, o.en ? el('dd', null, o.en) : null,
       o.latin ? el('dt', null, 'Botanisch') : null, o.latin ? el('dd', null, el('i', null, o.latin)) : null,
+      o.plantFamily ? el('dt', null, 'Pflanzenfamilie') : null,
+      o.plantFamily ? el('dd', null, o.plantFamily) : null,
       (o.goodDe && o.goodDe.length) ? el('dt', null, 'Gut für') : null,
       (o.goodDe && o.goodDe.length) ? el('dd', null, o.goodDe.join(', ')) : null,
+      (o.goesWith && o.goesWith.length) ? el('dt', null, 'Harmoniert mit') : null,
+      (o.goesWith && o.goesWith.length) ? el('dd', null, o.goesWith.join(', ')) : null,
       el('dt', null, 'Menge'), el('dd', null, DOSAGE.mlPerOil[0] + '–' + DOSAGE.mlPerOil[1] + ' ml'),
     ].filter(Boolean)),
   ]));
@@ -126,13 +140,14 @@ export function renderOne(id) {
   if (o.about) {
     body.appendChild(card('Wie es riecht', [
       el('div', 'prose', el('p', null, o.about)),
-      o.url ? link('Bei Aromen nachlesen', o.url) : null,
+      o.url ? link('Bei ' + (o.supplier || 'der Quelle') + ' nachlesen', o.url) : null,
     ]));
   }
   if (o.noteEstimated) {
     body.appendChild(card('Zur Note', [
-      el('p', 'prose small', 'Aromen gibt für dieses Öl keine Note an. ' + noteName(leadNote(o)) +
-        ' ist aus der Duftgruppe „' + o.familyDe + '“ geschätzt — siehe sources/oils.md im Repository.'),
+      el('p', 'prose small', (o.supplier || 'Die Quelle') + ' gibt für dieses Öl keine Note an. ' +
+        noteName(leadNote(o)) + ' ist aus der Duftgruppe „' + o.familyDe +
+        '“ geschätzt — siehe sources/ im Repository.'),
     ]));
   }
   if (o.custom) body.appendChild(editCard(o));
@@ -147,9 +162,9 @@ function link(text, href) {
   return el('p', null, a);
 }
 
-/* Only your own oils are editable. A catalogue oil's facts belong to Aromen
-   and are re-read from their site rather than typed over here; what you think
-   of it goes in your own note below, which every oil has. */
+/* Only your own oils are editable. A catalogue oil's facts belong to whoever
+   sells it and are re-read from their site rather than typed over here; what
+   you think of it goes in your own note below, which every oil has. */
 function editCard(o) {
   var fam = el('select');
   fam.appendChild(new Option('— Duftgruppe —', ''));

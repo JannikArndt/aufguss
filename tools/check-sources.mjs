@@ -22,9 +22,15 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { OILS } = await import('../src/data/oils.js');
+const { OILS_RBM } = await import('../src/data/oils-rbm.js');
 
 const CATEGORY = 'https://www.aromen.be/de/shop/category/atherische-ole-einzelole-26';
 const PLAN = 'https://www.baederland.de/media/kaifu-bad_aufgussplan_web.pdf';
+const RBM_SITEMAP = 'https://www.rbm-wellness.de/sitemap.xml';
+const RBM_API = 'https://eu-fra4-storefront-api.ecwid.com/storefront/api/v1/75784548/catalog/products';
+/* RBM's five single-oil categories. "Mischungen" and "Sonstiges" are blends
+   and hardware, and are not in the catalogue — see sources/oils-rbm.md. */
+const RBM_SINGLE = new Set(['Hölzer', 'Kräuter', 'Citrus', 'Gewürze', 'Blumen']);
 
 let notes = 0;
 function say(line) { console.log(line); }
@@ -71,6 +77,63 @@ if (seen.size) {
   if (fresh.length) flag('new since 8 September 2026: ' + fresh.join(', '));
   if (gone.length) flag('no longer listed: ' + gone.join(', '));
   if (!fresh.length && !gone.length) say('  nothing has moved');
+}
+
+/* ── The RBM oils ────────────────────────────────────────────────────────── */
+/* Their shop is a JavaScript storefront: the product pages carry nothing a
+   fetch can read. What does answer is the storefront's own product endpoint,
+   which takes a list of product ids and gives back the description each page
+   renders. The ids come out of the site's sitemap, which is plain XML. */
+say('');
+say('RBM — Naturreine ätherische Öle');
+try {
+  const xml = await (await fetch(RBM_SITEMAP, { headers: { 'user-agent': 'aufguss/check-sources' } })).text();
+  const ids = [...new Set([...xml.matchAll(/<loc>[^<]*-p(\d+)<\/loc>/g)].map((m) => Number(m[1])))];
+  if (!ids.length) throw new Error('the sitemap listed no products');
+
+  const items = [];
+  for (let i = 0; i < ids.length; i += 25) {
+    const res = await fetch(RBM_API, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'user-agent': 'aufguss/check-sources' },
+      body: JSON.stringify({ lang: 'de', productIds: ids.slice(i, i + 25) }),
+    });
+    if (!res.ok) throw new Error('the storefront answered ' + res.status);
+    items.push(...((await res.json()).items || []));
+  }
+
+  /* One product per size, so the same oil comes back three or four times. */
+  const onSite = new Map();
+  for (const it of items) {
+    const path = (it.categoryPaths?.[0]?.categoryPath || []).map((c) => c.name).filter(Boolean);
+    if (!RBM_SINGLE.has(path[path.length - 1])) continue;
+    onSite.set(it.name.trim(), it.description || '');
+  }
+  const have = new Map(OILS_RBM.map((o) => [o.de, o]));
+  const fresh = [...onSite.keys()].filter((n) => !have.has(n));
+  const gone = [...have.keys()].filter((n) => !onSite.has(n));
+  say('  ' + onSite.size + ' single oils on the site, ' + OILS_RBM.length +
+      ' in src/data/oils-rbm.js');
+  if (fresh.length) flag('new since 10 September 2026: ' + fresh.join(', '));
+  if (gone.length) flag('no longer listed: ' + gone.join(', '));
+
+  /* The note and the botanical name are read out of that description, so a
+     rewritten description is worth knowing about even when the range has not
+     moved. */
+  const drift = [];
+  for (const [name, oil] of have) {
+    const d = onSite.get(name);
+    if (d == null) continue;
+    const plain = d.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ');
+    const latin = /Botanischer Name\s*:?\s*([^]*?)(?:Pflanzenfamilie|Duftnote|Charakter|$)/i.exec(plain);
+    if (latin && latin[1].trim() !== oil.latin) {
+      drift.push(name + ': botanisch now "' + latin[1].trim() + '", was "' + oil.latin + '"');
+    }
+  }
+  if (drift.length) flag('descriptions have been edited: ' + drift.join('; '));
+  if (!fresh.length && !gone.length && !drift.length) say('  nothing has moved');
+} catch (e) {
+  flag('could not read the RBM range: ' + e.message);
 }
 
 /* ── The Kaifubad plan ───────────────────────────────────────────────────── */

@@ -1,8 +1,12 @@
-# The oil catalogue
+# The Aromen oil catalogue
 
 **Source:** <https://www.aromen.be/de/shop/category/atherische-ole-einzelole-26>
 **Fetched:** 8 September 2026
 **Result:** `src/data/oils.js` — 133 oils
+
+This is one of the two ranges the app carries. The other is RBM's, in
+[`oils-rbm.md`](oils-rbm.md) and `src/data/oils-rbm.js`; the app shows both as
+one list and puts the supplier on the oil.
 
 ## What was fetched
 

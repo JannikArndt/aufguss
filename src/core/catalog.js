@@ -1,6 +1,12 @@
 /* 2. The catalogue, and finding something in it.
 
-   One list of oils: the 133 from Aromen plus whatever you have added yourself.
+   One list of oils: the 133 from Aromen, the 81 from RBM, and whatever you
+   have added yourself. Which supplier an oil came from is a fact about where
+   to buy it, not about how it smells, so it is carried on the oil and shown
+   where it helps — and nowhere else does anything in the app branch on it.
+   Both ranges have a Zitrone and a Zirbelkiefer in them; that is not a
+   duplicate to clean up, it is two bottles.
+
    Custom oils carry a `custom: true` flag and an id that starts `own:` — that
    prefix is the only thing that distinguishes them anywhere in the app, and it
    is what makes an update of src/data/oils.js safe.
@@ -10,6 +16,7 @@
    type "zitr" and mean any of them. */
 
 import { OILS } from '../data/oils.js';
+import { OILS_RBM } from '../data/oils-rbm.js';
 import { NOTES } from '../data/blending.js';
 import { Store } from './store.js';
 import { fold } from './util.js';
@@ -18,15 +25,44 @@ var noteDe = {};
 for (var i = 0; i < NOTES.length; i++) noteDe[NOTES[i].id] = NOTES[i].de;
 export function noteName(id) { return noteDe[id] || id; }
 
+/* Both ranges, in one list, sorted the way a German-speaking finger scrolls.
+   Sorting here rather than in either data file means neither has to know the
+   other exists. */
+export var CATALOGUE = OILS.concat(OILS_RBM).sort(function (a, b) {
+  return a.de.localeCompare(b.de, 'de');
+});
+
+/* The suppliers, taken off the oils so this list cannot drift from the data.
+   Ordered by how many oils each has, the same way families() is. */
+export function suppliers() {
+  var seen = {}, out = [];
+  for (var i = 0; i < CATALOGUE.length; i++) {
+    var s = CATALOGUE[i].supplier;
+    if (!s) continue;
+    if (!seen[s]) { seen[s] = { id: s, n: 0 }; out.push(seen[s]); }
+    seen[s].n++;
+  }
+  out.sort(function (a, b) { return b.n - a.n; });
+  return out;
+}
+
 /* The families, with their German label, taken off the oils themselves so the
-   list cannot drift from the data. Ordered by how many oils are in each. */
+   list cannot drift from the data. Ordered by how many oils are in each.
+
+   The two suppliers write the same group differently — Aromen's Holzig is
+   RBM's Hölzer — so the label is the one more oils carry rather than the one
+   that happens to sort first. Otherwise the chip would change its wording
+   whenever the catalogue is re-sorted, which is a fact about nothing. */
 export function families() {
   var seen = {}, out = [];
-  for (var i = 0; i < OILS.length; i++) {
-    var o = OILS[i];
+  for (var i = 0; i < CATALOGUE.length; i++) {
+    var o = CATALOGUE[i];
     if (!o.family) continue;
-    if (!seen[o.family]) { seen[o.family] = { id: o.family, de: o.familyDe, n: 0 }; out.push(seen[o.family]); }
-    seen[o.family].n++;
+    if (!seen[o.family]) { seen[o.family] = { id: o.family, de: o.familyDe, n: 0, labels: {} }; out.push(seen[o.family]); }
+    var f = seen[o.family];
+    f.n++;
+    f.labels[o.familyDe] = (f.labels[o.familyDe] || 0) + 1;
+    if (f.labels[o.familyDe] > (f.labels[f.de] || 0)) f.de = o.familyDe;
   }
   out.sort(function (a, b) { return b.n - a.n; });
   return out;
@@ -39,7 +75,8 @@ export function customOil(name, extra) {
     code: '', de: name, en: o.en || '', latin: o.latin || '',
     family: o.family || '', familyDe: o.familyDe || '',
     notes: o.notes || [], noteEstimated: false,
-    good: [], goodDe: [], about: o.about || '', url: null, custom: true,
+    good: [], goodDe: [], supplier: '', character: [], goesWith: [],
+    about: o.about || '', url: null, custom: true,
   };
 }
 
@@ -52,7 +89,7 @@ export function all() {
   var stamp = String(custom.length) + ':' + custom.map(function (o) { return o.id; }).join(',');
   if (cache && cacheStamp === stamp) return cache;
   cacheStamp = stamp;
-  cache = OILS.concat(custom.map(function (o) {
+  cache = CATALOGUE.concat(custom.map(function (o) {
     o.custom = true;
     if (!o.familyDe && o.family) o.familyDe = o.family;
     return o;
@@ -71,7 +108,12 @@ export function byId(id) {
 /* Everything one oil can be found by, folded once and kept on the oil.
    Fields are kept separate so a hit on the name can outrank a hit on the
    description — which matters, because the descriptions mention half the
-   catalogue by name. */
+   catalogue by name.
+
+   RBM's `goesWith` is the one field on an oil that is deliberately not in
+   here. It is a list of other oils' names, so indexing it would put every oil
+   whose Harmonie line says "Zitrone" into the results for zitrone — the exact
+   noise the separate fields above exist to keep out. */
 function haystack(o) {
   return {
     de: fold(o.de),
@@ -80,7 +122,9 @@ function haystack(o) {
     fam: fold((o.family || '') + ' ' + (o.familyDe || '')),
     note: fold((o.notes || []).map(noteName).join(' ') + ' ' + (o.notes || []).join(' ')),
     good: fold((o.goodDe || []).join(' ') + ' ' + (o.good || []).join(' ')),
+    char: fold((o.character || []).join(' ')),
     code: fold(o.code),
+    supplier: fold(o.supplier),
     about: fold(o.about),
   };
 }
@@ -100,7 +144,9 @@ function scoreWord(hay, w) {
   s = Math.max(s, part(hay.fam, w, 62));
   s = Math.max(s, part(hay.note, w, 58));
   s = Math.max(s, part(hay.good, w, 46));
+  s = Math.max(s, part(hay.char, w, 44));
   s = Math.max(s, hay.code === w ? 96 : (hay.code.indexOf(w) === 0 ? 54 : 0));
+  s = Math.max(s, hay.supplier === w ? 70 : 0);   /* "rbm" means the range, not a word in it */
   if (!s && hay.about.indexOf(w) >= 0) s = 12;
   return s;
 }
@@ -125,6 +171,7 @@ export function search(query, opts) {
     var oil = list[i];
     var hay = oil._hay || (oil._hay = haystack(oil));
     if (o.families && o.families.length && o.families.indexOf(oil.family) < 0) continue;
+    if (o.suppliers && o.suppliers.length && o.suppliers.indexOf(oil.supplier) < 0) continue;
     if (o.notes && o.notes.length && !anyNote(oil, o.notes)) continue;
     if (o.exclude && o.exclude.indexOf(oil.id) >= 0) continue;
     if (o.favsOnly && !Store.personalFor(oil.id).fav) continue;
@@ -162,6 +209,8 @@ export function why(oil, query) {
     if (hay.en.indexOf(w) >= 0) return oil.en;
     if (hay.fam.indexOf(w) >= 0) return oil.familyDe;
     if (hay.good.indexOf(w) >= 0) return (oil.goodDe || [])[0] || '';
+    if (hay.char.indexOf(w) >= 0) return (oil.character || []).join(', ');
+    if (hay.supplier === w) return oil.supplier;
   }
   return '';
 }

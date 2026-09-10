@@ -7,6 +7,33 @@ cache-first, so the change lands on the next cold start, unless it is taken
 early from Mehr → **Update jetzt laden**. Mehr also shows the last few
 entries below this list in short; this file is the whole history.
 
+## 0.4.0 — 2026-09-10
+
+- Added the RBM range: **81 single oils** from RBM Natur Sauna & Wellness, so
+  the catalogue is now 214. Read off their own product pages and their price
+  list on 10 September 2026 — botanical name, Pflanzenfamilie, Duftnote,
+  Charakter, Herstellung and the Harmonie line, all in their words.
+  `sources/oils-rbm.md` has the method, including how a JavaScript-only shop
+  gets read at all.
+- Every oil now carries a `supplier`, shown under its name in every list and as
+  a pill on the oil sheet. Both ranges sell a Zitrone, a Zirbelkiefer and an
+  Amyris; those are two bottles each, not duplicates, and the app says which.
+- Öle gained a filter chip per range, next to the Duftgruppen. Typing `rbm`
+  works too, as does searching by how an oil smells — `rauchig` finds
+  Birkenteer.
+- An RBM oil's sheet also shows its Pflanzenfamilie, its Charakter and what RBM
+  says it harmonises with. That last list names other oils, so it is
+  deliberately not searchable: a query for Zitrone should not return the twelve
+  oils whose Harmonie line mentions it.
+- RBM does not publish effect tags or English names, so those stay empty rather
+  than getting invented. One oil — Bergamottminze — has neither a note nor a
+  botanical name on their page: its note is estimated from the family and
+  marked as such, its botanical name is left empty, and both are written down
+  in `sources/open-questions.md`.
+- `tools/check-sources.mjs` now re-reads the RBM range too, through the
+  storefront endpoint their site uses, and reports oils that have appeared or
+  gone as well as descriptions whose botanical name has been edited.
+
 ## 0.3.1 — 2026-09-10
 
 - Replaced the Kopf/Herz/Basis glyphs (▲ ● ■) with proper icons: a head

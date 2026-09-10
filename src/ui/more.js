@@ -43,14 +43,17 @@ export function render() {
 
   body.appendChild(card('Woher das Wissen kommt', [
     el('p', 'prose small',
-      'Die ' + all().length + ' Öle, ihre Duftgruppen, ihre Noten und die Beschreibungen ' +
-      'stammen von Aromen. Die botanischen Namen von Wikidata. Die Aufguss-Themen von ' +
+      'Die ' + all().length + ' Öle kommen aus zwei Sortimenten: 133 von Aromen und 81 von ' +
+      'RBM. Duftgruppe, Note und Beschreibung stehen bei jedem Öl so, wie es der jeweilige ' +
+      'Anbieter schreibt — welcher es ist, steht auf dem Öl. Die botanischen Namen der ' +
+      'Aromen-Öle sind von Wikidata, die der RBM-Öle von RBM selbst. Die Aufguss-Themen von ' +
       'Bäderlands eigenen Aufgussplänen. Die Regeln zum Mischen von vier Seiten, die alle ' +
       'in sources/blending.md stehen — mit dem Satz, aus dem sie kommen.'),
     el('p', 'prose small',
       'Nichts davon ist aus dem Kopf geschrieben, und nichts davon ist eine Wissenschaft. ' +
       'Wo etwas geschätzt ist, steht es dabei.'),
     linkP('Aromen — Einzelöle', 'https://www.aromen.be/de/shop/category/atherische-ole-einzelole-26'),
+    linkP('RBM — Naturreine ätherische Öle', 'https://www.rbm-wellness.de/Naturreine-atherische-Ole-c134687002'),
     linkP('Bäderland — Aufgusspläne', 'https://www.baederland.de/wellness/aufgussplaene/'),
     linkP('Alle Quellen im Repository', 'https://github.com/JannikArndt/aufguss/tree/main/sources'),
   ]));

@@ -284,7 +284,8 @@ function roundBlock(r) {
         var reason = why(o, q);
         return {
           title: o.de, value: o,
-          sub: [o.familyDe, noteName(leadNote(o) || ''), reason && reason !== o.de ? reason : null]
+          sub: [o.supplier, o.familyDe, noteName(leadNote(o) || ''),
+                reason && reason !== o.de ? reason : null]
             .filter(Boolean).join(' · '),
           lead: el('i', 'note-dot' + (leadNote(o) ? ' note-' + leadNote(o) : '')),
         };

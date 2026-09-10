@@ -9,6 +9,12 @@
 
    Write each note for someone who has never read the code. */
 export var RELEASES = [
+  { v: '0.4.0', date: '2026-09-10',
+    text: '81 Öle von RBM kommen dazu, also 214 insgesamt. Auf jedem Öl steht ' +
+          'jetzt, von wem es ist — beide Sortimente haben eine Zitrone, und das ' +
+          'sind zwei Fläschchen, nicht eins. Bei den RBM-Ölen steht außerdem, ' +
+          'wonach sie riechen und womit sie laut RBM zusammengehen. Unter Öle ' +
+          'kannst du nach Anbieter filtern.' },
   { v: '0.3.1', date: '2026-09-10',
     text: 'Die Kopf-, Herz- und Kellen-Icons sind jetzt eigene Formen statt ' +
           'Emoji — ein Kopf, ein Herz, und die Kelle sieht jetzt auch wie eine ' +

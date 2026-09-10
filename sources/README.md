@@ -13,8 +13,9 @@ the file says so, and the app says so too.
 
 | file | what it covers |
 |---|---|
-| [`oils.md`](oils.md) | the 133 single oils, their families, notes and descriptions |
-| [`botanical-names.md`](botanical-names.md) | the Latin names, and which ones are a judgement call |
+| [`oils.md`](oils.md) | the 133 single oils from Aromen, their families, notes and descriptions |
+| [`oils-rbm.md`](oils-rbm.md) | the 81 single oils from RBM, and how a JavaScript shop was read |
+| [`botanical-names.md`](botanical-names.md) | the Latin names of the Aromen oils, and which ones are a judgement call |
 | [`aufgussplan.md`](aufgussplan.md) | the Aufguss themes, times and intensities |
 | [`blending.md`](blending.md) | notes, ratios, mixing order, which families go together |
 | [`open-questions.md`](open-questions.md) | what could not be settled, and what it would take |

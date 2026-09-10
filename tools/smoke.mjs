@@ -33,37 +33,60 @@ function read(p) { return fs.readFileSync(path.join(ROOT, p), 'utf8'); }
 
 /* ── 1. The data ─────────────────────────────────────────────────────────── */
 const { OILS } = await import('../src/data/oils.js');
+const { OILS_RBM } = await import('../src/data/oils-rbm.js');
 const { THEMES, INTENSITIES } = await import('../src/data/themes.js');
 const { NOTES, RATIOS, HARMONY, MIX_ORDER, DOSAGE, CLASSICS } = await import('../src/data/blending.js');
 
-ok('oils: a catalogue arrived', OILS.length > 120, OILS.length + ' oils');
+/* Two ranges, one catalogue. Counts are pinned per range on purpose: a
+   regeneration that moves either has to bring its own sources/ file along. */
+const ALL_OILS = OILS.concat(OILS_RBM);
+const HOST = { Aromen: 'https://www.aromen.be/', RBM: 'https://www.rbm-wellness.de/' };
+
+eq('oils: the Aromen range arrived', OILS.length, 133);
+eq('oils: and the RBM range', OILS_RBM.length, 81);
 {
   const ids = new Set(), noteIds = new Set(NOTES.map((n) => n.id));
-  const fams = new Set(OILS.map((o) => o.family));
+  const fams = new Set(ALL_OILS.map((o) => o.family));
   let bad = [];
-  for (const o of OILS) {
+  for (const o of ALL_OILS) {
     if (ids.has(o.id)) bad.push('duplicate id ' + o.id);
     ids.add(o.id);
     if (!o.de) bad.push('no German name: ' + o.id);
-    if (!o.latin) bad.push('no botanical name: ' + o.de);
     if (!o.family) bad.push('no family: ' + o.de);
     if (!o.familyDe) bad.push('no German family: ' + o.de);
+    if (!o.supplier) bad.push('no supplier: ' + o.de);
     if (!o.notes.length) bad.push('no note: ' + o.de);
     for (const n of o.notes) if (!noteIds.has(n)) bad.push('unknown note ' + n + ' on ' + o.de);
-    if (o.url && !o.url.startsWith('https://www.aromen.be/')) bad.push('odd url on ' + o.de);
+    if (o.url && !o.url.startsWith(HOST[o.supplier])) bad.push('odd url on ' + o.de);
   }
   ok('oils: every field the app reads is filled', !bad.length, bad.slice(0, 4).join('; '));
-  ok('oils: exactly ten scent families', fams.size === 10, [...fams].join(','));
+  ok('oils: still exactly ten scent families', fams.size === 10, [...fams].join(','));
+  ok('oils: an RBM id cannot collide with an Aromen one',
+    OILS_RBM.every((o) => o.id.startsWith('rbm:')));
 }
 {
-  /* Every oil whose note is not Aromen's own must say so, and the eight that
-     carry that flag are the eight sources/oils.md names. If that number moves,
-     the data was regenerated and the source file needs the same edit. */
-  const est = OILS.filter((o) => o.noteEstimated);
-  eq('oils: eight notes are estimated, and marked', est.length, 8);
+  /* Every oil whose note is not the supplier's own must say so. Eight of those
+     are Aromen's (sources/oils.md) and one is RBM's Bergamottminze
+     (sources/oils-rbm.md). If either number moves, the data was regenerated
+     and the source file needs the same edit. */
+  eq('oils: eight Aromen notes are estimated, and marked',
+    OILS.filter((o) => o.noteEstimated).length, 8);
+  eq('oils: one RBM note is estimated, and marked',
+    OILS_RBM.filter((o) => o.noteEstimated).length, 1);
+  /* Aromen publishes no botanical names, so all 133 got one from Wikidata.
+     RBM publishes its own, and for exactly one oil it does not. */
+  eq('oils: exactly one oil has no botanical name anywhere',
+    ALL_OILS.filter((o) => !o.latin).length, 1);
 }
 ok('oils: the Kaifubad range is searchable in Latin',
   OILS.some((o) => o.latin === 'Santalum austrocaledonicum'));
+{
+  /* RBM names other oils in its Harmonie line. That list is shown but must
+     never reach the search index — see the comment on haystack(). */
+  const src = read('src/core/catalog.js');
+  ok('oils: what an RBM oil harmonises with is not searchable',
+    !/goesWith/.test(src.split('function haystack')[1].split('}')[0]));
+}
 
 ok('themes: the Kaifubad plan is in there', THEMES.filter((t) => t.venue === 'Kaifubad').length === 6);
 {
@@ -78,7 +101,7 @@ ok('themes: the Kaifubad plan is in there', THEMES.filter((t) => t.venue === 'Ka
 }
 
 {
-  const fams = new Set(OILS.map((o) => o.family));
+  const fams = new Set(ALL_OILS.map((o) => o.family));
   const bad = [];
   for (const k of Object.keys(HARMONY)) {
     if (!fams.has(k)) bad.push('harmony key is not a family: ' + k);
@@ -116,7 +139,10 @@ ok('search: a note name filters', cat.search('basisnote').length > 15);
 ok('search: a family name filters', cat.search('nadelholz').length >= 14);
 ok('search: every word has to hit', cat.search('zitrone kiefer').length === 0);
 ok('search: nothing matches nonsense', cat.search('qqqzzz').length === 0);
-ok('search: an empty query is the whole catalogue', cat.search('').length === OILS.length);
+ok('search: an empty query is the whole catalogue', cat.search('').length === ALL_OILS.length);
+eq('search: the range itself is a search term', cat.search('rbm').length, OILS_RBM.length);
+eq('search: and a filter', cat.search('', { suppliers: ['RBM'] }).length, OILS_RBM.length);
+eq('search: how an oil smells finds it', cat.search('rauchig', { limit: 1 })[0].de, 'Birkenteer');
 
 {
   const set = ['Zitrone', 'Belgian lavender', 'Sandelholz'].map((n) => cat.search(n, { limit: 1 })[0]);
@@ -278,7 +304,7 @@ ok('done: the row names the theme and the oils',
 
 /* The catalogue. */
 main.go('#/oele');
-ok('oils: the whole catalogue is listed', text('oilList').includes(String(OILS.length)));
+ok('oils: the whole catalogue is listed', text('oilList').includes(String(ALL_OILS.length)));
 type($('oilSearch'), 'basisnote');
 ok('oils: a note filters the list', findAll('#oilList .item').length > 15 &&
   findAll('#oilList .item').length < OILS.length);
@@ -325,7 +351,8 @@ ok('oil: back goes where you came from', visible('scOils'));
 main.go('#/mehr');
 ok('more: it counts what you have', text('moreBody').includes('Aufgüsse'));
 ok('more: it says the journal is only on this phone', text('moreBody').includes('nur auf diesem Gerät'));
-ok('more: it points at the sources', text('moreBody').includes('Aromen'));
+ok('more: it points at the sources', text('moreBody').includes('Aromen') &&
+  text('moreBody').includes('RBM'));
 
 /* Out and back in. */
 {

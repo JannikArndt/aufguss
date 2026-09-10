@@ -109,10 +109,13 @@ export function intensityPill(id) {
 /* One oil as a tappable row. `sub` overrides the second line, which is
    otherwise the family and the Latin name — the two things that answer
    "which one is this?" fastest. */
+/* The line under the name. The supplier goes first because it is the short
+   part and the part that tells two bottles apart — both ranges sell a Zitrone
+   and a Zirbelkiefer, and without this the two rows are the same row. */
 export function oilRow(oil, opts) {
   var o = opts || {};
   var sub = o.sub != null ? o.sub :
-    [oil.familyDe, oil.latin].filter(Boolean).join(' · ');
+    [oil.supplier, oil.familyDe, oil.latin].filter(Boolean).join(' · ');
   var row = el('button', 'item' + (o.flat ? ' flat' : ''), [
     noteDot(oil),
     el('span', 'grow', [
