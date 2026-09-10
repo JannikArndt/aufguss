@@ -7,6 +7,14 @@ cache-first, so the change lands on the next cold start, unless it is taken
 early from Mehr → **Update jetzt laden**. Mehr also shows the last few
 entries below this list in short; this file is the whole history.
 
+## 0.3.1 — 2026-09-10
+
+- Replaced the Kopf/Herz/Basis glyphs (▲ ● ■) with proper icons: a head
+  silhouette for Kopf, a heart for Herz; Basis keeps its square, now drawn
+  the same way as the other two for a consistent set.
+- Redrew the Kellen ladle icon — the wave-into-an-ellipse from 0.3.0 didn't
+  read as a ladle at all; it's now a bowl with a handle.
+
 ## 0.3.0 — 2026-09-09
 
 - Removed the ml field from a set row entirely; the row now shows the note

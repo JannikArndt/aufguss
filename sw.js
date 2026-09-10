@@ -17,7 +17,7 @@
    keep them in step, so tools/smoke.mjs asserts it, along with SHELL listing
    exactly the files on disk. */
 
-const VERSION = '0.3.0';
+const VERSION = '0.3.1';
 const CACHE = 'aufguss-' + VERSION;
 
 const SHELL = [
