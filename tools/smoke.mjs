@@ -43,7 +43,9 @@ const ALL_OILS = OILS.concat(OILS_RBM);
 const HOST = { Aromen: 'https://www.aromen.be/', RBM: 'https://www.rbm-wellness.de/' };
 
 eq('oils: the Aromen range arrived', OILS.length, 133);
-eq('oils: and the RBM range', OILS_RBM.length, 81);
+eq('oils: and the RBM range, singles and Mischungen', OILS_RBM.length, 104);
+eq('oils: 23 of RBM\'s entries are Mischungen', OILS_RBM.filter((o) => o.blend).length, 23);
+ok('oils: no Aromen entry claims to be a Mischung', !OILS.some((o) => o.blend));
 {
   const ids = new Set(), noteIds = new Set(NOTES.map((n) => n.id));
   const fams = new Set(ALL_OILS.map((o) => o.family));
@@ -55,12 +57,16 @@ eq('oils: and the RBM range', OILS_RBM.length, 81);
     if (!o.family) bad.push('no family: ' + o.de);
     if (!o.familyDe) bad.push('no German family: ' + o.de);
     if (!o.supplier) bad.push('no supplier: ' + o.de);
-    if (!o.notes.length) bad.push('no note: ' + o.de);
+    /* A Mischung has no note and no botanical name because nobody publishes
+       one for it. Anything that is not a Mischung must have both. */
+    if (!o.blend && !o.notes.length) bad.push('no note: ' + o.de);
+    if (o.blend && o.notes.length) bad.push('a Mischung with a note: ' + o.de);
     for (const n of o.notes) if (!noteIds.has(n)) bad.push('unknown note ' + n + ' on ' + o.de);
     if (o.url && !o.url.startsWith(HOST[o.supplier])) bad.push('odd url on ' + o.de);
   }
   ok('oils: every field the app reads is filled', !bad.length, bad.slice(0, 4).join('; '));
-  ok('oils: still exactly ten scent families', fams.size === 10, [...fams].join(','));
+  ok('oils: ten scent families, and Mischungen is not one of them',
+    fams.size === 11 && fams.has('Blend') && !HARMONY.Blend, [...fams].join(','));
   ok('oils: an RBM id cannot collide with an Aromen one',
     OILS_RBM.every((o) => o.id.startsWith('rbm:')));
 }
@@ -68,15 +74,25 @@ eq('oils: and the RBM range', OILS_RBM.length, 81);
   /* Every oil whose note is not the supplier's own must say so. Eight of those
      are Aromen's (sources/oils.md) and one is RBM's Bergamottminze
      (sources/oils-rbm.md). If either number moves, the data was regenerated
-     and the source file needs the same edit. */
+     and the source file needs the same edit. Nothing is ever estimated for a
+     Mischung: guessing a note off a Zusammensetzung is the thing this app does
+     not do. */
   eq('oils: eight Aromen notes are estimated, and marked',
     OILS.filter((o) => o.noteEstimated).length, 8);
   eq('oils: one RBM note is estimated, and marked',
     OILS_RBM.filter((o) => o.noteEstimated).length, 1);
+  ok('oils: and no Mischung has a guessed anything',
+    !OILS_RBM.some((o) => o.blend && (o.noteEstimated || o.latin || o.character)));
   /* Aromen publishes no botanical names, so all 133 got one from Wikidata.
-     RBM publishes its own, and for exactly one oil it does not. */
-  eq('oils: exactly one oil has no botanical name anywhere',
-    ALL_OILS.filter((o) => !o.latin).length, 1);
+     RBM publishes its own, and for exactly one single oil it does not. */
+  eq('oils: exactly one single oil has no botanical name',
+    ALL_OILS.filter((o) => !o.blend && !o.latin).length, 1);
+  /* Two entries have no page to link to: RBM's Ringelblume, which is on their
+     price list and not in their shop, and Aromen's Orangeöl süß, whose slug
+     has a ß in it (sources/open-questions.md). Everything else is checkable
+     against a URL, and that is the point of pinning this. */
+  eq('oils: exactly two entries have no URL to check them against',
+    ALL_OILS.filter((o) => !o.url).length, 2);
 }
 ok('oils: the Kaifubad range is searchable in Latin',
   OILS.some((o) => o.latin === 'Santalum austrocaledonicum'));
@@ -143,6 +159,14 @@ ok('search: an empty query is the whole catalogue', cat.search('').length === AL
 eq('search: the range itself is a search term', cat.search('rbm').length, OILS_RBM.length);
 eq('search: and a filter', cat.search('', { suppliers: ['RBM'] }).length, OILS_RBM.length);
 eq('search: how an oil smells finds it', cat.search('rauchig', { limit: 1 })[0].de, 'Birkenteer');
+{
+  /* What a Mischung is made of is readable and searchable, but only through
+     `about`, which is scored last — so the oil itself always comes first. */
+  const hits = cat.search('patchouli');
+  eq('search: an oil outranks the Mischungen that contain it', hits[0].de, 'Patchouli');
+  ok('search: and those Mischungen are still in the list',
+    hits.some((o) => o.de === '1001 Nacht') && hits.some((o) => o.de === 'Orientalischer Traum'));
+}
 
 {
   const set = ['Zitrone', 'Belgian lavender', 'Sandelholz'].map((n) => cat.search(n, { limit: 1 })[0]);
@@ -307,13 +331,18 @@ main.go('#/oele');
 ok('oils: the whole catalogue is listed', text('oilList').includes(String(ALL_OILS.length)));
 type($('oilSearch'), 'basisnote');
 ok('oils: a note filters the list', findAll('#oilList .item').length > 15 &&
-  findAll('#oilList .item').length < OILS.length);
+  findAll('#oilList .item').length < ALL_OILS.length);
 type($('oilSearch'), '');
 {
   const rows = findAll('#oilList .item');
   ok('oils: the ones you used are counted', rows.some((r) => r.textContent.includes('2×')) ||
     rows.some((r) => r.textContent.includes('1×')));
-  rows[0].click();
+  ok('oils: both ranges are in the one list',
+    rows.some((r) => r.textContent.includes('Aromen')) &&
+    rows.some((r) => r.textContent.includes('RBM')));
+  /* By name rather than by position: the list is sorted German-style and
+     "1001 Nacht" now sorts above every letter. */
+  rows.find((r) => r.textContent.includes('Aleppo-Kiefer')).click();
 }
 ok('oil: one oil opened', visible('scOil'));
 ok('oil: it shows the botanical name', text('oilBody').includes('Pinus halepensis'));
@@ -331,6 +360,28 @@ ok('oil: and the store agrees', Store.favourites().length === 1);
 }
 $('oilBack').click();
 ok('oil: back goes where you came from', visible('scOils'));
+
+/* A Mischung: no note, no botanical name, and the app saying so out loud
+   rather than filling either in. */
+{
+  const mix = cat.search('1001 nacht', { limit: 1 })[0];
+  main.go('#/oel/' + encodeURIComponent(mix.id));
+  const body = text('oilBody');
+  ok('mix: it lists what is in it', body.includes('Patchouli') && body.includes('Vetiver'));
+  ok('mix: and says why it has no note', /keine Duftnote an/.test(body) &&
+    /geraten wird hier nichts/.test(body));
+  ok('mix: it is poured last and counts as no note',
+    blend.leadNote(mix) === null &&
+    blend.balance([mix], '30-50-20').unknown === 1);
+  const set = [cat.search('Zitrone', { limit: 1 })[0], mix];
+  eq('mix: so the pour order puts it after the oils that have one',
+    blend.pourOrder(set).map((o) => o.de).join(' | '), 'Zitrone | 1001 Nacht');
+  const r = blend.remarks(set, '30-50-20', 4);
+  ok('mix: and the set says so in words, without scolding',
+    r.some((x) => /keine angegebene Note/.test(x.text)) &&
+    !r.some((x) => /Alles null|undefined/.test(x.text)));
+  main.go('#/oele');
+}
 
 /* Your own oil. */
 {

@@ -17,13 +17,14 @@ plans autocomplete, and anything you type is a theme too. It brings the time
 and the intensity off the plan with it. Then type three oil names. That is the
 whole of the short path, and everything else on the screen is optional.
 
-**Find an oil however you happen to think of it.** 214 single oils from two
-ranges — 133 from
-[Aromen](https://www.aromen.be/de/shop/category/atherische-ole-einzelole-26)
-and 81 from
-[RBM](https://www.rbm-wellness.de/Naturreine-atherische-Ole-c134687002) —
-searchable by the German name, the English name, the botanical name, the scent
-family, the note, the effect tags, how the supplier says it smells, the
+**Find an oil however you happen to think of it.** 237 bottles from two
+ranges — 133 single oils from
+[Aromen](https://www.aromen.be/de/shop/category/atherische-ole-einzelole-26),
+and from
+[RBM](https://www.rbm-wellness.de/Naturreine-atherische-Ole-c134687002)
+81 single oils plus their 23 fertige Mischungen — searchable by the German
+name, the English name, the botanical name, the scent family, the note, the
+effect tags, how the supplier says it smells, what a Mischung is made of, the
 supplier itself, or the article code. `santalum`, `sandalwood`, `Sandelholz`
 and `w8` all find the same bottle. Both ranges sell a Zitrone; the app shows
 whose each one is rather than picking for you.
@@ -69,7 +70,7 @@ judgement calls are.
 | what | from | file |
 |---|---|---|
 | 133 oils, families, notes, effect tags, descriptions | aromen.be, one product page each | [`sources/oils.md`](sources/oils.md) |
-| 81 oils, families, notes, characters, descriptions | rbm-wellness.de, one product page each, plus their price list | [`sources/oils-rbm.md`](sources/oils-rbm.md) |
+| 81 oils and 23 Mischungen, families, notes, characters, compositions | rbm-wellness.de, one product page each, plus their price list | [`sources/oils-rbm.md`](sources/oils-rbm.md) |
 | the botanical names of the Aromen oils | Wikipedia + Wikidata `P225` | [`sources/botanical-names.md`](sources/botanical-names.md) |
 | 62 themes, their times and intensities | Bäderland's eight Aufgusspläne | [`sources/aufgussplan.md`](sources/aufgussplan.md) |
 | notes, mixing order, ratios, which families pair | four named pages | [`sources/blending.md`](sources/blending.md) |
@@ -77,11 +78,15 @@ judgement calls are.
 
 Three things are worth knowing before trusting a screen:
 
-- **205 of the 214 notes are the supplier's own words** — Aromen's description
-  says "Diese luxuriöse Basisnote", RBM's says "Duftnote: Basisnote". The other
-  **nine are estimated from the scent family**, and the app says so on the oil
-  rather than pretending. One oil, RBM's Bergamottminze, has no botanical name
-  at all, because RBM publishes none for it.
+- **205 of the 214 single-oil notes are the supplier's own words** — Aromen's
+  description says "Diese luxuriöse Basisnote", RBM's says "Duftnote:
+  Basisnote". The other **nine are estimated from the scent family**, and the
+  app says so on the oil rather than pretending. One oil, RBM's Bergamottminze,
+  has no botanical name at all, because RBM publishes none for it.
+- **The 23 Mischungen have no note, and none was invented for them.** RBM
+  publishes a Zusammensetzung and nothing else, and five of those lines end in
+  "uvm.". So a Mischung is poured last, counted as *ohne Note* next to the
+  balance bar, and its page says plainly that nothing is being guessed.
 - **The two suppliers do not classify alike, and neither was corrected.**
   Aromen has ten scent groups including a separate one for conifers; RBM has
   five and calls every needle a Holz. Each oil carries its own shop's word.
@@ -106,7 +111,7 @@ There is nothing to build. It is static files, served as committed.
 
 ```bash
 python3 -m http.server 8000      # then open http://localhost:8000
-node tools/smoke.mjs             # the whole app, in Node, 127 checks
+node tools/smoke.mjs             # the whole app, in Node, 139 checks
 node tools/check-sources.mjs     # go and look at the sources again
 ```
 
@@ -124,7 +129,7 @@ app.css               every style, and the only place a colour is written down
 manifest.webmanifest  name, colours and icon for an installed copy
 sw.js                 service worker: offline, and one version at a time
 src/data/oils.js      the 133 Aromen oils
-src/data/oils-rbm.js  the 81 RBM oils
+src/data/oils-rbm.js  the 81 RBM oils and their 23 Mischungen
 src/data/themes.js    the 62 Aufguss themes
 src/data/blending.js  the sourced rules, and only those
 src/core/util.js      helpers, folding, dates

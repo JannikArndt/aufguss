@@ -9,6 +9,13 @@
 
    Write each note for someone who has never read the code. */
 export var RELEASES = [
+  { v: '0.5.0', date: '2026-09-10',
+    text: 'Die 23 fertigen Mischungen von RBM sind jetzt auch dabei — 1001 Nacht, ' +
+          'Blue Ice, Heublume und die anderen —, mit der Zusammensetzung, wie RBM ' +
+          'sie angibt. Eine Note haben sie nicht: RBM gibt für Mischungen keine ' +
+          'an, und geraten wird hier nichts. Sie zählen deshalb in der Verteilung ' +
+          'nicht mit, stehen als „ohne Note“ neben dem Balken und kommen zuletzt ' +
+          'in die Kelle.' },
   { v: '0.4.0', date: '2026-09-10',
     text: '81 Öle von RBM kommen dazu, also 214 insgesamt. Auf jedem Öl steht ' +
           'jetzt, von wem es ist — beide Sortimente haben eine Zitrone, und das ' +

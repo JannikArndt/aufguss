@@ -3,9 +3,10 @@
    The rules are all in src/data/blending.js and every one of them is sourced
    (sources/blending.md). This file only applies them. It reports and never
    refuses: a set with three base notes in it gets a remark, not an error, and
-   saves exactly like any other. Three of the notes in this app's catalogue are
+   saves exactly like any other. Some notes in this app's catalogue are
    estimated from the family rather than stated, and anything derived from one
-   of those says so. */
+   of those says so — and RBM's Mischungen carry no note at all, which is
+   reported the same way rather than guessed at. */
 
 import { NOTES, MIX_ORDER, RATIOS, HARMONY, DOSAGE } from '../data/blending.js';
 import { noteName } from './catalog.js';
@@ -126,23 +127,39 @@ export function remarks(oils, ratioId, totalMl) {
   if (!oils.length) return out;
   var b = balance(oils, ratioId), h = harmony(oils);
 
-  var missing = [];
+  /* Which notes are in the set and which are not. `present` is read off the
+     count rather than off oils[0], because the first oil in the set may be one
+     the supplier gives no note for — a Mischung, or one of your own — and then
+     "Alles <nichts>" was the sentence this used to print. */
+  var missing = [], present = [];
   for (var k = 0; k < MIX_ORDER.length; k++) {
-    if (!b.have[MIX_ORDER[k]]) missing.push(noteName(MIX_ORDER[k]));
+    if (b.have[MIX_ORDER[k]]) present.push(MIX_ORDER[k]);
+    else missing.push(noteName(MIX_ORDER[k]));
   }
   if (oils.length >= 2 && missing.length === 1) {
     out.push({ kind: 'note', text: 'Ohne ' + missing[0] + '. Das kann genau richtig sein — nach ' +
       b.ratio.label + ' wäre eine drin.' });
-  } else if (oils.length >= 2 && missing.length === 2) {
-    out.push({ kind: 'note', text: 'Alles ' + noteName(leadNote(oils[0])) +
+  } else if (oils.length >= 2 && missing.length === 2 && !b.unknown) {
+    out.push({ kind: 'note', text: 'Alles ' + noteName(present[0]) +
       '. Sehr geradlinig; eine zweite Ebene würde die Mischung länger tragen.' });
   } else if (!missing.length) {
     out.push({ kind: 'note', text: 'Kopf, Herz und Basis sind alle da.' });
   }
 
+  /* A fertige Mischung has no note because nobody published one, so it cannot
+     count towards Kopf, Herz oder Basis. Saying so beats letting the bar
+     quietly come up short. */
+  if (b.unknown) {
+    out.push({ kind: 'note', text: b.unknown === 1
+      ? 'Ein Öl hat keine angegebene Note — in der Verteilung zählt es nicht mit, ' +
+        'und in die Kelle kommt es zuletzt.'
+      : b.unknown + ' Öle haben keine angegebene Note — in der Verteilung zählen sie ' +
+        'nicht mit, und in die Kelle kommen sie zuletzt.' });
+  }
+
   if (b.estimated) {
     out.push({ kind: 'note', text: b.estimated === 1
-      ? 'Bei einem Öl ist die Note aus der Duftgruppe geschätzt, nicht von Aromen angegeben.'
+      ? 'Bei einem Öl ist die Note aus der Duftgruppe geschätzt, nicht vom Anbieter angegeben.'
       : 'Bei ' + b.estimated + ' Ölen ist die Note aus der Duftgruppe geschätzt.' });
   }
 

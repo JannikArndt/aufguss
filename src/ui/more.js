@@ -43,12 +43,14 @@ export function render() {
 
   body.appendChild(card('Woher das Wissen kommt', [
     el('p', 'prose small',
-      'Die ' + all().length + ' Öle kommen aus zwei Sortimenten: 133 von Aromen und 81 von ' +
-      'RBM. Duftgruppe, Note und Beschreibung stehen bei jedem Öl so, wie es der jeweilige ' +
-      'Anbieter schreibt — welcher es ist, steht auf dem Öl. Die botanischen Namen der ' +
-      'Aromen-Öle sind von Wikidata, die der RBM-Öle von RBM selbst. Die Aufguss-Themen von ' +
-      'Bäderlands eigenen Aufgussplänen. Die Regeln zum Mischen von vier Seiten, die alle ' +
-      'in sources/blending.md stehen — mit dem Satz, aus dem sie kommen.'),
+      'Die ' + all().length + ' Einträge kommen aus zwei Sortimenten: 133 Öle von Aromen und ' +
+      '104 von RBM, davon 81 Einzelöle und 23 fertige Mischungen. Duftgruppe, Note und ' +
+      'Beschreibung stehen so, wie es der jeweilige Anbieter schreibt — welcher es ist, steht ' +
+      'auf dem Öl. Für eine fertige Mischung gibt RBM keine Note an, und geraten wird hier ' +
+      'nichts. Die botanischen Namen der Aromen-Öle sind von Wikidata, die der RBM-Öle von ' +
+      'RBM selbst. Die Aufguss-Themen von Bäderlands eigenen Aufgussplänen. Die Regeln zum ' +
+      'Mischen von vier Seiten, die alle in sources/blending.md stehen — mit dem Satz, aus ' +
+      'dem sie kommen.'),
     el('p', 'prose small',
       'Nichts davon ist aus dem Kopf geschrieben, und nichts davon ist eine Wissenschaft. ' +
       'Wo etwas geschätzt ist, steht es dabei.'),

@@ -5,7 +5,7 @@
 price list *Preisliste ab 01.08.2026* (PDF, handed over by the owner as
 `2026_08_01PLRBMKd001.08.2026.pdf`)
 **Fetched:** 10 September 2026
-**Result:** `src/data/oils-rbm.js` — 81 oils
+**Result:** `src/data/oils-rbm.js` — 104 entries: 81 single oils and 23 Mischungen
 
 RBM Natur Sauna & Wellness is the second range this sauna buys from. Their oils
 sit next to Aromen's in one list; which one an oil is from is on the oil, and
@@ -17,8 +17,9 @@ sell a Zitrone, a Zirbelkiefer, an Amyris. That is two bottles, not a duplicate.
 **The price list** is the definitive list of what is actually orderable, with
 the article numbers. It has six categories; five of them are single oils —
 Hölzer 19, Kräuter 25, Zitrus 16, Gewürze 11, Blumen 10, **81 in total** — and
-the sixth, *Mix*, is 23 blends. Then a page of hardware: Fächer, Wedeltücher,
-Sauna-Aroma-Kugeln, Schulungen.
+the sixth, *Mix*, is **23 fertige Mischungen**. All 104 are in the app. Then a
+page of hardware: Fächer, Wedeltücher, Sauna-Aroma-Kugeln, Schulungen, which is
+not.
 
 It carries no botanical name, no note, no description. Those are on the shop.
 
@@ -47,9 +48,14 @@ method stays runnable rather than just described.
 432 product pages reduce to 128 products: **each oil is sold in 20, 100, 250
 and 1000 ml, and each size is its own product page with its own id.** The
 20 ml page is taken as canonical, the way the 11 ml page is for Aromen — it is
-the one in `url`. The article-number range in `code` (e.g. `04 - 07`) covers
-all four sizes and is copied off the price list verbatim, hyphens, slashes and
-all.
+the one in `url`. Two Mischungen have no 20 ml page (Frische Brise starts at
+100 ml, Orange Sprizz at 250 ml) and use the smallest there is. The
+article-number range in `code` (e.g. `04 - 07`) covers all four sizes and is
+copied off the price list verbatim, hyphens, slashes and all.
+
+Of those 128 products, 103 are in the app: 81 single oils and 22 Mischungen.
+The rest are the Sortimentskoffer, the Fächer, the Wedeltücher, the
+Sauna-Aroma-Kugeln and the Schulungen.
 
 ## What a product page carries
 
@@ -78,6 +84,8 @@ RBM's own words:
 | Charakter | `character`, and the first sentence of `about` |
 | Herstellung | the rest of `about` |
 | Harmonie | `goesWith` |
+
+A Mischung's page carries none of these — see below.
 
 `good` and `goodDe` are empty for every RBM oil: they publish no effect tags,
 and inventing some from the Charakter words would be exactly the guess this
@@ -108,9 +116,10 @@ Kiefernnadel, Zirbelkiefer and Latschenkiefer are *Hölzer* to them, so they are
 Woody here, while the same trees in Aromen's range are Conifers. Both are their
 own supplier's classification, verbatim. See `open-questions.md`.
 
-## The notes
+## The notes of the single oils
 
-RBM names the note on 80 of the 81 pages, in the same shapes Aromen uses:
+RBM names the note on 80 of the 81 single-oil pages, in the same shapes Aromen
+uses. Their Mischungen have no note at all — see below.
 
 ```
 Duftnote: Basisnote           →  base          16 oils
@@ -133,10 +142,11 @@ a top note), it carries `noteEstimated: true`, and the app says so on the oil.
 Its `latin` is left **empty** rather than read out of "Mentha-Citrataöl", which
 would be a guess dressed as a reading. See `open-questions.md`.
 
-## Names: the price list and the shop disagree in nine places
+## Names: the price list and the shop disagree in 22 places
 
 The shop's name is what is in `de`, because it is the name on the page `url`
-points at. Where the price list writes it differently, that is here:
+points at. Where the price list writes it differently, that is here — nine
+single oils, and thirteen Mischungen where it is mostly `MIX` against `Mix`:
 
 | price list | product page |
 |---|---|
@@ -149,19 +159,85 @@ points at. Where the price list writes it differently, that is here:
 | Latschenkiefer tirol | Latschenkiefer Tirol |
 | Lavendel Bulgarisch | Lavendel bulgarisch |
 | Lemonmyrte | Lemonmyrthe |
+| Advent MIX | Advent Mix |
+| Erkältung | Erkältung Mix |
+| Frischer Wald | Frischer Wald Mix |
+| Gewürzzauber MIX | Gewürzzauber Mix |
+| Heublume MIX | Heublume Mix |
+| Jasmin MIX | Jasmin Mix |
+| Kola-nuss-Orange | Kola-Nuss-Orange |
+| Lotus MIX | Lotus Mix |
+| Neroli MIX | Neroli Mix |
+| rbm Nautilust Med | Nautilust "MED" |
+| Rose MIX | Rose Mix |
+| Veilchen MIX | Veilchen Mix |
+| Wintermärchen MIX | Wintermärchen Mix |
+
+Ringelblume has no product page, so its `de` is the price-list name.
+
+## The 23 Mischungen
+
+RBM blends their own, and the price list has 23 of them. Their product pages
+carry **none** of the six labelled fields the single oils carry. The whole
+description is two lines:
+
+```
+Eine Hauseigene, 100% naturreine ätherische Ölmischung
+Zusammensetzung: Blutorange, Ylang Ylang, Zitrone, Elemi, Geranium, Limette, uvm.
+```
+
+So a Mischung in the data carries `blend: true`, its `code`, its `url`, that
+description in `about`, the composition line in `parts` — and **no note, no
+botanical name, no Pflanzenfamilie, no Charakter, no Harmonie and no scent
+family**. `familyDe` is their own category word, *Mischungen*, and `family` is
+`Blend`, which is deliberately not in the `HARMONY` table, the same way
+Gourmand and Earthy are not: an absent family scores nothing, which is the
+honest answer.
+
+Deriving a Duftnote from a composition line is the one thing that must not
+happen here. Five of the 22 published lines end in "uvm.", so they do not even
+say what is in the bottle, let alone in what proportion; and a note is about
+which ingredient the room smells first, which no ingredient list answers.
+`tools/smoke.mjs` pins that no Mischung carries a note, an estimated note, a
+botanical name or a Charakter, so nobody can fill one in later without the
+test asking why.
+
+The app is built for a note-less oil and did not need bending: it is poured
+last, counted as *ohne Note* next to the balance bar, scores nothing in the
+harmony table, and only ever appears in a suggestion because your own journal
+put it next to something.
+
+`parts` is **one string, not a list**, and unparsed. Splitting it would be
+inventing a structure their page does not have: half the lines are a list with
+"uvm." on the end, and the rest are a sentence —
+
+```
+Blue Ice     Gletschereis plus grüne Zitrone mit Mandarine
+Harmony      Blutorange und Minze, mit frischen grünen Blätter des Winters
+Summermix    Mint, Berry und Lime
+```
+
+Like `goesWith`, `parts` names other oils, so it is not in the search index
+either. It is in `about`, which is scored last and weakest, so typing
+`patchouli` gives you the Patchouli bottles first and then the two Mischungen
+that contain some.
+
+Two of the 23 are not a clean row on both sides:
+
+- **Kola-Nuss-Orange** is listed twice in their shop. *Kolanuss-Orange* carries
+  only the 1000 ml page, *Kola-Nuss-Orange* the other three, both with the same
+  Zusammensetzung, and the price list has one row for them. They are one entry
+  here, and `tools/check-sources.mjs` names the second listing so it is not
+  reported as new every run.
+- **Ringelblume** (article 352 - 355) is on the price list and **has no product
+  page at all** — nothing in the sitemap, nothing in the shop, though two oils'
+  Harmonie lines name "Ringelblume MIX". It is in the data with its name, its
+  article number and `url: null`, and nothing else, because nothing else was
+  published. It is the only RBM entry whose id is not a product slug. See
+  `open-questions.md`.
 
 ## What is *not* in the data
 
-- **The 23 Mischungen** — 1001 Nacht, Advent Mix, Big Cinnamon, Blue Ice,
-  Erkältung Mix, Frische Brise, Frischer Wald Mix, Gewürzzauber Mix, Harmony,
-  Heublume Mix, Jasmin Mix, Kola-Nuss-Orange, Lotus Mix, Nautilust "MED",
-  Neroli Mix, Orange Sprizz, Orientalischer Traum, Rose Mix, Sommernachtstraum,
-  Summermix, Veilchen Mix, Wintermärchen Mix, and a second listing of
-  Kola-Nuss-Orange. Every entry in this catalogue is one species in one bottle;
-  a blend under a single botanical name and a single note would be an invented
-  fact of exactly the kind `sources/` exists to rule out. The same reasoning
-  kept Purelia's Tigerminze out (see `open-questions.md`). Öle → **+** is the
-  honest way to get a blend into a journal.
 - **The hardware and the Schulungen.** Not oils.
 - **The prices.** They change, they are net, and this is a journal, not a
   shopping list.
@@ -180,7 +256,9 @@ deliberate or a copy-paste, and there is no way to tell from here.
 ## Re-checking
 
 `node tools/check-sources.mjs` walks the sitemap, re-reads all 432 product
-pages through the storefront endpoint, and reports single oils that have
-appeared or gone — and, because the note and the botanical name are read out of
-the description, any oil whose `Botanischer Name` line no longer says what
-`src/data/oils-rbm.js` says.
+pages through the storefront endpoint, and reports oils and Mischungen that
+have appeared or gone. Because everything the app says is read out of those
+descriptions, it also reports any single oil whose `Botanischer Name` line, or
+any Mischung whose `Zusammensetzung` line, no longer says what
+`src/data/oils-rbm.js` says — and it says so if Ringelblume turns up in the
+shop, which would let it stop being the one entry without a URL.

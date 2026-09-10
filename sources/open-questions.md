@@ -76,6 +76,70 @@ same reason (`Albies alba`, `Uniperus communis`, `Illicum verum`).
 
 **What would settle it:** the labels, or their batch documentation.
 
+## RBM's Ringelblume is on the price list and nowhere else
+
+Article 352 - 355, category *Mix*, four sizes and four prices on the
+*Preisliste ab 01.08.2026*. Their shop does not have it: nothing under that
+name in `sitemap.xml`, nothing in the Mischungen category, no product id to
+ask the storefront endpoint about. Two of their own oils name it, though —
+Eukalyptus chinesisch and Eukalyptus staigeriana both list *"Ringelblume MIX"*
+under Harmonie — so it is a real product of theirs, not a stale row.
+
+It is in `src/data/oils-rbm.js` with its name, its article number and nothing
+else: no Zusammensetzung, no description, and `url: null`. It is the only RBM
+entry whose id is not a product slug, and one of only two entries in the whole
+app with no page to check it against. `tools/smoke.mjs` pins that at two so a
+third cannot appear quietly, and `tools/check-sources.mjs` says so if
+Ringelblume ever turns up in the shop.
+
+**What would settle it:** RBM listing it, or the label off the bottle.
+
+## Aromen's Orangeöl süß has no product URL either
+
+This one predates the RBM range and was only noticed when the URL count got
+pinned. `c11-bio-orangeol-suß` is the only one of the 133 Aromen oils with
+`url: null` — its slug has a **ß** in it, which is almost certainly what broke
+the scrape that collected the other 132. Everything else about the oil is
+there.
+
+**What would settle it:** re-reading that one product page by hand and pasting
+the URL in. It is a one-line edit, not a regeneration.
+
+## No Mischung has a note, and none is going to get one
+
+RBM's 23 Mischungen have no `Duftnote:` line, because a blend does not have one
+note — it has whatever its ingredients do, in whatever proportion the blender
+chose, and RBM does not publish the proportion. Five of the 22 published
+composition lines end in "uvm.", so they do not even claim to name every
+ingredient.
+
+Estimating a note here would be easy and it would be wrong: unlike the nine
+single oils whose note is estimated, there is no sourced rule to estimate
+*from* — the family/note association at maitreya-natura maps a scent family
+onto a note, and a Mischung has no scent family either.
+
+So they carry `notes: []`, and the app reports that rather than hiding it: a
+Mischung is poured last, shows as *ohne Note* beside the balance bar, gets no
+family score, and its own page says in so many words that nothing is being
+guessed. `tools/smoke.mjs` pins that no Mischung has a note, an estimated note,
+a botanical name or a Charakter.
+
+**What would settle it:** RBM publishing a Duftnote for them. Nothing else
+would, and a note typed in from experience belongs in your own note on the oil,
+which every oil has.
+
+## Kola-Nuss-Orange is listed twice in RBM's shop
+
+*Kolanuss-Orange* carries only the 1000 ml page; *Kola-Nuss-Orange* carries the
+20, 100 and 250 ml pages. Same Zusammensetzung word for word, and the price list
+has one row (451 - 454). Read as one product listed twice, and kept as one
+entry. It is a reading, not a fact RBM states, which is why it is written down
+here; `tools/check-sources.mjs` names the second listing explicitly so it is not
+reported as a new blend on every run.
+
+**What would settle it:** RBM merging the two listings, or saying they are two
+different blends.
+
 ## RBM has no group for conifers, Aromen does
 
 Aromen sorts oils into ten scent groups and one of them is *Conifers*. RBM

@@ -19,10 +19,11 @@ Three things follow:
 
 - **A guess is labelled.** Nine oils have a note the family implied rather than
   their supplier stated — eight of Aromen's, one of RBM's; they carry
-  `noteEstimated: true` and the app says so on the oil. One oil has no
-  botanical name at all, because RBM does not publish one for it and nobody
-  here is going to supply it. Any future guess gets the same treatment or does
-  not ship.
+  `noteEstimated: true` and the app says so on the oil. One single oil has no
+  botanical name at all, and RBM's 23 Mischungen have no note, no botanical
+  name and no scent family, because nobody publishes any of it and nobody here
+  is going to supply it. Any future guess gets the same treatment or does not
+  ship.
 - **A judgement is written down.** `sources/open-questions.md` holds everything
   that could not be settled and what would settle it. Add to it rather than
   resolving something quietly.
@@ -82,9 +83,11 @@ RBM's, and `catalog.js` is the only place that knows there are two.
 ## 4. Data invariants
 
 - **A field the app reads is a field every oil has.** `id`, `de`, `family`,
-  `familyDe`, `supplier`, and at least one `notes` entry. `tools/smoke.mjs`
-  walks all 214 and fails on the first gap. `latin` is on that list too, with
-  exactly one sourced exception, and the count is pinned so it stays one.
+  `familyDe` and `supplier`. `tools/smoke.mjs` walks all 237 and fails on the
+  first gap. Two more are on that list with sourced exceptions, and the
+  exceptions are pinned so they cannot spread: at least one `notes` entry
+  unless the entry is a Mischung, which never has one; and `latin` on every
+  single oil but one.
 - **An oil's `family` is its own supplier's scent group**, verbatim in
   `familyDe`, and `family` is the English label the app already uses for that
   group — a translation and nothing more. The two suppliers do not agree with
@@ -96,9 +99,20 @@ RBM's, and `catalog.js` is the only place that knows there are two.
   smells: nothing in the app scores, filters or ranks on it except the filter
   chip that exists to say "only the shelf I am standing at". Both ranges have a
   Zitrone in them and that is two bottles, not a duplicate to clean up.
-- **RBM's `goesWith` stays out of the search index.** It names other oils, so
-  indexing it would return every oil whose Harmonie line mentions Zitrone for a
-  query of `zitrone`. `tools/smoke.mjs` checks.
+- **RBM's `goesWith` and `parts` stay out of the search index.** Both name
+  other oils, so indexing either would return every oil whose Harmonie line
+  mentions Zitrone, and every Mischung containing some, for a query of
+  `zitrone`. Both are in `about`, which is scored last and weakest, so the
+  question is still answerable — it just never outranks the oil itself.
+  `tools/smoke.mjs` checks.
+- **A Mischung is an entry, not an oil.** `blend: true`, `familyDe:
+  "Mischungen"`, `family: "Blend"` — which is deliberately absent from
+  `HARMONY`, like Gourmand and Earthy — `parts` holding their Zusammensetzung
+  line **verbatim and unparsed**, and `notes: []`. Never derive a note from a
+  Zusammensetzung: five of the 22 published lines end in "uvm.", and a note is
+  about what the room smells first, which no ingredient list answers. The app
+  already handles a note-less oil — poured last, counted as *ohne Note*, no
+  family score — so nothing needs bending to make one fit.
 - **A note is `top`, `heart` or `base`.** An oil may carry two, as Aromen writes
   "top-to-heart note"; the **first** is the one that counts everywhere —
   `leadNote()` in `blend.js` is the only place that decides this. Half an oil in
@@ -131,8 +145,11 @@ The scripts that read the sources are not in the repository; the *method* is, in
   returns a 404 shell, so there is nothing to scrape. Read `sitemap.xml` for
   the product ids, POST them 25 at a time to the storefront's own
   `catalog/products` endpoint, and read the six labelled lines out of the
-  description each page renders. Article numbers come off the price-list PDF,
-  which is the only place they exist. `sources/oils-rbm.md` has the endpoint,
+  description each page renders — a Mischung has none of the six and carries
+  only a Zusammensetzung line. Strip the tags **after** turning `<br>` and
+  `</p>` into newlines: their fields are one per line, and flattening first
+  runs two of them together. Article numbers come off the price-list PDF, which
+  is the only place they exist, and so is Ringelblume. `sources/oils-rbm.md` has the endpoint,
   the store id and where both came from; `tools/check-sources.mjs` does the
   whole thing, so the method is runnable rather than just written down.
 - **Botanical names** — reduce the English product name to a plant term, look it
@@ -145,10 +162,11 @@ The scripts that read the sources are not in the repository; the *method* is, in
   nearest time label. `sources/aufgussplan.md` has the colour values.
 
 When the data changes, the matching `sources/*.md` changes in the same commit.
-`tools/smoke.mjs` pins five counts on purpose — 133 Aromen oils, 81 RBM oils,
-ten families across both, eight estimated Aromen notes, one estimated RBM note,
-one oil with no botanical name — so a regeneration that moves any of them fails
-until the source file is brought along.
+`tools/smoke.mjs` pins the counts on purpose — 133 Aromen oils, 104 RBM entries
+of which 23 are Mischungen, ten scent families plus Mischungen, eight estimated
+Aromen notes, one estimated RBM note, one single oil with no botanical name,
+two entries with no URL — so a regeneration that moves any of them fails until
+the source file is brought along.
 
 ## 6. Testing
 
@@ -156,7 +174,7 @@ until the source file is brought along.
 node tools/smoke.mjs
 ```
 
-127 checks. It loads the whole app — `src/main.js` and everything under it —
+139 checks. It loads the whole app — `src/main.js` and everything under it —
 against the stub DOM in `tools/stub/`, and drives it the way a finger does: open
 a new Aufguss, pick a theme off the plan, type three oil names in three
 different languages, read what the screen says back, tap Fertig, reopen it,
@@ -233,7 +251,9 @@ version and takes the new one on the next cold start. That is the design.
 - Reconcile the two suppliers' scent groups, botanical names or spellings with
   each other, or with what you believe to be correct. Each range says what its
   own shop says.
-- Fold RBM's `goesWith` into the search index, or into `about`.
+- Fold RBM's `goesWith` or `parts` into the search index.
+- Give a Mischung a note, a botanical name or a scent family, however obvious
+  its Zusammensetzung makes one look.
 - Add a dependency, a build step, or a request to another origin.
 - Add a Save button, or anything else that lets a written Aufguss be lost by
   locking the phone. The editor saves on every change and that is the point.

@@ -146,13 +146,19 @@ export function balanceBar(bal) {
     i.style.width = (n / total * 100) + '%';
     bar.appendChild(i);
   });
-  var key = el('div', 'balkey', ['top', 'heart', 'base'].map(function (id) {
+  /* Oils nobody gives a note for — a fertige Mischung, or one of your own —
+     leave the rest of the track showing. Naming them in the key is the
+     difference between a bar that is short and a bar that looks broken. */
+  var keys = ['top', 'heart', 'base'].map(function (id) {
     return el('span', null, [
       el('i', 'note-dot note-' + id),
       noteName(id) + ' ' + bal.have[id] + '×',
     ]);
-  }));
-  return el('div', null, [bar, key]);
+  });
+  if (bal.unknown) {
+    keys.push(el('span', null, [el('i', 'note-dot note-none'), 'ohne Note ' + bal.unknown + '×']));
+  }
+  return el('div', null, [bar, el('div', 'balkey', keys)]);
 }
 
 /* ── Autocomplete ──────────────────────────────────────────────────────────

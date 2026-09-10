@@ -28,9 +28,13 @@ const CATEGORY = 'https://www.aromen.be/de/shop/category/atherische-ole-einzelol
 const PLAN = 'https://www.baederland.de/media/kaifu-bad_aufgussplan_web.pdf';
 const RBM_SITEMAP = 'https://www.rbm-wellness.de/sitemap.xml';
 const RBM_API = 'https://eu-fra4-storefront-api.ecwid.com/storefront/api/v1/75784548/catalog/products';
-/* RBM's five single-oil categories. "Mischungen" and "Sonstiges" are blends
-   and hardware, and are not in the catalogue — see sources/oils-rbm.md. */
-const RBM_SINGLE = new Set(['Hölzer', 'Kräuter', 'Citrus', 'Gewürze', 'Blumen']);
+/* The six RBM categories the app carries. "Sonstiges" is hardware and courses
+   and is not in the catalogue — see sources/oils-rbm.md. */
+const RBM_CATS = new Set(['Hölzer', 'Kräuter', 'Citrus', 'Gewürze', 'Blumen', 'Mischungen']);
+/* Two names that would otherwise be reported every single run, both explained
+   in sources/oils-rbm.md and sources/open-questions.md. */
+const RBM_ONE_BLEND_TWO_LISTINGS = 'Kolanuss-Orange';   /* the 1000 ml page of Kola-Nuss-Orange */
+const RBM_PRICE_LIST_ONLY = 'Ringelblume';              /* on the price list, not in the shop */
 
 let notes = 0;
 function say(line) { console.log(line); }
@@ -106,28 +110,54 @@ try {
   const onSite = new Map();
   for (const it of items) {
     const path = (it.categoryPaths?.[0]?.categoryPath || []).map((c) => c.name).filter(Boolean);
-    if (!RBM_SINGLE.has(path[path.length - 1])) continue;
-    onSite.set(it.name.trim(), it.description || '');
+    if (!RBM_CATS.has(path[path.length - 1])) continue;
+    const name = it.name.trim();
+    if (name === RBM_ONE_BLEND_TWO_LISTINGS) continue;
+    onSite.set(name, it.description || '');
   }
   const have = new Map(OILS_RBM.map((o) => [o.de, o]));
   const fresh = [...onSite.keys()].filter((n) => !have.has(n));
-  const gone = [...have.keys()].filter((n) => !onSite.has(n));
-  say('  ' + onSite.size + ' single oils on the site, ' + OILS_RBM.length +
-      ' in src/data/oils-rbm.js');
+  const gone = [...have.keys()].filter((n) => !onSite.has(n) && n !== RBM_PRICE_LIST_ONLY);
+  const singles = OILS_RBM.filter((o) => !o.blend).length;
+  say('  ' + onSite.size + ' entries on the site, ' + singles + ' single oils and ' +
+      (OILS_RBM.length - singles) + ' Mischungen in src/data/oils-rbm.js');
   if (fresh.length) flag('new since 10 September 2026: ' + fresh.join(', '));
   if (gone.length) flag('no longer listed: ' + gone.join(', '));
+  /* Ringelblume is only in the app because the price list has it. If it turns
+     up in the shop, it can stop being the one entry without a URL. */
+  if (onSite.has(RBM_PRICE_LIST_ONLY)) {
+    flag(RBM_PRICE_LIST_ONLY + ' is in the shop now — it can get a URL and a Zusammensetzung');
+  }
 
-  /* The note and the botanical name are read out of that description, so a
+  /* The note and the botanical name of a single oil are read out of its
+     description, and a Mischung is nothing but its Zusammensetzung line, so a
      rewritten description is worth knowing about even when the range has not
      moved. */
   const drift = [];
   for (const [name, oil] of have) {
     const d = onSite.get(name);
     if (d == null) continue;
-    const plain = d.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ');
-    const latin = /Botanischer Name\s*:?\s*([^]*?)(?:Pflanzenfamilie|Duftnote|Charakter|$)/i.exec(plain);
-    if (latin && latin[1].trim() !== oil.latin) {
-      drift.push(name + ': botanisch now "' + latin[1].trim() + '", was "' + oil.latin + '"');
+    /* Their labelled fields are one per line, so the line breaks have to
+       survive the tag stripping — flattening first turns Nautilust's two
+       composition lines into one and reports a change every run. */
+    const lines = d
+      .replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n').replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"')
+      .split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+    if (oil.blend) {
+      const comp = lines.filter((l) => /^(Zusammensetzung|Besteht aus|Bestehend aus)\s*:?/i.test(l));
+      const now = comp.length
+        ? comp[comp.length - 1].replace(/^(Zusammensetzung|Besteht aus|Bestehend aus)\s*:?\s*/i, '').trim()
+        : '';
+      if (now !== oil.parts) {
+        drift.push(name + ': Zusammensetzung now "' + now + '", was "' + oil.parts + '"');
+      }
+      continue;
+    }
+    const line = lines.find((l) => /^Botanischer Name\s*:?/i.test(l)) || '';
+    const latin = line.replace(/^Botanischer Name\s*:?\s*/i, '').trim();
+    if (latin !== oil.latin) {
+      drift.push(name + ': botanisch now "' + latin + '", was "' + oil.latin + '"');
     }
   }
   if (drift.length) flag('descriptions have been edited: ' + drift.join('; '));

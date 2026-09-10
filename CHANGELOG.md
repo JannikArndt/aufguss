@@ -7,6 +7,36 @@ cache-first, so the change lands on the next cold start, unless it is taken
 early from Mehr → **Update jetzt laden**. Mehr also shows the last few
 entries below this list in short; this file is the whole history.
 
+## 0.5.0 — 2026-09-10
+
+- Added RBM's **23 fertige Mischungen** — 1001 Nacht, Blue Ice, Heublume,
+  Nautilust "MED", Wintermärchen and the rest — so the catalogue is 237. Each
+  carries the Zusammensetzung line RBM publishes, verbatim and unparsed,
+  because half of them are a list ending in "uvm." and the rest are a sentence
+  ("Gletschereis plus grüne Zitrone mit Mandarine").
+- **A Mischung has no note, and none was invented.** RBM publishes no Duftnote
+  for them, and there is nothing to estimate from — the family/note rule the
+  nine estimated single-oil notes lean on needs a scent family, which a
+  Mischung has not got either. So they carry no note, no botanical name and no
+  Duftgruppe, and the app says so on the oil instead of filling anything in.
+- The app already knew what to do with a note-less oil, and now shows it: a
+  Mischung is poured last, appears as **ohne Note** in the balance-bar key
+  rather than leaving the bar mysteriously short, and scores nothing in the
+  harmony table. It only ever turns up in a suggestion because your own journal
+  put it next to something.
+- Fixed a sentence that could read "Alles null": the remark about a one-note
+  set took its wording from the first oil in the set, which since custom oils
+  existed could be one with no note at all. It now reads the note off the count.
+  The estimated-note remark said "nicht von Aromen angegeben" and now says
+  "nicht vom Anbieter angegeben", which has been true since 0.4.0.
+- `tools/check-sources.mjs` re-reads the Mischungen too and reports any whose
+  Zusammensetzung has been edited.
+- Two entries in the app now have no URL to check them against, both written
+  down in `sources/open-questions.md`: RBM's **Ringelblume**, which is on their
+  price list and has no product page at all, and Aromen's **Orangeöl süß**,
+  whose slug has a ß in it — that one predates the RBM range and was only
+  noticed because the count got pinned.
+
 ## 0.4.0 — 2026-09-10
 
 - Added the RBM range: **81 single oils** from RBM Natur Sauna & Wellness, so

@@ -129,6 +129,9 @@ export function renderOne(id) {
       o.latin ? el('dt', null, 'Botanisch') : null, o.latin ? el('dd', null, el('i', null, o.latin)) : null,
       o.plantFamily ? el('dt', null, 'Pflanzenfamilie') : null,
       o.plantFamily ? el('dd', null, o.plantFamily) : null,
+      o.blend ? el('dt', null, 'Zusammensetzung') : null,
+      o.blend ? el('dd', null, o.parts ||
+        'RBM veröffentlicht dazu nichts — das Öl steht nur auf der Preisliste.') : null,
       (o.goodDe && o.goodDe.length) ? el('dt', null, 'Gut für') : null,
       (o.goodDe && o.goodDe.length) ? el('dd', null, o.goodDe.join(', ')) : null,
       (o.goesWith && o.goesWith.length) ? el('dt', null, 'Harmoniert mit') : null,
@@ -148,6 +151,15 @@ export function renderOne(id) {
       el('p', 'prose small', (o.supplier || 'Die Quelle') + ' gibt für dieses Öl keine Note an. ' +
         noteName(leadNote(o)) + ' ist aus der Duftgruppe „' + o.familyDe +
         '“ geschätzt — siehe sources/ im Repository.'),
+    ]));
+  } else if (o.blend) {
+    /* A fertige Mischung has a note only in the sense that its ingredients do,
+       and nobody publishes which one wins. Guessing it off the Zusammensetzung
+       would be the invented fact this app is built not to write down. */
+    body.appendChild(card('Zur Note', [
+      el('p', 'prose small', 'Für eine fertige Mischung gibt ' + (o.supplier || 'der Anbieter') +
+        ' keine Duftnote an, und geraten wird hier nichts. In der Verteilung ' +
+        'zählt sie deshalb nicht mit, und in die Kelle kommt sie zuletzt.'),
     ]));
   }
   if (o.custom) body.appendChild(editCard(o));

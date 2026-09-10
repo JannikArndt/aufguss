@@ -14,7 +14,7 @@
    shop's blog. They are here rather than buried so they can be argued with.
 
    Nothing here is ever the only way in. Every suggestion sits next to the same
-   search field, and the search field reaches all 133 oils. */
+   search field, and the search field reaches the whole catalogue. */
 
 import { all } from './catalog.js';
 import { Store } from './store.js';
@@ -121,7 +121,10 @@ export function suggest(chosen, ratioId, opts) {
     if (u) score += Math.min(u * W.used, W.usedCap);
 
     score += W.versatile * ((HARMONY[oil.family] || []).length);
-    if (!oil.noteEstimated) score += 1;   /* a stated note beats a guessed one */
+    /* A stated note beats a guessed one — and no note at all beats neither, so
+       a Mischung only ever surfaces here because your own journal put it
+       there. Nothing sourced can be said about it. */
+    if (oil.notes && oil.notes.length && !oil.noteEstimated) score += 1;
 
     if (score <= 0) continue;
     out.push({ oil: oil, score: score, reasons: reasons, used: u });
