@@ -10,14 +10,51 @@ import { noteName } from '../core/catalog.js';
 import { leadNote } from '../core/blend.js';
 import { INTENSITIES } from '../data/themes.js';
 
+var SVG_NS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs) {
+  var n = document.createElementNS(SVG_NS, tag);
+  for (var k in attrs) n.setAttribute(k, attrs[k]);
+  return n;
+}
+/* A tiny icon, built from SVG shapes rather than an emoji — an emoji is a
+   drawing someone else made in a style that is never quite this app's, and
+   it cannot take currentColor the way these need to for a chip or a pill
+   that changes colour under them. */
+function icon(viewBox, size, kids) {
+  var s = svgEl('svg', { viewBox: viewBox, width: size, height: size, 'aria-hidden': 'true' });
+  kids.forEach(function (k) { s.appendChild(k); });
+  return s;
+}
+
 /* Kopf, Herz, Basis as a shape, for the rows where a set is already read by
    its colour (the step circle in a set row is already top/heart/base
    coloured) and the word next to it would not fit four oils on a screen. A
    shape rather than just a fuller dot, because colour alone tells nobody who
-   cannot see it apart which note it is — light and rising for Kopf, a full
-   circle at the centre for Herz, a square that grounds it for Basis. */
-var NOTE_GLYPH = { top: '▲', heart: '●', base: '■' };
-export function noteGlyph(n) { return NOTE_GLYPH[n] || '?'; }
+   cannot see it apart which note it is — a head for Kopf, first to arrive; a
+   heart for Herz, the body of the mix; a square for Basis, what it stands
+   on. */
+export function noteGlyph(n) {
+  if (n === 'top') {
+    return icon('0 0 20 20', '13', [
+      svgEl('circle', { cx: '10', cy: '7.5', r: '5', fill: 'currentColor' }),
+      svgEl('path', { d: 'M2 19c0-4.7 3.6-8.5 8-8.5s8 3.8 8 8.5', fill: 'currentColor' }),
+    ]);
+  }
+  if (n === 'heart') {
+    return icon('0 0 20 20', '13', [
+      svgEl('path', {
+        d: 'M10 18C10 18 2 12.6 2 7 2 4 4.2 2 7 2c1.6 0 3 .8 3 2.6C10 2.8 11.4 2 13 2c2.8 0 5 2 5 5 0 5.6-8 11-8 11Z',
+        fill: 'currentColor',
+      }),
+    ]);
+  }
+  if (n === 'base') {
+    return icon('0 0 20 20', '13', [
+      svgEl('rect', { x: '3.5', y: '3.5', width: '13', height: '13', rx: '2.5', fill: 'currentColor' }),
+    ]);
+  }
+  return el('span', null, '?');
+}
 
 /* Kopf, Herz, Basis as a coloured dot plus its name. The dot alone would be
    colour carrying meaning on its own, which is no good to anyone who cannot
@@ -43,22 +80,17 @@ export function noteChip(oil, opts) {
 var KELLEN = { sanft: 1, mittel: 2, stark: 3 };
 export function kellenOf(id) { return KELLEN[id] || 0; }
 
-var SVG_NS = 'http://www.w3.org/2000/svg';
-function svgEl(tag, attrs) {
-  var n = document.createElementNS(SVG_NS, tag);
-  for (var k in attrs) n.setAttribute(k, attrs[k]);
-  return n;
-}
-/* A pour, into a ladle: a short wave and the bowl it lands in. currentColor
-   so it takes whatever colour the wrapping pill or chip already sets. */
+/* A ladle: a round bowl and the handle it hangs from, the shape it actually
+   has at the stones — not the wave this used to be, which read as nothing
+   in particular. */
 function ladle() {
-  var s = svgEl('svg', { viewBox: '0 0 20 14', width: '13', height: '9', 'aria-hidden': 'true' });
-  s.appendChild(svgEl('path', {
-    d: 'M1 9c2-6 4-6 6 0', fill: 'none', stroke: 'currentColor',
-    'stroke-width': '2', 'stroke-linecap': 'round',
-  }));
-  s.appendChild(svgEl('ellipse', { cx: '14.5', cy: '7', rx: '4.5', ry: '4', fill: 'currentColor' }));
-  return s;
+  return icon('0 0 16 16', '12', [
+    svgEl('circle', { cx: '5.3', cy: '5.3', r: '4', fill: 'currentColor' }),
+    svgEl('line', {
+      x1: '8.1', y1: '8.1', x2: '14', y2: '14', stroke: 'currentColor',
+      'stroke-width': '2.2', 'stroke-linecap': 'round',
+    }),
+  ]);
 }
 export function kellenIcon(n) {
   var wrap = el('span', 'kellen');

@@ -9,6 +9,10 @@
 
    Write each note for someone who has never read the code. */
 export var RELEASES = [
+  { v: '0.3.1', date: '2026-09-10',
+    text: 'Die Kopf-, Herz- und Kellen-Icons sind jetzt eigene Formen statt ' +
+          'Emoji — ein Kopf, ein Herz, und die Kelle sieht jetzt auch wie eine ' +
+          'aus.' },
   { v: '0.3.0', date: '2026-09-09',
     text: 'Die Öl-Liste ist aufgeräumt: kein ml-Feld mehr, Icons statt Wörtern ' +
           'für Kopf-, Herz- und Basisnote, ein Strich zwischen Kugeln statt ' +
