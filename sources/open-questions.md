@@ -27,6 +27,26 @@ each one. **What would settle it:** the note printed on the bottle, or Aromen
 answering. Fixing one is a two-word edit in `src/data/oils.js` plus dropping
 its `noteEstimated`.
 
+## Aromen split Krauseminze in two, and both are Spearmint
+
+Until 10 September 2026 Aromen sold one article, `M4` *Krauseminze / Grüne
+Minze*. It is now two: `M4` **Grüne Minze** (BIO, India) and a new `M5`
+**Krauseminze** (not BIO, China). The M4 11 ml page keeps article 4490, so this
+is a rename plus a new neighbour rather than two new products.
+
+Both English pages call it *Spearmint*, both are Fresh and a Kopfnote, and the
+two German descriptions differ only in the country. So both carry *Mentha
+spicata* — two articles of one species, like their Blood orange and Sweet
+orange. Nothing here decides whether the oils actually smell different; the
+shop says the country and the certification differ, and that is all it says.
+
+The rename moved M4's id, because an id is the supplier's slug. `wasId` keeps
+the old one on the oil so an Aufguss written before the rename still finds it —
+see `CLAUDE.md` §4.
+
+**What would settle it:** nothing outstanding. It is written down here because
+"two oils, one Latin name" is the sort of thing that looks like a bug later.
+
 ## RBM's Bergamottminze has neither a note nor a botanical name
 
 <https://www.rbm-wellness.de/Bergamottminze-p473058551> is the one RBM product
@@ -94,16 +114,16 @@ Ringelblume ever turns up in the shop.
 
 **What would settle it:** RBM listing it, or the label off the bottle.
 
-## Aromen's Orangeöl süß has no product URL either
+## ~~Aromen's Orangeöl süß has no product URL~~ — settled 10 September 2026
 
-This one predates the RBM range and was only noticed when the URL count got
-pinned. `c11-bio-orangeol-suß` is the only one of the 133 Aromen oils with
-`url: null` — its slug has a **ß** in it, which is almost certainly what broke
-the scrape that collected the other 132. Everything else about the oil is
-there.
+`c11-bio-orangeol-suß` was the only one of the 133 Aromen oils with
+`url: null`; its slug has a **ß** in it, which is almost certainly what broke
+the scrape that collected the other 132. The page was re-read by hand and says
+exactly what the entry already said, so only the URL changed:
+<https://www.aromen.be/de/shop/atherische-ole-einzelole-26/c11-bio-orangeol-suß-11ml-bio-4746>.
 
-**What would settle it:** re-reading that one product page by hand and pasting
-the URL in. It is a one-line edit, not a regeneration.
+Ringelblume is now the only entry in the app with no URL, and `tools/smoke.mjs`
+pins that at one.
 
 ## No Mischung has a note, and none is going to get one
 
@@ -219,14 +239,21 @@ is a same-day re-check rather than a stale one:
 None of the three went into `src/data/oils.js`, because there is nothing at a
 URL to put next to them.
 
-**Kampfer is settled, as of 10 September 2026:** RBM sells it
+**Kampfer is settled twice over, as of 10 September 2026.** RBM sells it
 (<https://www.rbm-wellness.de/Kampfer-p472801955>, article 106 - 109,
-*Cinnamomum camphora*, Herznote), and it is in `src/data/oils-rbm.js`. On the
-same day `tools/check-sources.mjs` also reported `e6-kampfer` back in Aromen's
-own listing — that has **not** been added, because adding it means reading its
-product page the way the other 133 were read, and that is a regeneration of
-`src/data/oils.js`, not a line. Tigerminze and Polarminze are still nowhere:
-not in RBM's range either, single or blended. **What would settle it:** Aromen relisting Kampfer,
+*Cinnamomum camphora*, Herznote) and it is in `src/data/oils-rbm.js`. And
+Aromen have relisted their own: `tools/check-sources.mjs` found `e6-kampfer`
+back in the category listing, with an 11 ml page that did not exist on
+8 September
+(<https://www.aromen.be/de/shop/atherische-ole-einzelole-26/e6-kampfer-11ml-5811>).
+That page was read the same way as the original 133 — Fresh, Kopfnote, China,
+not BIO — and it is in `src/data/oils.js`. Both are in the app under their own
+supplier, and the two disagree about the note, which is the two shops
+disagreeing and not an error here.
+
+Tigerminze and Polarminze are still nowhere: not at Aromen, not at Purelia, and
+not in RBM's range either, single or blended. **What would settle those two:** a
+source naming a supplier and a product page, or the label off the bottle. **What would settle it:** Aromen relisting Kampfer,
 or a source for Tigerminze/Polarminze naming a supplier and a product page. In
 the meantime the app already has the right door for this: Öle → **+** adds an
 oil under your own name, with whatever family and note you give it, and nothing

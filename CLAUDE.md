@@ -83,7 +83,7 @@ RBM's, and `catalog.js` is the only place that knows there are two.
 ## 4. Data invariants
 
 - **A field the app reads is a field every oil has.** `id`, `de`, `family`,
-  `familyDe` and `supplier`. `tools/smoke.mjs` walks all 237 and fails on the
+  `familyDe` and `supplier`. `tools/smoke.mjs` walks all 239 and fails on the
   first gap. Two more are on that list with sourced exceptions, and the
   exceptions are pinned so they cannot spread: at least one `notes` entry
   unless the entry is a Mischung, which never has one; and `latin` on every
@@ -131,6 +131,14 @@ RBM's, and `catalog.js` is the only place that knows there are two.
 - **Ids are the supplier's slugs.** They are also the last part of the product
   URL, which is what makes `check-sources.mjs` able to compare. Do not
   normalise them — `c11-bio-orangeol-suß` has a ß in it because the shop does.
+- **A renamed product carries the id it used to have.** When a supplier renames
+  an article its slug moves and so does its id, but every Aufguss already
+  written down points at the old one. `wasId` holds the previous id and
+  `byId()` falls back to it after an exact match fails. One oil has it so far —
+  Aromen's `M4`, renamed from *Krauseminze / Grüne Minze* to *Grüne Minze* on
+  10 September 2026. Never change a catalogue id without leaving a `wasId`
+  behind: an oil that quietly vanishes out of a saved Aufguss is the same
+  failure as losing the Aufguss.
 
 ## 5. Regenerating the data
 
@@ -162,10 +170,10 @@ The scripts that read the sources are not in the repository; the *method* is, in
   nearest time label. `sources/aufgussplan.md` has the colour values.
 
 When the data changes, the matching `sources/*.md` changes in the same commit.
-`tools/smoke.mjs` pins the counts on purpose — 133 Aromen oils, 104 RBM entries
+`tools/smoke.mjs` pins the counts on purpose — 135 Aromen oils, 104 RBM entries
 of which 23 are Mischungen, ten scent families plus Mischungen, eight estimated
 Aromen notes, one estimated RBM note, one single oil with no botanical name,
-two entries with no URL — so a regeneration that moves any of them fails until
+one entry with no URL — so a regeneration that moves any of them fails until
 the source file is brought along.
 
 ## 6. Testing
@@ -174,7 +182,7 @@ the source file is brought along.
 node tools/smoke.mjs
 ```
 
-139 checks. It loads the whole app — `src/main.js` and everything under it —
+141 checks. It loads the whole app — `src/main.js` and everything under it —
 against the stub DOM in `tools/stub/`, and drives it the way a finger does: open
 a new Aufguss, pick a theme off the plan, type three oil names in three
 different languages, read what the screen says back, tap Fertig, reopen it,

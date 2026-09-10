@@ -42,7 +42,7 @@ const { NOTES, RATIOS, HARMONY, MIX_ORDER, DOSAGE, CLASSICS } = await import('..
 const ALL_OILS = OILS.concat(OILS_RBM);
 const HOST = { Aromen: 'https://www.aromen.be/', RBM: 'https://www.rbm-wellness.de/' };
 
-eq('oils: the Aromen range arrived', OILS.length, 133);
+eq('oils: the Aromen range arrived', OILS.length, 135);
 eq('oils: and the RBM range, singles and Mischungen', OILS_RBM.length, 104);
 eq('oils: 23 of RBM\'s entries are Mischungen', OILS_RBM.filter((o) => o.blend).length, 23);
 ok('oils: no Aromen entry claims to be a Mischung', !OILS.some((o) => o.blend));
@@ -87,12 +87,12 @@ ok('oils: no Aromen entry claims to be a Mischung', !OILS.some((o) => o.blend));
      RBM publishes its own, and for exactly one single oil it does not. */
   eq('oils: exactly one single oil has no botanical name',
     ALL_OILS.filter((o) => !o.blend && !o.latin).length, 1);
-  /* Two entries have no page to link to: RBM's Ringelblume, which is on their
-     price list and not in their shop, and Aromen's Orangeöl süß, whose slug
-     has a ß in it (sources/open-questions.md). Everything else is checkable
-     against a URL, and that is the point of pinning this. */
-  eq('oils: exactly two entries have no URL to check them against',
-    ALL_OILS.filter((o) => !o.url).length, 2);
+  /* One entry has no page to link to — RBM's Ringelblume, which is on their
+     price list and not in their shop (sources/open-questions.md). Everything
+     else is checkable against a URL, and that is the point of pinning this. */
+  eq('oils: exactly one entry has no URL to check it against',
+    ALL_OILS.filter((o) => !o.url).length, 1);
+
 }
 ok('oils: the Kaifubad range is searchable in Latin',
   OILS.some((o) => o.latin === 'Santalum austrocaledonicum'));
@@ -159,6 +159,11 @@ ok('search: an empty query is the whole catalogue', cat.search('').length === AL
 eq('search: the range itself is a search term', cat.search('rbm').length, OILS_RBM.length);
 eq('search: and a filter', cat.search('', { suppliers: ['RBM'] }).length, OILS_RBM.length);
 eq('search: how an oil smells finds it', cat.search('rauchig', { limit: 1 })[0].de, 'Birkenteer');
+/* A renamed product keeps a way back to the id it had, or every Aufguss
+   written before the rename quietly loses that oil. */
+eq('catalogue: the one renamed product still answers to its old id',
+  cat.byId('m4-bio-krauseminze-grune-minze').de, 'Grüne Minze');
+eq('catalogue: and the exact id still wins', cat.byId('m4-bio-grune-minze').code, 'M4');
 {
   /* What a Mischung is made of is readable and searchable, but only through
      `about`, which is scored last — so the oil itself always comes first. */

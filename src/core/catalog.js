@@ -99,9 +99,17 @@ export function all() {
 }
 export function invalidate() { cache = null; }
 
+/* An id is the supplier's slug, so when a supplier renames a product the id
+   moves with it — and every Aufguss already written down points at the old
+   one. `wasId` carries the name it used to have, and an entry from before the
+   rename still finds its oil. Without it the oil would quietly vanish out of
+   an Aufguss that was written correctly at the time, which is the one thing
+   this app must never do. The exact id always wins; the old name is only ever
+   a fallback. */
 export function byId(id) {
-  var list = all();
-  for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+  var list = all(), i;
+  for (i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+  for (i = 0; i < list.length; i++) if (list[i].wasId === id) return list[i];
   return null;
 }
 

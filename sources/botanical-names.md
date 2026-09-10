@@ -1,8 +1,8 @@
 # The Latin names
 
 **Sources:** the English Wikipedia API and Wikidata
-**Fetched:** 8 September 2026
-**Result:** the `latin` field of every oil in `src/data/oils.js` — 133 of 133 filled
+**Fetched:** 8 September 2026; two more looked up on 10 September 2026
+**Result:** the `latin` field of every oil in `src/data/oils.js` — 135 of 135 filled
 
 ## Why they are not from Aromen
 
@@ -20,23 +20,54 @@ brackets), looked up on English Wikipedia, followed through redirects, and the
 article's Wikidata item read for **P225, "taxon name"**. Nothing was accepted
 that did not have a P225.
 
-- **75 resolved straight**: `Peppermint` → *Mentha ×piperita*,
+- **76 resolved straight**: `Peppermint` → *Mentha ×piperita*,
   `Norway spruce` → *Picea abies*, `Eucalyptus dives` → *Eucalyptus dives*.
-- **32 landed on a page that is not a taxon** — `Cinnamon`, `Sage`, `Lime`,
+- **33 landed on a page that is not a taxon** — `Cinnamon`, `Sage`, `Lime`,
   `Mandarin` and the like are about a spice or a fruit, not a species. For those
   the species used for the oil was named explicitly and then verified to have a
   P225 of its own. These are the judgement calls and they are listed below.
 - **7 landed on a genus** where a species was wanted (`Geranium` → the genus
   *Geranium*, when geranium oil is a *Pelargonium*).
-- **6 had no English article** at all and were found by Wikidata search.
+- **7 had no English article** at all and were found by Wikidata search — all
+  but `Green mint`, which was settled off Aromen's own English page instead
+  (below).
 
-## The 32 judgement calls
+## The two looked up on 10 September 2026
+
+Aromen relisted `E6` Kampfer and split `M4` into Grüne Minze and Krauseminze
+(see [`oils.md`](oils.md)), so three oils needed a name and two lookups
+answered them:
+
+| English name | Wikipedia | Wikidata | P225 |
+|---|---|---|---|
+| Spearmint | `Spearmint` | `Q160114` | *Mentha spicata* |
+| Camphor | `Camphor` | `Q181559` | **none** — the article is about the compound |
+| Camphor tree | → `Camphora officinarum` | `Q158722` | *Cinnamomum camphora* |
+
+Two judgement calls came out of that, and both are in the table below:
+
+- **Camphor** is the 33rd non-taxon landing. The plain product term goes to the
+  chemical, so the plant term is *camphor tree*, which redirects to
+  *Camphora officinarum* — and that Wikidata item's own P225 still reads
+  *Cinnamomum camphora*. The method says read P225, so *Cinnamomum camphora* is
+  what the app carries, even though the Wikipedia article has since been
+  retitled. Worth knowing, and worth re-checking if the app ever gains a second
+  camphor.
+- **Green mint** has no English Wikipedia article at all. Aromen's own English
+  page for it opens *"Spearmint essential oil exudes…"*, so the plant term came
+  off their page rather than out of a search, and both `M4` and `M5` carry
+  *Mentha spicata*. They are two articles of one species — different country,
+  one BIO and one not — the same way Blood orange and Sweet orange are.
+
+## The 33 judgement calls
 
 Read this as "the species the oil trade means by that name", checked against
 Wikipedia but chosen here:
 
 | oil | species | why |
 |---|---|---|
+| Camphor | *Cinnamomum camphora* | `Camphor` is the compound; the tree is `Camphor tree` → *Camphora officinarum*, whose P225 still reads *Cinnamomum camphora* |
+| Green mint | *Mentha spicata* | no English article; Aromen's own English page calls it spearmint |
 | Sandalwood | *Santalum austrocaledonicum* | **Aromen's own description says New Caledonia**, which is that species and not Indian *S. album* |
 | Curcuma CO2 | *Curcuma longa* | their description says "derived from turmeric" |
 | Bergamot | *Citrus ×bergamia* | |

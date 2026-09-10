@@ -7,6 +7,39 @@ cache-first, so the change lands on the next cold start, unless it is taken
 early from Mehr → **Update jetzt laden**. Mehr also shows the last few
 entries below this list in short; this file is the whole history.
 
+## 0.5.1 — 2026-09-10
+
+Aromen's range had moved since it was read on 8 September.
+`tools/check-sources.mjs` said so while the RBM range was being added, and all
+four pages below were re-read the same way as the original 133 — German page
+and English page, `Duftgruppe`, `Gut Für`, and the note out of the description.
+239 entries now.
+
+- **Kampfer is back at Aromen.** `E6` was a hole in their numbering on
+  8 September and its old URLs answered 404; there is an 11 ml page again.
+  Fresh, Kopfnote, from China. The app now has two Kampfer, one per supplier,
+  and they disagree about the note — Aromen says Kopf, RBM says Herz. Both say
+  what their own shop says.
+- **Krauseminze was split in two.** What was one article, *Krauseminze / Grüne
+  Minze*, is now `M4` **Grüne Minze** (BIO, India) and a new `M5`
+  **Krauseminze** (China). Both are Spearmint in English, both *Mentha
+  spicata*, both Fresh and a Kopfnote; the shop separates them by country and
+  certification.
+- **An Aufguss written before that rename still shows its oil.** The rename
+  moved M4's id, because an id is the supplier's slug — so the oil now carries
+  the id it used to have, and looking one up falls back to it. Without that,
+  the oil would have quietly disappeared out of an Aufguss that was correct
+  when it was written.
+- **Orangeöl süß has its link back.** It was the one oil with no product URL;
+  its slug has a ß in it, which is almost certainly what dropped it out of the
+  first scrape. The page still says exactly what the entry said, so only the
+  link changed. RBM's Ringelblume is now the only entry in the app with no page
+  to check it against.
+- Corrected the effect-tag counts in `sources/oils.md`: five of the seven rows
+  had been two to four too high since the file was written. A slip in the
+  documentation, not in the data — the tags on the oils were right all along,
+  and the numbers are now read off `src/data/oils.js`.
+
 ## 0.5.0 — 2026-09-10
 
 - Added RBM's **23 fertige Mischungen** — 1001 Nacht, Blue Ice, Heublume,

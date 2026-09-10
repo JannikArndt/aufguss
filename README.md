@@ -17,8 +17,8 @@ plans autocomplete, and anything you type is a theme too. It brings the time
 and the intensity off the plan with it. Then type three oil names. That is the
 whole of the short path, and everything else on the screen is optional.
 
-**Find an oil however you happen to think of it.** 237 bottles from two
-ranges — 133 single oils from
+**Find an oil however you happen to think of it.** 239 bottles from two
+ranges — 135 single oils from
 [Aromen](https://www.aromen.be/de/shop/category/atherische-ole-einzelole-26),
 and from
 [RBM](https://www.rbm-wellness.de/Naturreine-atherische-Ole-c134687002)
@@ -69,7 +69,7 @@ judgement calls are.
 
 | what | from | file |
 |---|---|---|
-| 133 oils, families, notes, effect tags, descriptions | aromen.be, one product page each | [`sources/oils.md`](sources/oils.md) |
+| 135 oils, families, notes, effect tags, descriptions | aromen.be, one product page each | [`sources/oils.md`](sources/oils.md) |
 | 81 oils and 23 Mischungen, families, notes, characters, compositions | rbm-wellness.de, one product page each, plus their price list | [`sources/oils-rbm.md`](sources/oils-rbm.md) |
 | the botanical names of the Aromen oils | Wikipedia + Wikidata `P225` | [`sources/botanical-names.md`](sources/botanical-names.md) |
 | 62 themes, their times and intensities | Bäderland's eight Aufgusspläne | [`sources/aufgussplan.md`](sources/aufgussplan.md) |
@@ -78,7 +78,7 @@ judgement calls are.
 
 Three things are worth knowing before trusting a screen:
 
-- **205 of the 214 single-oil notes are the supplier's own words** — Aromen's
+- **207 of the 216 single-oil notes are the supplier's own words** — Aromen's
   description says "Diese luxuriöse Basisnote", RBM's says "Duftnote:
   Basisnote". The other **nine are estimated from the scent family**, and the
   app says so on the oil rather than pretending. One oil, RBM's Bergamottminze,
@@ -111,7 +111,7 @@ There is nothing to build. It is static files, served as committed.
 
 ```bash
 python3 -m http.server 8000      # then open http://localhost:8000
-node tools/smoke.mjs             # the whole app, in Node, 139 checks
+node tools/smoke.mjs             # the whole app, in Node, 141 checks
 node tools/check-sources.mjs     # go and look at the sources again
 ```
 
@@ -128,7 +128,7 @@ index.html            markup only
 app.css               every style, and the only place a colour is written down
 manifest.webmanifest  name, colours and icon for an installed copy
 sw.js                 service worker: offline, and one version at a time
-src/data/oils.js      the 133 Aromen oils
+src/data/oils.js      the 135 Aromen oils
 src/data/oils-rbm.js  the 81 RBM oils and their 23 Mischungen
 src/data/themes.js    the 62 Aufguss themes
 src/data/blending.js  the sourced rules, and only those

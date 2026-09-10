@@ -43,7 +43,7 @@ export function render() {
 
   body.appendChild(card('Woher das Wissen kommt', [
     el('p', 'prose small',
-      'Die ' + all().length + ' Einträge kommen aus zwei Sortimenten: 133 Öle von Aromen und ' +
+      'Die ' + all().length + ' Einträge kommen aus zwei Sortimenten: 135 Öle von Aromen und ' +
       '104 von RBM, davon 81 Einzelöle und 23 fertige Mischungen. Duftgruppe, Note und ' +
       'Beschreibung stehen so, wie es der jeweilige Anbieter schreibt — welcher es ist, steht ' +
       'auf dem Öl. Für eine fertige Mischung gibt RBM keine Note an, und geraten wird hier ' +

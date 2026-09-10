@@ -9,6 +9,11 @@
 
    Write each note for someone who has never read the code. */
 export var RELEASES = [
+  { v: '0.5.1', date: '2026-09-10',
+    text: 'Aromen hat sein Sortiment geändert: Kampfer gibt es dort wieder, und ' +
+          'aus „Krauseminze / Grüne Minze“ sind zwei Öle geworden. Beides ist ' +
+          'jetzt drin, also 239 Einträge. Aufgüsse, in denen die alte Krauseminze ' +
+          'steht, zeigen sie weiterhin an.' },
   { v: '0.5.0', date: '2026-09-10',
     text: 'Die 23 fertigen Mischungen von RBM sind jetzt auch dabei — 1001 Nacht, ' +
           'Blue Ice, Heublume und die anderen —, mit der Zusammensetzung, wie RBM ' +
