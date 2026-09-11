@@ -7,6 +7,26 @@ cache-first, so the change lands on the next cold start, unless it is taken
 early from Mehr → **Update jetzt laden**. Mehr also shows the last few
 entries below this list in short; this file is the whole history.
 
+## 0.6.1 — 2026-09-11
+
+0.6.0 gave the suggestions room by sending the focused field to the top of the
+screen. On a real iPhone that went wrong: `scrollIntoView` scrolls *every*
+scrollable ancestor, and iOS scrolls the document itself to reveal a focused
+field even though `html` and `body` are locked to `overflow: hidden`. The whole
+app slid up, the field ended half-hidden under the notch, and the app box's
+bottom edge floated above the keyboard. Reopening fixed it until the next tap.
+
+- **Only `.body` ever scrolls now.** `scrollIntoView` is gone — `bodyPane()` in
+  `src/core/util.js` finds the one pane that is allowed to move, and the focus
+  handler nudges its `scrollTop`. A check in `tools/smoke.mjs` fails if
+  `scrollIntoView` comes back.
+- **The document scroll is undone wherever it comes from.** `fitHeight()` puts
+  the page back to 0 whenever `window.scrollY` or `visualViewport.offsetTop`
+  says iOS moved it.
+- **The list is fitted, not the field.** Three hits no longer hoist the field to
+  the top of the screen; the pane scrolls just far enough for the list's bottom
+  edge to clear, and never far enough to lift the field above the pane's top.
+
 ## 0.6.0 — 2026-09-11
 
 Typing an oil name left about two suggestions visible. The field sat in the

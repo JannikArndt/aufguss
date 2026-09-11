@@ -28,6 +28,11 @@ class Node {
     this._className = '';
     this._hidden = false;
     this.style = new Style();
+    /* Nothing here has real layout, so these stay plain numbers rather than
+       the read-only, clamped properties a browser gives — main.js and
+       parts.js only ever add to scrollTop and read it back. */
+    this.scrollTop = 0;
+    this.clientHeight = 0;
   }
   get className() { return this._className; }
   set className(v) { this._className = String(v == null ? '' : v); }
@@ -281,6 +286,11 @@ export function install(htmlPath) {
     confirm: () => true,
     prompt: () => null,
     setTimeout, clearTimeout,
+    /* fitHeight's undo-iOS's-scroll guard needs both to exist and to be
+       settable; nothing here ever really scrolls, so this just has to be a
+       number scrollTo can zero back out. */
+    scrollY: 0,
+    scrollTo(x, y) { this.scrollY = arguments.length > 1 ? y : 0; },
     URL: { createObjectURL: () => 'blob:stub', revokeObjectURL() {} },
     /* No layout, so no real computed style — just enough that reading
        --app-h off the root (parts.js's autocomplete sizing) doesn't throw;

@@ -615,6 +615,20 @@ ok('more: it points at the sources', text('moreBody').includes('Aromen') &&
     !/(src|href)="https?:\/\//.test(read('index.html')));
 }
 {
+  /* scrollIntoView scrolls every scrollable ancestor, the document included —
+     which is exactly the bug that used to drag .top up under the notch. Only
+     a field's own .body pane may ever move; util.js's bodyPane() plus a
+     scrollTop nudge is what replaced it. */
+  const bad = [];
+  for (const dir of ['src', 'src/core', 'src/ui', 'src/data']) {
+    for (const f of fs.readdirSync(path.join(ROOT, dir))) {
+      if (!f.endsWith('.js')) continue;
+      if (/scrollIntoView/.test(read(dir + '/' + f))) bad.push(dir + '/' + f);
+    }
+  }
+  ok('scroll: nothing under src/ calls scrollIntoView', !bad.length, bad.join(', '));
+}
+{
   /* Every source file the docs point at is really there. */
   const missing = ['README.md', 'CHANGELOG.md', 'sources/README.md', 'sources/oils.md', 'sources/blending.md',
     'sources/aufgussplan.md', 'sources/botanical-names.md', '.nojekyll', 'manifest.webmanifest',

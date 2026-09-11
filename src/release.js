@@ -9,6 +9,12 @@
 
    Write each note for someone who has never read the code. */
 export var RELEASES = [
+  { v: '0.6.1', date: '2026-09-11',
+    text: 'Das Suchfeld rutschte beim Antippen unter den Notch und ließ ein ' +
+          'leeres Stück über der Tastatur stehen — iOS hat die Seite selbst ' +
+          'gescrollt, obwohl sie das nicht soll. Jetzt bewegt sich nur noch ' +
+          'die Liste, und nur so weit, wie das, was gefunden wurde, auch ' +
+          'wirklich braucht.' },
   { v: '0.6.0', date: '2026-09-11',
     text: 'Die Ölsuche im Aufguss hat jetzt Platz. Fertig geht zur Seite, ' +
           'solange du tippst — Zurück oben macht dasselbe —, das Suchfeld ' +

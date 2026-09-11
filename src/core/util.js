@@ -21,6 +21,20 @@ export function el(tag, cls, kids) {
 
 export function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
 
+/* The nearest .body pane an element sits in — the only thing in this app
+   that is ever meant to scroll. main.js's focus handler and parts.js's
+   autocomplete both need to find it, so it lives here rather than twice.
+   Walked by className, not classList: the stub DOM has none, and neither do
+   the oldest iOS versions this app still has to run on. */
+export function bodyPane(node) {
+  var n = node;
+  while (n) {
+    if ((' ' + (n.className || '') + ' ').indexOf(' body ') >= 0) return n;
+    n = n.parentNode;
+  }
+  return null;
+}
+
 /* Search has to survive how people actually type: "zitrone" must find Zitrone,
    "rosmarin ct cineol" must find "Rosmarin ct. Cineol", and someone typing on a
    phone will not reach for ×, é or ß. So everything — the haystack and the

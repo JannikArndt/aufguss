@@ -13,7 +13,7 @@
    Nothing else in src/ imports this file. That is what keeps the core modules
    loadable in Node without a DOM, which is what tools/smoke.mjs relies on. */
 
-import { $, el, AppUpdate } from './core/util.js';
+import { $, el, AppUpdate, bodyPane } from './core/util.js';
 import { Store } from './core/store.js';
 import * as Journal from './ui/journal.js';
 import * as Entry from './ui/entry.js';
@@ -128,23 +128,35 @@ function param(query, key) {
 function fitHeight() {
   var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
   document.documentElement.style.setProperty('--app-h', h + 'px');
+  /* iOS still scrolls the document itself when a field near the foot takes
+     focus, even with html and body locked to overflow:hidden — that scroll is
+     what used to drag .top up under the notch. This undoes it regardless of
+     what triggered it. Already at 0 is a no-op, so the visualViewport
+     'scroll' listener that calls fitHeight cannot turn this into a loop. */
+  var scrolledDoc = window.scrollY || 0;
+  var scrolledView = (window.visualViewport && window.visualViewport.offsetTop) || 0;
+  if ((scrolledDoc || scrolledView) && window.scrollTo) window.scrollTo(0, 0);
 }
 
 /* The keyboard opening moves the field a fixed layout would otherwise leave
    right where it was — half hidden above it, however tight --app-h already
-   is. Nudging the field into view inside its own .body, after the keyboard
-   has had a moment to finish animating, is the same thing a native app gets
-   for free; a plain scrollIntoView while the sheet is still resizing just
-   scrolls to where the field will not be. */
+   is. This scrolls only the field's own .body pane, after the keyboard has
+   had a moment to finish animating, and only ever downward: the document
+   itself must never move (fitHeight's job above is to undo it when iOS does
+   it anyway), and the field must never end up higher than it already was —
+   that is exactly what used to put it under the notch. A short field near the
+   top of the screen is therefore left alone; parts.js's autocomplete handles
+   fitting the list that opens under it. */
 function nudgeFieldIntoView(ev) {
   var t = ev.target;
   if (!t || (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA')) return;
-  /* A field an autocomplete list hangs off (parts.js marks it 'ac-input')
-     goes to the top of .body instead of the middle — that puts the whole rest
-     of the screen below it, which is where the list needs the room. */
-  var toTop = (' ' + (t.className || '') + ' ').indexOf(' ac-input ') >= 0;
   setTimeout(function () {
-    if (t.scrollIntoView) t.scrollIntoView({ block: toTop ? 'start' : 'center', behavior: 'smooth' });
+    var pane = bodyPane(t);
+    if (!pane || !t.getBoundingClientRect || !pane.getBoundingClientRect) return;
+    var f = t.getBoundingClientRect(), p = pane.getBoundingClientRect();
+    var paneBottom = p.top + (pane.clientHeight || (p.bottom - p.top));
+    var over = f.bottom - paneBottom + 12;
+    if (over > 0) pane.scrollTop = (pane.scrollTop || 0) + over;
   }, 300);
 }
 

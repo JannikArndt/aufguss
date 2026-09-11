@@ -5,7 +5,7 @@
    because the note dot is the one piece of colour the app uses to mean
    something, so there had better be exactly one of it. */
 
-import { el, fold } from '../core/util.js';
+import { el, fold, bodyPane } from '../core/util.js';
 import { noteName } from '../core/catalog.js';
 import { leadNote } from '../core/blend.js';
 import { INTENSITIES } from '../data/themes.js';
@@ -175,10 +175,6 @@ export function autocomplete(input, opts) {
      document yet, and it is what the caller places. Reaching for
      input.parentNode instead only works when the field has already been built,
      which is never the order these screens are written in. */
-  /* Marks "a field whose results appear underneath it" — main.js reads this
-     to scroll the field to the top of .body instead of centring it, and to
-     know when the screen should give the list the rest of the space. */
-  input.className = (input.className ? input.className + ' ' : '') + 'ac-input';
   var wrap = el('div', 'ac');
   if (input.parentNode) input.parentNode.insertBefore(wrap, input);
   wrap.appendChild(input);
@@ -232,6 +228,23 @@ export function autocomplete(input, opts) {
       if (!isFinite(appH)) appH = window.innerHeight;
       var avail = appH - box.bottom - 12;
       if (avail > 160) list.style.maxHeight = avail + 'px';
+      /* Fit the list, not the field: scroll the pane just enough that the
+         list's own bottom edge clears it. Clamped so the field's top never
+         rises above the pane's top — a short list (a few hits) must barely
+         move the page at all, not hoist the field to the top regardless of
+         how little is under it. */
+      var pane = bodyPane(input);
+      if (pane && list.getBoundingClientRect && pane.getBoundingClientRect) {
+        var listRect = list.getBoundingClientRect();
+        var paneRect = pane.getBoundingClientRect();
+        var paneBottom = paneRect.top + (pane.clientHeight || (paneRect.bottom - paneRect.top));
+        var down = listRect.bottom - paneBottom + 8;
+        if (down > 0) {
+          var maxDown = box.top - paneRect.top;
+          if (down > maxDown) down = maxDown;
+          if (down > 0) pane.scrollTop = (pane.scrollTop || 0) + down;
+        }
+      }
     }
     move(0);
   }

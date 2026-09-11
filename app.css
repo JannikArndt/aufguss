@@ -125,6 +125,11 @@ body { height: var(--app-h); overflow: hidden; }
    field can reach the top of it. entry.js sets this class off a focus timer,
    never straight from a tap, so it never lingers once focus moves off. */
 .screen.typing .foot { display: none; }
+/* Scroll room, not a gap anyone should ever actually see — it exists so a
+   field near the end of the set can still reach the top of .body when
+   scrolled all the way down. main.js and parts.js's autocomplete only ever
+   scroll as far as the focused field or the open list needs, so in practice
+   this padding stays below the fold, out of sight under the keyboard. */
 .screen.typing .body { padding-bottom: calc(var(--app-h) * 0.72); }
 
 /* ── Tab bar ───────────────────────────────────────────────────────────── */

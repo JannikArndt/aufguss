@@ -190,7 +190,7 @@ the source file is brought along.
 node tools/smoke.mjs
 ```
 
-150 checks. It loads the whole app — `src/main.js` and everything under it —
+151 checks. It loads the whole app — `src/main.js` and everything under it —
 against the stub DOM in `tools/stub/`, and drives it the way a finger does: open
 a new Aufguss, pick a theme off the plan, type three oil names in three
 different languages, read what the screen says back, tap Fertig, reopen it,
