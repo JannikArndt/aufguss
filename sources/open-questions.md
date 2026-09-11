@@ -326,3 +326,39 @@ Duftgruppe and Gut-Für tags, RBM six labelled lines — so as far as this
 repository has looked, the variant only ever exists inside the name. Failing
 such a field, the list of exceptions grows by hand as new suppliers arrive, and
 this paragraph grows with it.
+
+## Grouping bottles into a plant
+
+`src/core/catalog.js` now builds a second layer on top of the grouping above: a
+`nameParts().key` shared by two or more bottles becomes one `art:` entry —
+"Mandarine" instead of two separate bottles that both happen to start with that
+word. **This is a reading of the suppliers' own names, not a claim that two
+bottles are the same oil.** Nothing about a scent is asserted by it: the plant
+carries a field only where every one of its bottles already says the same
+thing, and says nothing where they don't, which is the same rule as everywhere
+else in this repository — a guess is worse than admitting there isn't one.
+
+Checked against the current catalogue: **45 plants, built from 112 of the 239
+bottles.** Of those 45, **14 disagree on which note they lead with, 15 disagree
+on scent family, and 25 disagree on botanical name.** A disagreement is shown,
+not resolved — the plant's `notes`, `family`/`familyDe` or `latin` comes back
+empty, and a `split` on the plant records what each bottle actually said, so
+the app can print "Aromen sagt Kopfnote, RBM sagt Herznote" instead of picking a
+winner. A plant with no agreed note lands exactly where an oil without one
+already does: poured last, counted as *ohne Note*, no family score. Nothing is
+averaged or majority-voted anywhere in this.
+
+A Mischung never joins a plant, however close its name sits to one. The key
+`jasmin` holds a plant of Aromen's *Jasmin absolut* and *Jasmin mix* — the
+Mischung *Jasmin Mix* sits next to it, untouched; the key `orange` holds a
+plant of two RBM single oils next to the untouched Mischung *Orange Sprizz*. A
+Mischung is an entry, not an oil (§4 of `CLAUDE.md`): it has no note, no
+botanical name and no scent family to begin with, so it has nothing to agree or
+disagree with a plant about, and folding one in would be inventing exactly the
+Duftnote §4 already refuses to derive from a Zusammensetzung line.
+
+**What would settle it:** the same field the previous section is waiting on — a
+supplier field naming the plant separately from the variant. Neither
+`sources/oils.md` nor `sources/oils-rbm.md` lists one among the fields either
+shop publishes, so the grouping above is read off the name and nothing else,
+and stays exactly as re-checkable, and exactly as fallible, as that reading is.
