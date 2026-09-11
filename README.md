@@ -17,7 +17,10 @@ plans autocomplete, and anything you type is a theme too. It brings the time
 and the intensity off the plan with it. Then type three oil names. That is the
 whole of the short path, and everything else on the screen is optional.
 
-**Find an oil however you happen to think of it.** 239 bottles from two
+**Find an oil however you happen to think of it.** You search the plant, not
+the bottle: „Mandarine“ stands once in the list, and the variety and the
+supplier are chips you may tap afterwards or ignore. That is 172 entries over
+239 bottles from two
 ranges — 135 single oils from
 [Aromen](https://www.aromen.be/de/shop/category/atherische-ole-einzelole-26),
 and from
@@ -111,7 +114,7 @@ There is nothing to build. It is static files, served as committed.
 
 ```bash
 python3 -m http.server 8000      # then open http://localhost:8000
-node tools/smoke.mjs             # the whole app, in Node, 150 checks
+node tools/smoke.mjs             # the whole app, in Node, 171 checks
 node tools/check-sources.mjs     # go and look at the sources again
 ```
 

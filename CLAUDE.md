@@ -66,7 +66,7 @@ other; they survived being split into files and should stay.
 |---|---|
 | `src/core/util.js` | 0. `$`, `el`, `clear`, `fold`, dates, `notice` |
 | `src/core/store.js` | 1. the journal, custom oils, favourites, prefs, export/import |
-| `src/core/catalog.js` | 2. the merged catalogue and the search |
+| `src/core/catalog.js` | 2. the merged catalogue, the plant layer and the search |
 | `src/core/blend.js` | 3. pour order, balance, remarks — applying the sourced rules |
 | `src/core/suggest.js` | 4. what would go with this, and why |
 | `src/ui/parts.js` | 5. note chip, oil row, balance bar, autocomplete |
@@ -133,9 +133,33 @@ RBM's, and `catalog.js` is the only place that knows there are two.
   five of the sixty-two, all from Blankenese. `Waldfunkeln` sounds like wood and
   the plan does not say so, so the app is quiet about it. Do not read a theme's
   name as a hint.
-- **A custom oil's id starts `own:`, and an RBM one `rbm:`.** Those prefixes
-  are the only thing separating the three kinds of oil anywhere in the app, and
-  they are what makes regenerating either data file safe.
+- **The thing you pick is the plant; the bottle is a detail.** `catalog.js`
+  groups the 239 bottles by `nameParts().key` wherever two or more share one,
+  giving 45 plants over 112 bottles and 172 entries in all. `all()` and
+  `search()` walk entries; `bottles()` is still the flat 239. A Mischung and a
+  custom oil never join a plant — a Mischung is an entry and not an oil, and it
+  has no note, family or botanical name to agree about. `tools/smoke.mjs` pins
+  every one of those counts, because the grouping is a *reading* of the
+  suppliers' names rather than something either shop publishes:
+  `sources/open-questions.md` says so and says what would settle it.
+- **A plant says only what its bottles agree on.** Where they disagree the
+  field comes back empty and a `split` records both sides — 14 of the 45
+  disagree on the note, 15 on family, 25 on botanical name. Aromen calls
+  Kampfer a Kopfnote and RBM calls it Herz, so `art:kampfer` has no note at all
+  until a chip resolves it, and lands where a note-less oil already lands:
+  poured last, counted as *ohne Note*. Never average, never take a majority,
+  never let the longer range win. In a `split` row `value` is the id the code
+  reasons with and `label` is the word that supplier actually printed — `label`
+  is the one that goes on a screen.
+- **An Aufguss records `oilId` and an optional `bottleId`.** `oilId` is the
+  plant; `bottleId` is empty until a chip narrows it. Entries written before
+  the plant layer hold a bottle id in `oilId` and are migrated on the first
+  edit, never on merely opening one — reading is not editing. `byId()` still
+  resolves a bottle id to that bottle, which is what stops an oil vanishing out
+  of an Aufguss that was written correctly at the time.
+- **A custom oil's id starts `own:`, and an RBM one `rbm:`.** A plant's starts `art:`. Those prefixes
+  are the only thing separating the four kinds of entry anywhere in the app,
+  and they are what makes regenerating either data file safe.
 - **Ids are the supplier's slugs.** They are also the last part of the product
   URL, which is what makes `check-sources.mjs` able to compare. Do not
   normalise them — `c11-bio-orangeol-suß` has a ß in it because the shop does.
@@ -190,7 +214,7 @@ the source file is brought along.
 node tools/smoke.mjs
 ```
 
-151 checks. It loads the whole app — `src/main.js` and everything under it —
+171 checks. It loads the whole app — `src/main.js` and everything under it —
 against the stub DOM in `tools/stub/`, and drives it the way a finger does: open
 a new Aufguss, pick a theme off the plan, type three oil names in three
 different languages, read what the screen says back, tap Fertig, reopen it,

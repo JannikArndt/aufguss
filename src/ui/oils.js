@@ -6,13 +6,42 @@
 
 import { $, el, clear, notice, agoText } from '../core/util.js';
 import { Store } from '../core/store.js';
-import { byId, search, families, suppliers, noteName, customOil, invalidate } from '../core/catalog.js';
+import { byId, search, families, suppliers, noteName, customOil, invalidate, plantOf } from '../core/catalog.js';
 import { NOTES, DOSAGE, leadNote } from '../core/blend.js';
 import { history } from '../core/suggest.js';
 import { oilRow, noteChip, field, card } from './parts.js';
 
 var state = { q: '', families: [], suppliers: [], notes: [], favsOnly: false };
 var currentOil = null;
+
+/* A favourite still keys on one id, but a plant is a different id from any of
+   its bottles — so before this grouping existed, someone could already have
+   starred a bottle that now lives inside a plant. Treating the plant as a
+   favourite whenever it is itself starred *or* one of its bottles still is
+   means that old star keeps showing up rather than quietly vanishing. */
+function isFav(o) {
+  if (!o) return false;
+  if (Store.personalFor(o.id).fav) return true;
+  if (o.plant) {
+    for (var i = 0; i < o.bottles.length; i++) if (Store.personalFor(o.bottles[i].id).fav) return true;
+  }
+  return false;
+}
+
+/* The line under a plant's name in the list: what tells the bottles apart,
+   in the same "supplier · family · latin" shape a single oil's row already
+   uses, plus how many bottles answer to the name when that is more than
+   one. Built from pieces that may each be empty — joined rather than
+   concatenated, so a disagreement (no familyDe, no latin) drops its part
+   cleanly instead of leaving a stray " · " behind. */
+function plantSub(o) {
+  var bits = [];
+  if (o.suppliers.length) bits.push(o.suppliers.join('/'));
+  if (o.familyDe) bits.push(o.familyDe);
+  if (o.latin) bits.push(o.latin);
+  if (o.bottles.length > 1) bits.push(o.bottles.length + ' Sorten');
+  return bits.join(' · ');
+}
 
 /* ── The list ────────────────────────────────────────────────────────────── */
 export function renderList() {
@@ -52,10 +81,15 @@ export function renderList() {
   chips.appendChild(fams);
 
   var hist = history();
+  /* favsOnly is filtered here rather than handed to search() as an option:
+     search() checks a fav on the entry's own id, and a plant's own id is
+     never what an old favourite was set on — see isFav() above. Filtering
+     after the fact means "★ Lieblinge" still finds a plant whose favourite
+     lives on one of its bottles. */
   var hits = search(state.q, {
-    families: state.families, suppliers: state.suppliers,
-    notes: state.notes, favsOnly: state.favsOnly,
+    families: state.families, suppliers: state.suppliers, notes: state.notes,
   });
+  if (state.favsOnly) hits = hits.filter(isFav);
 
   var list = $('oilList');
   clear(list);
@@ -65,13 +99,23 @@ export function renderList() {
     return;
   }
   hits.forEach(function (o) {
-    var used = hist.used[o.id] || 0;
+    var used = usedCount(o, hist);
     list.appendChild(oilRow(o, {
-      fav: Store.personalFor(o.id).fav,
+      fav: isFav(o),
+      sub: o.plant ? plantSub(o) : undefined,
       trail: used ? used + '×' : '',
       onTap: function () { location.hash = '#/oel/' + encodeURIComponent(o.id); },
     }));
   });
+}
+/* How often this entry has been poured — a plant's own id never appears in a
+   journal written before this grouping existed, so its count is the sum of
+   whatever its bottles were poured as, plus its own id in case a future
+   Aufguss ever names the plant directly. */
+function usedCount(o, hist) {
+  var n = hist.used[o.id] || 0;
+  if (o.plant) for (var i = 0; i < o.bottles.length; i++) n += hist.used[o.bottles[i].id] || 0;
+  return n;
 }
 function chip(text, on, fn, note) {
   var c = el('button', 'chip' + (on ? ' on' : ''),
@@ -114,16 +158,32 @@ export function renderOne(id) {
   var o = currentOil, p = Store.personalFor(o.id);
   $('oilTitle').textContent = o.de;
   var fav = $('oilFav');
-  fav.textContent = p.fav ? '★' : '☆';
-  fav.className = 'icon fav' + (p.fav ? ' on' : '');
+  var favOn = isFav(o);
+  fav.textContent = favOn ? '★' : '☆';
+  fav.className = 'icon fav' + (favOn ? ' on' : '');
+
+  /* A bottle that belongs to a plant gets a way back up to it — the plant is
+     the thing you were looking at, this is the detail underneath. A plant's
+     own page never shows this, since plantOf() on a plant id returns the
+     plant itself. */
+  var pl = plantOf(o);
+  if (pl && pl.plant && pl.id !== o.id) {
+    body.appendChild(el('div', 'chips', [backChip(pl)]));
+  }
+
+  var headChips = [
+    /* An agreed note, shown the same way a single oil's is. Where the
+       bottles disagree o.notes is empty on purpose (§4) — nothing is
+       guessed here, the disagreement gets its own card below instead. */
+    (o.notes && o.notes.length) ? noteChip(o) : null,
+    o.familyDe ? el('span', 'pill', o.familyDe) : null,
+  ];
+  if (o.plant) headChips = headChips.concat(o.suppliers.map(function (s) { return el('span', 'pill', s); }));
+  else if (o.supplier) headChips.push(el('span', 'pill', o.supplier));
+  if (o.code) headChips.push(el('span', 'pill', o.code));
 
   body.appendChild(card(null, [
-    el('div', 'chips', [
-      noteChip(o),
-      o.familyDe ? el('span', 'pill', o.familyDe) : null,
-      o.supplier ? el('span', 'pill', o.supplier) : null,
-      o.code ? el('span', 'pill', o.code) : null,
-    ]),
+    el('div', 'chips', headChips),
     el('dl', 'kv', [
       o.en ? el('dt', null, 'Englisch') : null, o.en ? el('dd', null, o.en) : null,
       o.latin ? el('dt', null, 'Botanisch') : null, o.latin ? el('dd', null, el('i', null, o.latin)) : null,
@@ -147,10 +207,11 @@ export function renderOne(id) {
     ]));
   }
   if (o.noteEstimated) {
+    var famBit = o.familyDe ? ' aus der Duftgruppe „' + o.familyDe + '“' : '';
     body.appendChild(card('Zur Note', [
-      el('p', 'prose small', (o.supplier || 'Die Quelle') + ' gibt für dieses Öl keine Note an. ' +
-        noteName(leadNote(o)) + ' ist aus der Duftgruppe „' + o.familyDe +
-        '“ geschätzt — siehe sources/ im Repository.'),
+      el('p', 'prose small', (o.plant ? o.suppliers.join('/') : (o.supplier || 'Die Quelle')) +
+        ' gibt für dieses Öl keine Note an. ' + noteName(leadNote(o)) + ' ist' + famBit +
+        ' geschätzt — siehe sources/ im Repository.'),
     ]));
   } else if (o.blend) {
     /* A fertige Mischung has a note only in the sense that its ingredients do,
@@ -162,10 +223,79 @@ export function renderOne(id) {
         'zählt sie deshalb nicht mit, und in die Kelle kommt sie zuletzt.'),
     ]));
   }
+  if (o.plant) {
+    var sc = splitCard(o);
+    if (sc) body.appendChild(sc);
+    body.appendChild(bottlesCard(o));
+  }
   if (o.custom) body.appendChild(editCard(o));
 
   body.appendChild(personalCard(o, p));
   body.appendChild(usageCard(o));
+}
+
+/* A button back up to the plant a bottle belongs to. A chip rather than a new
+   element, so it looks like every other tappable pill on this screen. */
+function backChip(pl) {
+  var c = el('button', 'chip', '← ' + pl.de);
+  c.type = 'button';
+  c.addEventListener('click', function () { location.hash = '#/oel/' + encodeURIComponent(pl.id); });
+  return c;
+}
+
+/* Where a plant's bottles do not agree, both sides — never resolved, never
+   averaged, never marked as the one that is right (§1). Built off the
+   bottles themselves rather than o.split: split's family value is the
+   English family id catalog.js already translates familyDe from, and the
+   supplier's own word for it is familyDe, not that id. Grouped by supplier so
+   two bottles from the same range that happen to agree read as one voice; a
+   bottle named alongside its supplier only when that same supplier's bottles
+   disagree with each other too. */
+function disagreeSentence(bottles, valueFn, renderFn) {
+  var seen = {}, kids = [];
+  for (var i = 0; i < bottles.length; i++) {
+    var b = bottles[i], v = valueFn(b) || 'keine Angabe';
+    var key = b.supplier + '|' + v;
+    if (seen[key]) continue;
+    seen[key] = true;
+    var supplierSplits = false;
+    for (var j = 0; j < bottles.length; j++) {
+      if (bottles[j].supplier === b.supplier && valueFn(bottles[j]) && valueFn(bottles[j]) !== v) supplierSplits = true;
+    }
+    if (kids.length) kids.push(', ');
+    kids.push((supplierSplits ? b.supplier + ' (' + b.de + ')' : b.supplier) + ' sagt ');
+    kids.push(renderFn(v));
+  }
+  kids.push('.');
+  return kids;
+}
+function splitCard(o) {
+  var kids = [];
+  if (!o.notes.length) kids.push(el('p', 'prose small',
+    disagreeSentence(o.bottles, function (b) { return leadNote(b); }, noteName)));
+  if (!o.familyDe) kids.push(el('p', 'prose small',
+    disagreeSentence(o.bottles, function (b) { return b.familyDe; }, function (v) { return v; })));
+  if (!o.latin) kids.push(el('p', 'prose small',
+    disagreeSentence(o.bottles, function (b) { return b.latin; },
+      function (v) { return v === 'keine Angabe' ? v : el('i', null, v); })));
+  if (!kids.length) return null;
+  return card('Die Anbieter sind sich uneinig', kids);
+}
+
+/* Every bottle behind the plant, each a row of its own — supplier, its own
+   family, note, article code and botanical name, tapping through to that
+   exact bottle (byId() already resolves a bottle id). oilRow's default sub
+   line is name-only-caring, so it is built explicitly here to also carry the
+   article code, which a plant itself never has. */
+function bottlesCard(o) {
+  var rows = o.bottles.map(function (b) {
+    return oilRow(b, {
+      fav: isFav(b),
+      sub: [b.supplier, b.familyDe, b.latin, b.code].filter(Boolean).join(' · '),
+      onTap: function () { location.hash = '#/oel/' + encodeURIComponent(b.id); },
+    });
+  });
+  return card('Alle Flaschen', rows);
 }
 
 function link(text, href) {
@@ -234,22 +364,39 @@ function personalCard(o, p) {
 
 function usageCard(o) {
   var hist = history();
-  var n = hist.used[o.id] || 0;
+  /* Every Aufguss ever written down named a bottle, never a plant — a plant's
+     id did not exist yet when it was poured. So "how often" sums every
+     bottle the plant groups, plus the plant's own id in case a future
+     Aufguss ever names it directly. */
+  var ids = o.plant ? o.bottles.map(function (b) { return b.id; }).concat([o.id]) : [o.id];
+  var n = 0, last = null;
+  for (var i = 0; i < ids.length; i++) {
+    n += hist.used[ids[i]] || 0;
+    if (hist.last[ids[i]] && (!last || hist.last[ids[i]] > last)) last = hist.last[ids[i]];
+  }
   var kids = [];
   if (!n) {
     kids.push(el('p', 'prose small', 'Noch nie damit gegossen.'));
   } else {
     kids.push(el('p', 'prose small', n + (n === 1 ? ' Aufguss' : ' Aufgüsse') +
-      ', zuletzt ' + agoText(hist.last[o.id]) + '.'));
-    var partners = [];
+      ', zuletzt ' + agoText(last) + '.'));
+    /* A partner is collapsed to its own plant, if it has one — two Aufgüsse
+       poured with different bottles of the same partner plant are one
+       partner here, the same as the list shows one row for them. */
+    var partners = {}, order = [];
     for (var k in hist.pair) {
-      var ids = k.split(' ');
-      if (ids.indexOf(o.id) < 0) continue;
-      var other = byId(ids[0] === o.id ? ids[1] : ids[0]);
-      if (other) partners.push({ oil: other, n: hist.pair[k] });
+      var pair = k.split(' ');
+      var mineA = ids.indexOf(pair[0]) >= 0, mineB = ids.indexOf(pair[1]) >= 0;
+      if (mineA === mineB) continue;   /* neither is this entry, or both are — not a partner */
+      var otherId = mineA ? pair[1] : pair[0];
+      var otherEntry = plantOf(otherId);
+      if (!otherEntry) continue;
+      if (!partners[otherEntry.id]) { partners[otherEntry.id] = { oil: otherEntry, n: 0 }; order.push(otherEntry.id); }
+      partners[otherEntry.id].n += hist.pair[k];
     }
-    partners.sort(function (a, b) { return b.n - a.n; });
-    partners.slice(0, 5).forEach(function (pp) {
+    var list = order.map(function (key) { return partners[key]; });
+    list.sort(function (a, b) { return b.n - a.n; });
+    list.slice(0, 5).forEach(function (pp) {
       kids.push(oilRow(pp.oil, {
         flat: true, sub: pp.n + (pp.n === 1 ? '× zusammen' : '× zusammen'),
         onTap: function () { location.hash = '#/oel/' + encodeURIComponent(pp.oil.id); },
@@ -267,8 +414,16 @@ function usageCard(o) {
 export function wireOne() {
   $('oilFav').addEventListener('click', function () {
     if (!currentOil) return;
-    var p = Store.personalFor(currentOil.id);
-    Store.setPersonal(currentOil.id, { fav: !p.fav });
+    var next = !isFav(currentOil);
+    Store.setPersonal(currentOil.id, { fav: next });
+    /* Turning a plant's star off while a bottle underneath is still starred
+       from before this grouping existed would otherwise leave the star
+       stuck on — isFav() would still find that old bottle favourite. Clearing
+       it here is a direct answer to the tap that was just made, not a silent
+       loss of data. */
+    if (currentOil.plant && !next) {
+      currentOil.bottles.forEach(function (b) { Store.setPersonal(b.id, { fav: false }); });
+    }
     renderOne(currentOil.id);
   });
 }

@@ -9,6 +9,15 @@
 
    Write each note for someone who has never read the code. */
 export var RELEASES = [
+  { v: '0.7.0', date: '2026-09-11',
+    text: 'Du suchst jetzt das Öl, nicht die Flasche. „Mandarine“ steht einmal ' +
+          'in der Liste statt dreimal, und das reicht auch — Sorte und Anbieter ' +
+          'kannst du danach unter dem Öl antippen, musst du aber nicht. Aus 239 ' +
+          'Einträgen sind so 172 geworden. Wo Aromen und RBM sich uneinig sind, ' +
+          'steht das jetzt da: Kampfer ist bei Aromen eine Kopfnote und bei RBM ' +
+          'eine Herznote, und das Öl sagt beides, statt sich für eins zu ' +
+          'entscheiden. Aufgüsse, die du vorher aufgeschrieben hast, zeigen ' +
+          'weiterhin genau die Flasche, die drin stand.' },
   { v: '0.6.1', date: '2026-09-11',
     text: 'Das Suchfeld rutschte beim Antippen unter den Notch und ließ ein ' +
           'leeres Stück über der Tastatur stehen — iOS hat die Seite selbst ' +

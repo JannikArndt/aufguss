@@ -159,15 +159,20 @@ function buildPlant(key, list) {
   var latinAgree = true;
   for (i = 1; i < list.length; i++) if (list[i].latin !== list[0].latin) latinAgree = false;
 
+  /* Both sides of a disagreement, one row per bottle. `value` is the id the
+     rest of the app reasons with; `label` is the word that supplier actually
+     printed, and it is the one to put on a screen — Aromen's Kampfer is
+     "Frisch" and RBM's is "Kräuter", where `value` would say Fresh and
+     Herbal, which is this app's English shorthand and nobody's own words. */
   var split = {};
   if (!notesAgree) split.note = list.map(function (o, idx) {
-    return { supplier: o.supplier, de: o.de, value: leads[idx] };
+    return { supplier: o.supplier, de: o.de, value: leads[idx], label: noteName(leads[idx] || '') };
   });
   if (!familyAgree) split.family = list.map(function (o) {
-    return { supplier: o.supplier, de: o.de, value: o.family };
+    return { supplier: o.supplier, de: o.de, value: o.family, label: o.familyDe };
   });
   if (!latinAgree) split.latin = list.map(function (o) {
-    return { supplier: o.supplier, de: o.de, value: o.latin };
+    return { supplier: o.supplier, de: o.de, value: o.latin, label: o.latin };
   });
 
   var plant = {
@@ -437,9 +442,18 @@ function scoreWord(hay, w) {
   s = Math.max(s, part(hay.good, w, 46));
   s = Math.max(s, part(hay.char, w, 44));
   s = Math.max(s, hay.code === w ? 96 : (hay.code.indexOf(w) === 0 ? 54 : 0));
-  s = Math.max(s, hay.supplier === w ? 70 : 0);   /* "rbm" means the range, not a word in it */
+  s = Math.max(s, isSupplier(hay.supplier, w) ? 70 : 0);   /* "rbm" means the range, not a word in it */
   if (!s && hay.about.indexOf(w) >= 0) s = 12;
   return s;
+}
+/* A whole supplier name, not a word inside one: typing "rbm" means the range
+   and should not drag in every oil whose description mentions it. A plant's
+   haystack holds every supplier behind it — "aromen rbm" — so this matches a
+   whole token rather than the whole field, or a Zitrone both shops sell would
+   answer to neither of them. */
+function isSupplier(hay, w) {
+  if (!hay) return false;
+  return (' ' + hay + ' ').indexOf(' ' + w + ' ') >= 0;
 }
 function part(hay, w, top) {
   if (!hay) return 0;
@@ -504,7 +518,7 @@ export function why(oil, query) {
     if (hay.fam.indexOf(w) >= 0) return oil.familyDe;
     if (hay.good.indexOf(w) >= 0) return (oil.goodDe || [])[0] || '';
     if (hay.char.indexOf(w) >= 0) return (oil.character || []).join(', ');
-    if (hay.supplier === w) return oil.supplier;
+    if (isSupplier(hay.supplier, w)) return suppliersOf(oil).join(' und ');
   }
   return '';
 }

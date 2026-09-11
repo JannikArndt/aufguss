@@ -192,13 +192,6 @@ export function autocomplete(input, opts) {
     close();
     var q = input.value.trim();
     if (q.length < (o.minChars || 2)) return;
-    /* The filter chips, when the search has a choice worth offering — built
-       first so they sit above the rows rather than after them. Returning null
-       here means the query did not earn a choice, and nothing is added. */
-    if (o.head) {
-      var head = o.head(q);
-      if (head) list.appendChild(head);
-    }
     var found = o.find(q) || [];
     for (var i = 0; i < found.length; i++) rows.push(found[i]);
     rows.forEach(function (r, i) {

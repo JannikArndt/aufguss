@@ -155,9 +155,62 @@ ok('search: a note name filters', cat.search('basisnote').length > 15);
 ok('search: a family name filters', cat.search('nadelholz').length >= 14);
 ok('search: every word has to hit', cat.search('zitrone kiefer').length === 0);
 ok('search: nothing matches nonsense', cat.search('qqqzzz').length === 0);
-ok('search: an empty query is the whole catalogue', cat.search('').length === ALL_OILS.length);
-eq('search: the range itself is a search term', cat.search('rbm').length, OILS_RBM.length);
-eq('search: and a filter', cat.search('', { suppliers: ['RBM'] }).length, OILS_RBM.length);
+ok('search: an empty query is the whole catalogue', cat.search('').length === cat.all().length);
+{
+  /* The range is still a search term, but it now answers with entries rather
+     than bottles: a plant is on RBM's shelf if any of its bottles is. The
+     same goes for the filter, which is what keeps "only what I can buy here"
+     honest for a Zitrone both ranges sell. */
+  const hits = cat.search('rbm');
+  ok('search: the range itself is a search term',
+    hits.length > 80 && hits.every((o) => cat.suppliersOf(o).includes('RBM')));
+  const filtered = cat.search('', { suppliers: ['RBM'] });
+  ok('search: and a filter',
+    filtered.length === hits.length &&
+    filtered.every((o) => cat.suppliersOf(o).includes('RBM')));
+}
+
+/* ── The plant layer ──────────────────────────────────────────────────────
+   The thing you pick is the plant; the bottle is a detail you may add. Every
+   count here is pinned because the grouping is a *reading* of the suppliers'
+   own names (sources/open-questions.md) — if one of these moves, the reading
+   moved with it and the note in sources/ has to move too. */
+{
+  eq('plants: the catalogue is entries, not bottles', cat.all().length, 172);
+  eq('plants: and every bottle is still reachable', cat.bottles().length, 239);
+  const plants = cat.all().filter((o) => o.plant);
+  eq('plants: forty-five names gather more than one bottle', plants.length, 45);
+  eq('plants: built out of this many bottles',
+    plants.reduce((n, p) => n + p.bottles.length, 0), 112);
+  ok('plants: no Mischung was ever folded into one',
+    !plants.some((p) => p.bottles.some((b) => b.blend)));
+
+  /* Where the two shops disagree the plant says nothing and records both
+     sides. This is the whole point of the layer: no averaging, no majority,
+     no quiet winner. */
+  const split = (k) => plants.filter((p) => p.split && p.split[k]).length;
+  eq('plants: fourteen disagree about the note', split('note'), 14);
+  eq('plants: fifteen about the scent family', split('family'), 15);
+  eq('plants: twenty-five about the botanical name', split('latin'), 25);
+  ok('plants: a disagreement leaves the field empty rather than guessed',
+    plants.every((p) => (!p.split || !p.split.note || !p.notes.length) &&
+                        (!p.split || !p.split.family || !p.family) &&
+                        (!p.split || !p.split.latin || !p.latin)));
+  const kampfer = cat.byId('art:kampfer');
+  eq('plants: Kampfer has no note of its own', kampfer.notes.length, 0);
+  eq('plants: because Aromen says one thing and RBM another',
+    kampfer.split.note.map((r) => r.supplier + ':' + r.value).sort().join(' '),
+    'Aromen:top RBM:heart');
+
+  /* An Aufguss written before any of this still points at the bottle it
+     recorded. Losing that is the same failure as losing the Aufguss. */
+  const bottle = cat.byId('rbm:Minze-chinesisch');
+  eq('plants: an old entry still finds its exact bottle', bottle.de, 'Minze chinesisch');
+  eq('plants: and knows which plant it belongs to', cat.plantOf(bottle).id, 'art:minze');
+  eq('plants: a plant offers its varieties',
+    cat.byId('art:minze').variants.map((v) => v.label).sort().join(', '),
+    'chinesisch, indisch, japanisch');
+}
 eq('search: how an oil smells finds it', cat.search('rauchig', { limit: 1 })[0].de, 'Birkenteer');
 /* A renamed product keeps a way back to the id it had, or every Aufguss
    written before the rename quietly loses that oil. */
@@ -349,47 +402,91 @@ ok('done: the row names the theme and the oils',
   main.go('#/');
 }
 
-/* Oil search: when the hits offer a choice, two rows of chips sit above the
-   list — never a requirement, since the unfiltered list is what a fresh
-   search always shows first. */
-function chipLabels(head, label) {
-  for (const wrap of head.childNodes) {
-    if (wrap.childNodes[0] && wrap.childNodes[0].textContent === label) {
-      return wrap.childNodes[1].childNodes.map((c) => c.textContent);
+/* Picking an oil is two steps now, and the second one is optional. Step one
+   is the plant — "Minze" is enough. Step two, if you care, is a variety and a
+   supplier as chips under the oil in its Kugel; tapping an active chip puts it
+   back to just the plant. Nobody is ever made to choose a bottle. */
+function chipsUnder(label) {
+  for (const box of findAll('.setchips', $('entryBody'))) {
+    for (const wrap of box.childNodes) {
+      if (wrap.childNodes[0] && wrap.childNodes[0].textContent === label) {
+        return wrap.childNodes[1].childNodes;
+      }
     }
   }
-  return null;
+  return [];
 }
 {
   main.go('#/neu');
   const box = findAll('input', $('entryBody')).filter((n) => n.type === 'search').pop();
   type(box, 'minze');
-  const head = find('.ac-head', $('entryBody'));
-  ok('search: "minze" offers a row of variants', !!head);
-  const variants = head && chipLabels(head, 'Variante');
-  ok('search: and its chips are chinesisch, indisch and japanisch', variants &&
-    variants.slice().sort().join(', ') === 'chinesisch, indisch, japanisch');
+  const offered = findAll('.ac-item', $('entryBody')).map((r) => r.textContent);
+  ok('pick: the three mints are offered once, as the plant',
+    offered.some((t) => t.startsWith('Minze')) &&
+    !offered.some((t) => t.includes('Minze chinesisch')));
+  findAll('.ac-item', $('entryBody'))[0].click();
 
-  const before = findAll('.ac-item', $('entryBody')).length;
-  const chip = findAll('.ac-head .chip', $('entryBody')).find((c) => c.textContent === 'chinesisch');
-  ok('search: the variant chip is there to tap', !!chip);
-  chip.click();
-  const narrowed = findAll('.ac-item', $('entryBody')).length;
-  ok('search: tapping it narrows the list', narrowed > 0 && narrowed < before);
-  chip.click();
-  eq('search: tapping it again restores the list', findAll('.ac-item', $('entryBody')).length, before);
+  eq('pick: one oil is in the Kugel', findAll('.setrow', $('entryBody')).length, 1);
+  const saved = () => Store.entries().find((e) => e.oils.some((o) => o.oilId === 'art:minze'));
 
-  type(box, 'zitrone');
-  const head2 = find('.ac-head', $('entryBody'));
-  const suppliers = head2 && chipLabels(head2, 'Anbieter');
-  ok('search: "zitrone" offers an Anbieter row with both suppliers', suppliers &&
-    suppliers.includes('Aromen') && suppliers.includes('RBM'));
+  const variants = chipsUnder('Variante');
+  ok('pick: its varieties sit under it, not in its name', !!variants && variants.length === 3);
+  ok('pick: and no bottle was chosen for you',
+    findAll('.setrow', $('entryBody'))[0].textContent.includes('Minze'));
+
+  const chinese = [...variants].find((c) => c.textContent === 'chinesisch');
+  chinese.click();
+  {
+    const rows = findAll('.setrow', $('entryBody'));
+    ok('pick: tapping a variety narrows it to that bottle',
+      rows[0].textContent.includes('chinesisch'));
+    const on = [...chipsUnder('Variante')].filter((c) => c.className.includes('on'));
+    eq('pick: and only that chip is active', on.length, 1);
+  }
+  [...chipsUnder('Variante')].find((c) => c.textContent === 'chinesisch').click();
+  {
+    const on = [...chipsUnder('Variante')].filter((c) => c.className.includes('on'));
+    eq('pick: tapping it again goes back to just the plant', on.length, 0);
+  }
+  main.go('#/');
+}
+
+/* An Aufguss written before any of this recorded a bottle id. Opening it must
+   still show that exact bottle — losing the oil out of a saved Aufguss is the
+   same failure as losing the Aufguss, and it is the whole reason bottleId
+   exists rather than the plant simply swallowing the id. */
+{
+  const old = {
+    id: 'smoke-old-entry', date: '2026-09-01', time: '15:00',
+    theme: 'Altes Thema', themeKind: '', intensity: '', sauna: '',
+    oils: [{ oilId: 'rbm:Minze-chinesisch', ml: 3, round: 1 }],
+    rounds: 3, ratio: 'classic', notes: '', rating: 0,
+    written: '2026-09-01T15:00:00.000Z',
+  };
+  Store.putEntry(old);
+  main.go('#/e/smoke-old-entry');
+  ok('old entry: it still names the exact bottle it recorded',
+    findAll('.setrow', $('entryBody'))[0].textContent.includes('chinesisch'));
+  ok('old entry: and the variety chip reads as chosen',
+    [...chipsUnder('Variante')].some((c) => c.textContent === 'chinesisch' &&
+      c.className.includes('on')));
+  /* Opening one does not rewrite it — reading is not editing. The new shape is
+     written the first time something actually changes, and the bottle is kept
+     beside the plant rather than replaced by it. */
+  eq('old entry: reading it leaves the file alone',
+    Store.entries().find((e) => e.id === 'smoke-old-entry').oils[0].oilId,
+    'rbm:Minze-chinesisch');
+  type(find('textarea', $('entryBody')), 'Nachtrag.');
+  const now = Store.entries().find((e) => e.id === 'smoke-old-entry').oils[0];
+  eq('old entry: an edit files it under its plant', now.oilId, 'art:minze');
+  eq('old entry: and keeps the exact bottle alongside', now.bottleId, 'rbm:Minze-chinesisch');
+  Store.removeEntry('smoke-old-entry');
   main.go('#/');
 }
 
 /* The catalogue. */
 main.go('#/oele');
-ok('oils: the whole catalogue is listed', text('oilList').includes(String(ALL_OILS.length)));
+eq('oils: the whole catalogue is listed', findAll('#oilList .item').length, cat.all().length);
 type($('oilSearch'), 'basisnote');
 ok('oils: a note filters the list', findAll('#oilList .item').length > 15 &&
   findAll('#oilList .item').length < ALL_OILS.length);

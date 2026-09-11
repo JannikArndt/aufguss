@@ -7,6 +7,42 @@ cache-first, so the change lands on the next cold start, unless it is taken
 early from Mehr → **Update jetzt laden**. Mehr also shows the last few
 entries below this list in short; this file is the whole history.
 
+## 0.7.0 — 2026-09-11
+
+The catalogue was 239 bottles, and finding a Mandarine meant scrolling past
+three of them. Now the **plant** is the thing you pick and the bottle is a
+detail you may add: 172 entries, of which 45 gather more than one bottle.
+
+- **One row per plant in the search.** Type "Minze" and it appears once, not
+  three times. Picking it is enough — "the scent or plant is enough", in the
+  owner's words.
+- **Variety and supplier moved out of the name and under the oil.** Chips for
+  *chinesisch / indisch / japanisch*, chips for *Aromen / RBM*, sitting in the
+  Kugel beneath the oil they belong to. Tapping one narrows to that bottle;
+  tapping it again goes back to just the plant. Neither is ever required.
+- **A plant says only what its bottles agree on.** Where the two shops
+  disagree — 14 plants on the note, 15 on scent family, 25 on botanical name —
+  the plant says nothing of its own and shows both sides in each supplier's own
+  words instead. Aromen's Kampfer is a Kopfnote, RBM's is a Herznote, and the
+  app reports that rather than picking a winner. A plant without an agreed note
+  lands where a note-less oil already landed: poured last, counted as *ohne
+  Note*. Nothing is averaged or majority-voted.
+- **A Mischung is never folded in.** It is an entry, not an oil, and has no
+  note, family or botanical name to agree about — so RBM's *Jasmin Mix* sits
+  beside the Jasmin plant rather than inside it, and *Orange Sprizz* beside the
+  Orange one.
+- **Nothing already written down lost its oil.** An Aufguss from before this
+  holds a bottle id and still shows that exact bottle; it is filed under its
+  plant, with the bottle kept alongside, the first time you edit it. Opening
+  one changes nothing — reading is not editing.
+- **The Öle screen follows.** The list shows the 172, the filters still mean
+  "what is on this shelf" by matching any bottle behind an entry, and an oil's
+  page lists every variety and every supplier it is available from.
+
+The grouping is a reading of the suppliers' own names, not something either
+shop publishes; `sources/open-questions.md` records the rule, the counts and
+what would settle it.
+
 ## 0.6.1 — 2026-09-11
 
 0.6.0 gave the suggestions room by sending the focused field to the top of the

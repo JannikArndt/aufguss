@@ -13,7 +13,7 @@
 
 import { $, el, clear, uid, todayISO, nearestHour, agoText, notice, fold } from '../core/util.js';
 import { Store } from '../core/store.js';
-import { byId, search, why, customOil, invalidate, noteName, families, nameParts } from '../core/catalog.js';
+import { byId, search, why, customOil, invalidate, noteName, families, nameParts, plantOf } from '../core/catalog.js';
 import { THEMES, INTENSITIES } from '../data/themes.js';
 import { RATIOS, DOSAGE, pourOrder, balance, remarks, drops, leadNote } from '../core/blend.js';
 import { suggest, history } from '../core/suggest.js';
@@ -42,10 +42,46 @@ export function open(id, opts) {
     if (o.oils) entry.oils = o.oils.slice();
     if (o.theme) applyTheme(o.theme);
   }
+  normaliseOils();
   normaliseRounds();
   $('entryTitle').textContent = isNew ? 'Neuer Aufguss' : (entry.theme || 'Aufguss');
   $('entryDelete').hidden = isNew;
   render();
+}
+
+/* Every Aufguss already in localStorage names a bottle in `oilId` — plants did
+   not exist when it was written. Rewriting that in place, the first time the
+   entry is opened after the plant layer landed, is what keeps an old entry
+   pointing at exactly the bottle it was poured with rather than a bare plant
+   name: the bottle moves to `bottleId`, and `oilId` becomes the plant it now
+   sits inside. An oilId that was never grouped — a Mischung, an own: oil, or
+   one that is already a plant id — comes back unchanged from plantOf(), so
+   nothing here touches it. Idempotent, so reopening an already-migrated entry
+   is a no-op. */
+function migratedOilRef(x) {
+  var oilId = x.oilId, bottleId = x.bottleId || '';
+  if (!bottleId) {
+    var plant = plantOf(oilId);
+    if (plant && plant.plant && plant.id !== oilId) { bottleId = oilId; oilId = plant.id; }
+  }
+  return { oilId: oilId, bottleId: bottleId, ml: x.ml, round: x.round || 1 };
+}
+function normaliseOils() {
+  entry.oils = entry.oils.map(migratedOilRef);
+}
+
+/* The oil this line of the set actually means: the chosen bottle when chips
+   have narrowed one, the plant (or the ungrouped oil, Mischung, own: oil)
+   otherwise. Everything downstream — the pour order, the balance bar, the
+   remarks — reads this and never the bare plant, so a plant whose bottles
+   disagree on note correctly lands in "ohne Note" until a chip resolves it. */
+function effectiveOil(x) { return byId(x.bottleId || x.oilId); }
+
+/* The plant behind an entry's oil, or null when there is none — an ungrouped
+   oil, a Mischung and an own: oil never get chips. */
+function plantFor(oilId) {
+  var p = byId(oilId);
+  return (p && p.plant) ? p : null;
 }
 
 /* Three ice balls is the usual Aufguss — a round per Guss. Older entries were
@@ -79,7 +115,7 @@ function render() {
   var body = $('entryBody');
   clear(body);
   $('entryTitle').textContent = entry.theme || (isNew ? 'Neuer Aufguss' : 'Aufguss');
-  var oils = entry.oils.map(function (x) { return byId(x.oilId); }).filter(Boolean);
+  var oils = entry.oils.map(effectiveOil).filter(Boolean);
 
   body.appendChild(whenAndWhat());
   body.appendChild(lastTimeCard());
@@ -216,10 +252,10 @@ function lastTimeCard() {
 function pastRow(e) {
   var groups = {};
   (e.oils || []).forEach(function (x) {
-    var o = byId(x.oilId);
+    var m = migratedOilRef(x);
+    var o = byId(m.bottleId || m.oilId);
     if (!o) return;
-    var r = x.round || 1;
-    (groups[r] = groups[r] || []).push(o.de);
+    (groups[m.round] = groups[m.round] || []).push(o.de);
   });
   var rounds = Object.keys(groups).sort(function (a, b) { return a - b; });
   var text = rounds.map(function (r) { return groups[r].join(' + '); }).join('  ·  ');
@@ -232,7 +268,7 @@ function pastRow(e) {
   ]);
   row.type = 'button';
   row.addEventListener('click', function () {
-    entry.oils = (e.oils || []).slice().map(function (x) { return { oilId: x.oilId, ml: x.ml, round: x.round || 1 }; });
+    entry.oils = (e.oils || []).map(migratedOilRef);
     normaliseRounds();
     save(); render(); notice('Übernommen. Ändern geht natürlich noch.');
   });
@@ -269,90 +305,36 @@ function oilsCard() {
 function chosenIds() { return entry.oils.map(function (x) { return x.oilId; }); }
 
 function roundBlock(r) {
-  var oils = entry.oils.filter(function (x) { return x.round === r; })
-    .map(function (x) { return byId(x.oilId); }).filter(Boolean);
-  var ordered = pourOrder(oils);
+  var items = entry.oils.filter(function (x) { return x.round === r; });
+  var pairs = items.map(function (x) { return { x: x, oil: effectiveOil(x) }; })
+    .filter(function (p) { return !!p.oil; });
+  var byOilId = {};
+  pairs.forEach(function (p) { byOilId[p.oil.id] = p; });
+  var ordered = pourOrder(pairs.map(function (p) { return p.oil; }))
+    .map(function (o) { return byOilId[o.id]; });
 
   var rows = el('div');
-  ordered.forEach(function (oil) { rows.appendChild(setRow(oil)); });
-
-  /* When the hits share a name across a spelling ("Minze chinesisch" /
-     "indisch" / "japanisch") or a supplier ("Zitrone" from both Aromen and
-     RBM), the chips above the list let a tap narrow it — never a requirement,
-     the unfiltered list is what a fresh search always shows first. Both start
-     empty and reset the moment the search moves to a different name, so a
-     chip left over from "minze" cannot silently empty the results for
-     "zitrone". */
-  var selVariants = [], selSuppliers = [], selGroup = '';
-  var oilAc;
+  ordered.forEach(function (p) {
+    rows.appendChild(setRow(p.x, p.oil));
+    var chips = chipsFor(p.x);
+    if (chips) rows.appendChild(chips);
+  });
 
   var input = el('input');
   input.type = 'search';
-  input.placeholder = oils.length ? 'Öl hinzufügen' : 'Öl suchen — Name, Latein, Duftgruppe';
+  input.placeholder = items.length ? 'Öl hinzufügen' : 'Öl suchen — Name, Latein, Duftgruppe';
   input.autocomplete = 'off';
-  oilAc = autocomplete(input, {
-    head: function (q) {
-      var hits = search(q, { limit: 40, exclude: chosenIds() });
-      if (!hits.length) return null;
-      var group = nameParts(hits[0]).key;
-      if (group !== selGroup) { selVariants = []; selSuppliers = []; selGroup = group; }
-
-      var variants = [], seenV = {};
-      hits.forEach(function (o) {
-        if (nameParts(o).key !== group) return;
-        nameParts(o).words.forEach(function (w) {
-          var k = fold(w);
-          if (k.length < 2 || seenV[k]) return;
-          seenV[k] = true; variants.push({ id: k, label: w });
-        });
-      });
-      var sups = [], seenS = {};
-      hits.forEach(function (o) {
-        if (!o.supplier || seenS[o.supplier]) return;
-        seenS[o.supplier] = true; sups.push({ id: o.supplier, label: o.supplier });
-      });
-      if (variants.length < 2 && sups.length < 2) return null;   /* one chip is not a choice */
-
-      var kids = [];
-      if (variants.length >= 2) {
-        kids.push(chipRow('Variante', variants,
-          function (id) { return selVariants.indexOf(id) >= 0; },
-          function (id) { toggleIn(selVariants, id); oilAc.refresh(); }));
-      }
-      if (sups.length >= 2) {
-        kids.push(chipRow('Anbieter', sups,
-          function (id) { return selSuppliers.indexOf(id) >= 0; },
-          function (id) { toggleIn(selSuppliers, id); oilAc.refresh(); }));
-      }
-      return el('div', 'ac-head', kids);
-    },
+  var oilAc = autocomplete(input, {
     find: function (q) {
       var hits = search(q, { limit: 12, exclude: chosenIds() });
-      if (selVariants.length) {
-        hits = hits.filter(function (o) {
-          var words = nameParts(o).words.map(fold);
-          for (var i = 0; i < selVariants.length; i++) if (words.indexOf(selVariants[i]) < 0) return false;
-          return true;
-        });
-      }
-      if (selSuppliers.length) {
-        hits = hits.filter(function (o) { return selSuppliers.indexOf(o.supplier) >= 0; });
-      }
       var rows = hits.map(function (o) {
         var reason = why(o, q);
-        return {
-          title: o.de, value: o,
-          sub: [o.supplier, o.familyDe, noteName(leadNote(o) || ''),
-                reason && reason !== o.de ? reason : null]
-            .filter(Boolean).join(' · '),
-          lead: el('i', 'note-dot' + (leadNote(o) ? ' note-' + leadNote(o) : '')),
-        };
+        return { title: o.de, value: o, sub: searchSub(o, reason), lead: leadDot(o) };
       });
       rows.push({ title: '„' + q + '“ als eigenes Öl anlegen', value: { newOil: q }, sub: 'Kommt in deine Liste' });
       return rows;
     },
     onPick: function (v) {
-      selVariants = []; selSuppliers = []; selGroup = '';
       if (v.newOil) { addCustom(v.newOil, r); return; }
       addOil(v.id, r);
       input.value = '';
@@ -365,12 +347,30 @@ function roundBlock(r) {
     field(null, oilAc.node),
   ]);
 }
-function toggleIn(arr, v) {
-  var i = arr.indexOf(v);
-  if (i < 0) arr.push(v); else arr.splice(i, 1);
+
+/* The autocomplete's sub-line: what tells this hit apart from another one
+   named almost the same. Only what is actually there — a plant whose bottles
+   disagree has no family and no note, and printing the gap as "· ·" would
+   look broken rather than honest. suppliers()/variants() come off the plant
+   itself, computed once in catalog.js; an ungrouped oil falls back to its own
+   single supplier the same field always held. */
+function searchSub(o, reason) {
+  var bits = [];
+  var sup = o.plant ? o.suppliers.join(', ') : o.supplier;
+  if (sup) bits.push(sup);
+  if (o.familyDe) bits.push(o.familyDe);
+  var note = noteName(leadNote(o) || '');
+  if (note) bits.push(note);
+  if (o.plant && o.variants.length > 1) bits.push(o.variants.length + ' Sorten');
+  if (reason && reason !== o.de) bits.push(reason);
+  return bits.join(' · ');
+}
+function leadDot(o) {
+  var n = leadNote(o);
+  return el('i', 'note-dot' + (n ? ' note-' + n : ''));
 }
 
-function setRow(oil) {
+function setRow(x, oil) {
   var n = leadNote(oil);
 
   var glyph = el('span', 'step', noteGlyph(n));
@@ -380,23 +380,115 @@ function setRow(oil) {
   drop.type = 'button';
   drop.setAttribute('aria-label', oil.de + ' entfernen');
   drop.addEventListener('click', function () {
-    entry.oils = entry.oils.filter(function (x) { return x.oilId !== oil.id; });
+    entry.oils = entry.oils.filter(function (y) { return y !== x; });
     save(); render();
   });
+
+  var plant = plantFor(x.oilId);
 
   var open = el('button', 'grow');
   open.type = 'button';
   open.style.cssText = 'background:none;border:0;text-align:left;padding:0;color:inherit;font:inherit;min-width:0';
-  open.appendChild(el('span', 'name', oil.de));
+  open.appendChild(el('span', 'name', plant ? plant.de : oil.de));
   if (oil.latin) open.appendChild(el('div', 'lat', oil.latin));
-  var detail = [oil.familyDe, (oil.goodDe && oil.goodDe.length) ? oil.goodDe.slice(0, 2).join(', ') : null]
-    .filter(Boolean).join(' · ');
+  var detail = rowDetail(x, oil, plant);
   if (detail) open.appendChild(el('div', 'tiny', detail));
   open.addEventListener('click', function () {
     location.hash = '#/oel/' + encodeURIComponent(oil.id);
   });
 
   return el('div', 'setrow' + (n ? ' n-' + n : ''), [glyph, open, drop]);
+}
+
+/* The line under the oil's name. An ungrouped oil, a Mischung or an own: oil
+   keeps exactly what it always showed — family and what it is good for. A
+   plant says who it can be bought from when nothing has narrowed it yet, or
+   the chosen bottle's supplier and variety once a chip has; and when the
+   bottles disagree on note or family and nothing has resolved that yet, it
+   says so in a plain sentence rather than leaving a silent gap. */
+function rowDetail(x, oil, plant) {
+  if (!plant) {
+    return [oil.familyDe, (oil.goodDe && oil.goodDe.length) ? oil.goodDe.slice(0, 2).join(', ') : null]
+      .filter(Boolean).join(' · ');
+  }
+  if (x.bottleId) {
+    var vid = bottleVariantId(oil, plant);
+    var vlabel = vid ? variantLabel(plant, vid) : null;
+    return [oil.supplier, vlabel].filter(Boolean).join(' · ');
+  }
+  var bits = [plant.suppliers.join(', ')];
+  if (plant.split && plant.split.note) bits.push('Note je nach Anbieter unterschiedlich');
+  else if (plant.split && plant.split.family) bits.push('Duftgruppe je nach Anbieter unterschiedlich');
+  return bits.filter(Boolean).join(' · ');
+}
+function variantLabel(plant, id) {
+  for (var i = 0; i < plant.variants.length; i++) if (plant.variants[i].id === id) return plant.variants[i].label;
+  return null;
+}
+function bottleVariantId(bottle, plant) {
+  var words = nameParts(bottle).words.map(fold);
+  for (var i = 0; i < plant.variants.length; i++) if (words.indexOf(plant.variants[i].id) >= 0) return plant.variants[i].id;
+  return null;
+}
+
+/* Variante and Anbieter, under the row — never required, so a fresh pick
+   always shows a plant with no chip lit. A chip is on exactly when the
+   bottle currently chosen carries it; tapping an on chip clears bottleId back
+   to '' (the owner's rule: tapping an active chip simply deselects it), and
+   tapping an off one narrows to the first bottle that carries it, keeping
+   whatever the other row already chose when a bottle exists for both. */
+function chipsFor(x) {
+  var plant = plantFor(x.oilId);
+  if (!plant) return null;
+  var bottle = x.bottleId ? byId(x.bottleId) : null;
+  var kids = [];
+  if (plant.variants.length) {
+    kids.push(chipRow('Variante', plant.variants,
+      function (id) { return !!bottle && nameParts(bottle).words.map(fold).indexOf(id) >= 0; },
+      function (id) { toggleVariant(x, plant, id); }));
+  }
+  if (plant.suppliers.length >= 2) {
+    kids.push(chipRow('Anbieter', plant.suppliers.map(function (s) { return { id: s, label: s }; }),
+      function (id) { return !!bottle && bottle.supplier === id; },
+      function (id) { toggleSupplier(x, plant, id); }));
+  }
+  if (!kids.length) return null;
+  return el('div', 'setchips', kids);
+}
+function toggleVariant(x, plant, id) {
+  var bottle = x.bottleId ? byId(x.bottleId) : null;
+  if (bottle && nameParts(bottle).words.map(fold).indexOf(id) >= 0) { x.bottleId = ''; save(); render(); return; }
+  var picked = pickBottle(plant, id, bottle ? bottle.supplier : null);
+  x.bottleId = picked ? picked.id : '';
+  save(); render();
+}
+function toggleSupplier(x, plant, id) {
+  var bottle = x.bottleId ? byId(x.bottleId) : null;
+  if (bottle && bottle.supplier === id) { x.bottleId = ''; save(); render(); return; }
+  var picked = pickBottle(plant, bottle ? bottleVariantId(bottle, plant) : null, id);
+  x.bottleId = picked ? picked.id : '';
+  save(); render();
+}
+/* The first bottle carrying both wants, falling back to just the one that was
+   actually tapped when no bottle carries both — a plant's bottles do not
+   always cover every variant/supplier pair. */
+function pickBottle(plant, wantVariant, wantSupplier) {
+  var i;
+  function fits(b, variant, supplier) {
+    if (variant && nameParts(b).words.map(fold).indexOf(variant) < 0) return false;
+    if (supplier && b.supplier !== supplier) return false;
+    return true;
+  }
+  if (wantVariant && wantSupplier) {
+    for (i = 0; i < plant.bottles.length; i++) if (fits(plant.bottles[i], wantVariant, wantSupplier)) return plant.bottles[i];
+  }
+  if (wantVariant) {
+    for (i = 0; i < plant.bottles.length; i++) if (fits(plant.bottles[i], wantVariant, null)) return plant.bottles[i];
+  }
+  if (wantSupplier) {
+    for (i = 0; i < plant.bottles.length; i++) if (fits(plant.bottles[i], null, wantSupplier)) return plant.bottles[i];
+  }
+  return null;
 }
 
 function famDe(id) {
@@ -407,7 +499,7 @@ function famDe(id) {
 
 function addOil(id, round) {
   for (var i = 0; i < entry.oils.length; i++) if (entry.oils[i].oilId === id) return;
-  entry.oils.push({ oilId: id, ml: Store.prefs().defaultMl, round: round || 1 });
+  entry.oils.push({ oilId: id, bottleId: '', ml: Store.prefs().defaultMl, round: round || 1 });
   save(); render();
 }
 
