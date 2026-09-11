@@ -1,7 +1,7 @@
 /* 11. Which screen is showing, and everything that wires the app to the phone.
 
    Routing is the hash, so Back on the phone works without any thought and a
-   screen can be linked to. Five routes and two of them take an argument:
+   screen can be linked to. Seven routes and two of them take an argument:
 
      #/            the journal
      #/neu         a new Aufguss   (?oil=<id>,<id> pre-fills it)
@@ -9,6 +9,7 @@
      #/oele        the catalogue
      #/oel/<id>    one oil
      #/mehr        settings, backup, sources
+     #/pruefen     where the three ranges contradict each other
 
    Nothing else in src/ imports this file. That is what keeps the core modules
    loadable in Node without a DOM, which is what tools/smoke.mjs relies on. */
@@ -19,6 +20,7 @@ import * as Journal from './ui/journal.js';
 import * as Entry from './ui/entry.js';
 import * as Oils from './ui/oils.js';
 import * as More from './ui/more.js';
+import * as Check from './ui/check.js';
 
 /* ── The tab bar ───────────────────────────────────────────────────────────
    The same four tabs on every screen that has them, built from one table so
@@ -41,7 +43,7 @@ function buildTabs(node, active) {
   });
 }
 
-var SCREENS = ['scJournal', 'scEntry', 'scOils', 'scOil', 'scMore'];
+var SCREENS = ['scJournal', 'scEntry', 'scOils', 'scOil', 'scMore', 'scCheck'];
 function show(id) {
   for (var i = 0; i < SCREENS.length; i++) $(SCREENS[i]).hidden = SCREENS[i] !== id;
 }
@@ -107,6 +109,10 @@ function route() {
     More.render();
     show('scMore');
 
+  } else if (h === '#/pruefen') {
+    Check.render();
+    show('scCheck'); resetScroll('scCheck');
+
   } else {
     go('#/');
   }
@@ -168,6 +174,7 @@ function wire() {
 
   $('entryBack').addEventListener('click', function () { go('#/'); });
   $('oilBack').addEventListener('click', function () { go(cameFrom); });
+  $('checkBack').addEventListener('click', function () { go('#/mehr'); });
 
   $('entryDelete').addEventListener('click', function () {
     if (!confirm('Diesen Aufguss löschen? Das lässt sich nicht rückgängig machen.')) return;

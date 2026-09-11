@@ -2,22 +2,21 @@
 
    The shortest way through it is the one the brief describes — pick a theme,
    type three oil names, done. Everything else on this screen is optional and
-   sits below that: what the notes add up to, what order to pour them in, what
-   you did last time under the same theme, and what would go with what you have
-   so far.
+   sits below that: what you did last time under the same theme, and what would
+   go with what you have so far.
 
    It saves as you go. There is no Save button and no draft that can be lost by
    locking the phone, because the one thing worse than a clumsy journal is one
    that quietly throws away the Aufguss you just poured. The foot carries
    "Fertig", which only closes the screen. */
 
-import { $, el, clear, uid, todayISO, nearestHour, agoText, notice, fold } from '../core/util.js';
+import { $, el, clear, uid, todayISO, nearestHour, agoText, notice } from '../core/util.js';
 import { Store } from '../core/store.js';
-import { byId, search, why, customOil, invalidate, noteName, families, nameParts, plantOf } from '../core/catalog.js';
+import { byId, search, why, customOil, invalidate, noteName, families, plantOf, varietyOf } from '../core/catalog.js';
 import { THEMES, INTENSITIES } from '../data/themes.js';
-import { RATIOS, DOSAGE, pourOrder, balance, remarks, drops, leadNote } from '../core/blend.js';
+import { pourOrder, leadNote } from '../core/blend.js';
 import { suggest, history } from '../core/suggest.js';
-import { oilRow, balanceBar, autocomplete, field, card, kellenOf, kellenIcon, noteGlyph, chipRow } from './parts.js';
+import { oilRow, autocomplete, field, card, kellenOf, kellenIcon, noteGlyph, chipRow } from './parts.js';
 
 var entry = null;      /* the one being edited */
 var isNew = false;
@@ -62,7 +61,7 @@ function migratedOilRef(x) {
   var oilId = x.oilId, bottleId = x.bottleId || '';
   if (!bottleId) {
     var plant = plantOf(oilId);
-    if (plant && plant.plant && plant.id !== oilId) { bottleId = oilId; oilId = plant.id; }
+    if (plant && plant.isPlant && plant.id !== oilId) { bottleId = oilId; oilId = plant.id; }
   }
   return { oilId: oilId, bottleId: bottleId, ml: x.ml, round: x.round || 1 };
 }
@@ -72,16 +71,16 @@ function normaliseOils() {
 
 /* The oil this line of the set actually means: the chosen bottle when chips
    have narrowed one, the plant (or the ungrouped oil, Mischung, own: oil)
-   otherwise. Everything downstream — the pour order, the balance bar, the
-   remarks — reads this and never the bare plant, so a plant whose bottles
-   disagree on note correctly lands in "ohne Note" until a chip resolves it. */
+   otherwise. Everything downstream — the pour order, the suggestions — reads
+   this and never the bare plant, so a plant whose bottles disagree on note
+   correctly lands in "ohne Note" until a chip resolves it. */
 function effectiveOil(x) { return byId(x.bottleId || x.oilId); }
 
 /* The plant behind an entry's oil, or null when there is none — an ungrouped
    oil, a Mischung and an own: oil never get chips. */
 function plantFor(oilId) {
   var p = byId(oilId);
-  return (p && p.plant) ? p : null;
+  return (p && p.isPlant) ? p : null;
 }
 
 /* Three ice balls is the usual Aufguss — a round per Guss. Older entries were
@@ -120,7 +119,6 @@ function render() {
   body.appendChild(whenAndWhat());
   body.appendChild(lastTimeCard());
   body.appendChild(oilsCard());
-  if (oils.length) body.appendChild(setCard(oils));
   if (oils.length < 6) body.appendChild(suggestCard(oils));
   body.appendChild(notesCard());
 
@@ -294,9 +292,6 @@ function oilsCard() {
   addRound.addEventListener('click', function () { entry.rounds++; save(); render(); });
   kids.push(addRound);
 
-  if (entry.oils.length) {
-    kids.push(el('p', 'tiny', 'In dieser Reihenfolge in die Kelle: Basis zuerst und sparsam, dann Herz, dann Kopf.'));
-  }
   return card('Öle', kids);
 }
 
@@ -348,23 +343,39 @@ function roundBlock(r) {
   ]);
 }
 
-/* The autocomplete's sub-line: what tells this hit apart from another one
-   named almost the same. Only what is actually there — a plant whose bottles
-   disagree has no family and no note, and printing the gap as "· ·" would
-   look broken rather than honest. suppliers()/variants() come off the plant
-   itself, computed once in catalog.js; an ungrouped oil falls back to its own
-   single supplier the same field always held. */
+/* The autocomplete's sub-line: what the name alone does not say.
+
+   For a plant that is its varieties — "Grün | Orange | Rot" under one
+   Mandarine is the whole reason five bottles are one row, and it answers the
+   only question the name leaves open. For everything else it is the old
+   supplier/Duftgruppe/Note line, which is what tells two oils of nearly the
+   same name apart. Only what is actually there: a plant whose bottles disagree
+   has no family and no note, and printing the gap as "· ·" would look broken
+   rather than honest. */
 function searchSub(o, reason) {
+  if (o.isPlant && o.variants.length) {
+    var vs = o.variants.map(function (v) { return capitalised(v.label); }).join(' | ');
+    return (reason && reason !== o.de) ? vs + ' · ' + reason : vs;
+  }
   var bits = [];
-  var sup = o.plant ? o.suppliers.join(', ') : o.supplier;
+  var sup = o.isPlant ? o.suppliers.join(', ') : o.supplier;
   if (sup) bits.push(sup);
   if (o.familyDe) bits.push(o.familyDe);
   var note = noteName(leadNote(o) || '');
   if (note) bits.push(note);
-  if (o.plant && o.variants.length > 1) bits.push(o.variants.length + ' Sorten');
   if (reason && reason !== o.de) bits.push(reason);
   return bits.join(' · ');
 }
+
+/* A variety is stored in the base form the suppliers' own words reduce to, so
+   they can be compared across three shops — which means they arrive lowercase
+   ("grün", "italienisch") and want a capital on a screen. Left alone where the
+   word carries its own shape: "ct. Cineol" and "CO2" are not improved by it. */
+function capitalised(word) {
+  if (!/^[a-zäöüß]/.test(word)) return word;
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
 function leadDot(o) {
   var n = leadNote(o);
   return el('i', 'note-dot' + (n ? ' note-' + n : ''));
@@ -413,7 +424,7 @@ function rowDetail(x, oil, plant) {
   }
   if (x.bottleId) {
     var vid = bottleVariantId(oil, plant);
-    var vlabel = vid ? variantLabel(plant, vid) : null;
+    var vlabel = vid ? capitalised(variantLabel(plant, vid) || '') : null;
     return [oil.supplier, vlabel].filter(Boolean).join(' · ');
   }
   var bits = [plant.suppliers.join(', ')];
@@ -426,38 +437,53 @@ function variantLabel(plant, id) {
   return null;
 }
 function bottleVariantId(bottle, plant) {
-  var words = nameParts(bottle).words.map(fold);
-  for (var i = 0; i < plant.variants.length; i++) if (words.indexOf(plant.variants[i].id) >= 0) return plant.variants[i].id;
+  var ids = variantIds(bottle);
+  for (var i = 0; i < plant.variants.length; i++) if (ids.indexOf(plant.variants[i].id) >= 0) return plant.variants[i].id;
   return null;
 }
 
-/* Variante and Anbieter, under the row — never required, so a fresh pick
-   always shows a plant with no chip lit. A chip is on exactly when the
-   bottle currently chosen carries it; tapping an on chip clears bottleId back
-   to '' (the owner's rule: tapping an active chip simply deselects it), and
-   tapping an off one narrows to the first bottle that carries it, keeping
-   whatever the other row already chose when a bottle exists for both. */
+/* Sorte and Anbieter, under the row — never required, so a fresh pick always
+   shows a plant with no chip lit. A chip is on exactly when the bottle
+   currently chosen carries it; tapping an on chip clears bottleId back to ''
+   (tapping an active chip simply deselects it), and tapping an off one narrows
+   to the first bottle that carries it, keeping whatever the other chip already
+   chose when a bottle exists for both.
+
+   One row, no labels over it. Which oil it is matters; whether the Mandarine
+   came from Italy mostly does not, and two labelled rows spent more of the
+   screen asking than the question is worth. A thin rule separates the
+   varieties from the ranges so the two do not read as one list. */
 function chipsFor(x) {
   var plant = plantFor(x.oilId);
   if (!plant) return null;
   var bottle = x.bottleId ? byId(x.bottleId) : null;
   var kids = [];
   if (plant.variants.length) {
-    kids.push(chipRow('Variante', plant.variants,
-      function (id) { return !!bottle && nameParts(bottle).words.map(fold).indexOf(id) >= 0; },
+    kids.push(chipRow(null, plant.variants.map(function (v) {
+      return { id: v.id, label: capitalised(v.label) };
+    }), function (id) { return !!bottle && variantIds(bottle).indexOf(id) >= 0; },
       function (id) { toggleVariant(x, plant, id); }));
   }
   if (plant.suppliers.length >= 2) {
-    kids.push(chipRow('Anbieter', plant.suppliers.map(function (s) { return { id: s, label: s }; }),
+    if (kids.length) kids.push(el('span', 'sep'));
+    kids.push(chipRow(null, plant.suppliers.map(function (s) { return { id: s, label: s }; }),
       function (id) { return !!bottle && bottle.supplier === id; },
       function (id) { toggleSupplier(x, plant, id); }));
   }
   if (!kids.length) return null;
   return el('div', 'setchips', kids);
 }
+
+/* Every value one bottle answers to as a variety — only what it declares,
+   which is exactly what catalog.js built the chips out of, so a chip and the
+   bottle behind it can never disagree. */
+function variantIds(bottle) {
+  return varietyOf(bottle).map(function (v) { return v.id; });
+}
+
 function toggleVariant(x, plant, id) {
   var bottle = x.bottleId ? byId(x.bottleId) : null;
-  if (bottle && nameParts(bottle).words.map(fold).indexOf(id) >= 0) { x.bottleId = ''; save(); render(); return; }
+  if (bottle && variantIds(bottle).indexOf(id) >= 0) { x.bottleId = ''; save(); render(); return; }
   var picked = pickBottle(plant, id, bottle ? bottle.supplier : null);
   x.bottleId = picked ? picked.id : '';
   save(); render();
@@ -471,11 +497,11 @@ function toggleSupplier(x, plant, id) {
 }
 /* The first bottle carrying both wants, falling back to just the one that was
    actually tapped when no bottle carries both — a plant's bottles do not
-   always cover every variant/supplier pair. */
+   always cover every variety/supplier pair. */
 function pickBottle(plant, wantVariant, wantSupplier) {
   var i;
   function fits(b, variant, supplier) {
-    if (variant && nameParts(b).words.map(fold).indexOf(variant) < 0) return false;
+    if (variant && variantIds(b).indexOf(variant) < 0) return false;
     if (supplier && b.supplier !== supplier) return false;
     return true;
   }
@@ -509,37 +535,6 @@ function addCustom(name, round) {
   invalidate();
   addOil(oil.id, round);
   notice('„' + name + '“ angelegt. Duftgruppe und Note kannst du unter Öle ergänzen.');
-}
-
-/* ── What the set adds up to ─────────────────────────────────────────────── */
-function setCard(oils) {
-  var totalMl = entry.oils.reduce(function (s, x) { return s + (x.ml || 0); }, 0);
-  var bal = balance(oils, entry.ratio);
-
-  var ratios = el('div', 'chips', RATIOS.map(function (r) {
-    var c = el('button', 'chip' + (entry.ratio === r.id ? ' on' : ''), r.label);
-    c.type = 'button';
-    c.title = r.de;
-    c.addEventListener('click', function () {
-      entry.ratio = r.id; Store.setPref('ratio', r.id); save(); render();
-    });
-    return c;
-  }));
-
-  var d = drops(entry.ratio, 10);
-  var wrap = card('Die Mischung', [
-    balanceBar(bal),
-    ratios,
-    el('p', 'tiny', bal.ratio.de + ' — ' + bal.ratio.note +
-      ' Auf 10 Tropfen: ' + d.top + ' Kopf, ' + d.heart + ' Herz, ' + d.base + ' Basis.'),
-    el('div', 'prose small', remarks(oils, entry.ratio, totalMl).map(function (r) {
-      return el('p', null, r.text);
-    })),
-    el('p', 'tiny', 'Zur Orientierung: ' + DOSAGE.dropsPerLitre[0] + '–' + DOSAGE.dropsPerLitre[1] +
-      ' Tropfen pro Liter Aufgusswasser (saunawelt-oso.de). Was auf die Steine kommt, entscheidest du.'),
-  ]);
-  wrap.id = 'setCard';
-  return wrap;
 }
 
 /* ── What would go with it ─────────────────────────────────────────────────

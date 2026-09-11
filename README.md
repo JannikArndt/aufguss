@@ -19,23 +19,26 @@ whole of the short path, and everything else on the screen is optional.
 
 **Find an oil however you happen to think of it.** You search the plant, not
 the bottle: „Mandarine“ stands once in the list, and the variety and the
-supplier are chips you may tap afterwards or ignore. That is 172 entries over
-239 bottles from two
+supplier are chips you may tap afterwards or ignore. That is 147 entries over
+286 bottles from three
 ranges — 135 single oils from
 [Aromen](https://www.aromen.be/de/shop/category/atherische-ole-einzelole-26),
-and from
+from
 [RBM](https://www.rbm-wellness.de/Naturreine-atherische-Ole-c134687002)
-81 single oils plus their 23 fertige Mischungen — searchable by the German
-name, the English name, the botanical name, the scent family, the note, the
-effect tags, how the supplier says it smells, what a Mischung is made of, the
-supplier itself, or the article code. `santalum`, `sandalwood`, `Sandelholz`
-and `w8` all find the same bottle. Both ranges sell a Zitrone; the app shows
-whose each one is rather than picking for you.
+81 single oils plus their 23 fertige Mischungen, and from
+[Purelia professional](https://schrader24.eu/portfolio/aetherische-oele/)
+40 single oils plus 7 Ölmischungen — searchable by the German name, the English
+name, the botanical name, the scent family, the note, the effect tags, how the
+supplier says it smells, what a Mischung is made of, the supplier itself, or
+the article code. `santalum`, `sandalwood`, `Sandelholz` and `w8` all find the
+same bottle. All three ranges sell a Zitrone; that is one row, and under it
+whose each bottle is.
 
-**See what the set adds up to.** Kopf, Herz and Basis as a bar; the order to
-pour them in, heaviest first; what your chosen ratio would have wanted; whether
-the scent families are ones the sources pair. All of it reported, none of it
-enforced — it will never stop you saving something.
+**See where the shops disagree.** Three ranges describe overlapping plants and
+they do not always say the same thing: Aromen calls Kampfer a Kopfnote, RBM
+calls it a Herznote, and Purelia says nothing about any of it. The app reports
+that rather than picking a winner, and Mehr → Daten prüfen counts every such
+case in one place, with a text to take back to the shops' own pages.
 
 **Start with one scent and be offered the rest.** Type Zitrone and the app
 suggests what would go with it, and says why each one: it fills the missing
@@ -81,18 +84,24 @@ judgement calls are.
 
 Three things are worth knowing before trusting a screen:
 
-- **207 of the 216 single-oil notes are the supplier's own words** — Aromen's
-  description says "Diese luxuriöse Basisnote", RBM's says "Duftnote:
-  Basisnote". The other **nine are estimated from the scent family**, and the
-  app says so on the oil rather than pretending. One oil, RBM's Bergamottminze,
-  has no botanical name at all, because RBM publishes none for it.
-- **The 23 Mischungen have no note, and none was invented for them.** RBM
-  publishes a Zusammensetzung and nothing else, and five of those lines end in
-  "uvm.". So a Mischung is poured last, counted as *ohne Note* next to the
-  balance bar, and its page says plainly that nothing is being guessed.
-- **The two suppliers do not classify alike, and neither was corrected.**
+- **207 of Aromen's and RBM's 216 single-oil notes are the supplier's own
+  words** — Aromen's description says "Diese luxuriöse Basisnote", RBM's says
+  "Duftnote: Basisnote". The other **nine are estimated from the scent family**,
+  and the app says so on the oil rather than pretending. One oil, RBM's
+  Bergamottminze, has no botanical name at all, because RBM publishes none.
+- **Purelia publishes no note, no scent group, no botanical name and no
+  description for any of its 40 oils**, and none of the four was filled in from
+  what another shop says about the same plant. The one page that lists the
+  Professional line prints names and nothing else, and that is what is in here.
+- **The 30 Mischungen have no note, and none was invented for them.** RBM
+  publishes a Zusammensetzung and nothing else, five of those lines end in
+  "uvm.", and Purelia publishes not even that. So a Mischung is poured last,
+  counted as *ohne Note*, and its page says plainly that nothing is guessed.
+- **The three suppliers do not classify alike, and none was corrected.**
   Aromen has ten scent groups including a separate one for conifers; RBM has
-  five and calls every needle a Holz. Each oil carries its own shop's word.
+  five and calls every needle a Holz; Purelia has none. Each oil carries its
+  own shop's word, and where two shops contradict each other the plant says
+  nothing of its own and shows both sides.
 - **The Kaifubad plan published online covers one day** — Dienstag, Frauensauna.
   There is no weekly plan to be had, so the app treats a theme as a name you
   pick and a time as any hour you like.

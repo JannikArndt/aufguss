@@ -15,6 +15,7 @@ the file says so, and the app says so too.
 |---|---|
 | [`oils.md`](oils.md) | the 133 single oils from Aromen, their families, notes and descriptions |
 | [`oils-rbm.md`](oils-rbm.md) | the 81 single oils from RBM, and how a JavaScript shop was read |
+| [`oils-purelia.md`](oils-purelia.md) | the 40 single oils and 7 Ölmischungen from Purelia professional, and the four things that range publishes nothing about |
 | [`botanical-names.md`](botanical-names.md) | the Latin names of the Aromen oils, and which ones are a judgement call |
 | [`aufgussplan.md`](aufgussplan.md) | the Aufguss themes, times and intensities |
 | [`blending.md`](blending.md) | notes, ratios, mixing order, which families go together |

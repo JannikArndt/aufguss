@@ -34,17 +34,25 @@ function read(p) { return fs.readFileSync(path.join(ROOT, p), 'utf8'); }
 /* ── 1. The data ─────────────────────────────────────────────────────────── */
 const { OILS } = await import('../src/data/oils.js');
 const { OILS_RBM } = await import('../src/data/oils-rbm.js');
+const { OILS_PURELIA } = await import('../src/data/oils-purelia.js');
 const { THEMES, INTENSITIES } = await import('../src/data/themes.js');
 const { NOTES, RATIOS, HARMONY, MIX_ORDER, DOSAGE, CLASSICS } = await import('../src/data/blending.js');
 
-/* Two ranges, one catalogue. Counts are pinned per range on purpose: a
-   regeneration that moves either has to bring its own sources/ file along. */
-const ALL_OILS = OILS.concat(OILS_RBM);
-const HOST = { Aromen: 'https://www.aromen.be/', RBM: 'https://www.rbm-wellness.de/' };
+/* Three ranges, one catalogue. Counts are pinned per range on purpose: a
+   regeneration that moves any of them has to bring its own sources/ file
+   along. */
+const ALL_OILS = OILS.concat(OILS_RBM).concat(OILS_PURELIA);
+const HOST = {
+  Aromen: 'https://www.aromen.be/',
+  RBM: 'https://www.rbm-wellness.de/',
+  Purelia: 'https://schrader24.eu/',
+};
 
 eq('oils: the Aromen range arrived', OILS.length, 135);
 eq('oils: and the RBM range, singles and Mischungen', OILS_RBM.length, 104);
+eq('oils: and Purelia\'s, singles and Ölmischungen', OILS_PURELIA.length, 47);
 eq('oils: 23 of RBM\'s entries are Mischungen', OILS_RBM.filter((o) => o.blend).length, 23);
+eq('oils: 7 of Purelia\'s are', OILS_PURELIA.filter((o) => o.blend).length, 7);
 ok('oils: no Aromen entry claims to be a Mischung', !OILS.some((o) => o.blend));
 {
   const ids = new Set(), noteIds = new Set(NOTES.map((n) => n.id));
@@ -54,21 +62,38 @@ ok('oils: no Aromen entry claims to be a Mischung', !OILS.some((o) => o.blend));
     if (ids.has(o.id)) bad.push('duplicate id ' + o.id);
     ids.add(o.id);
     if (!o.de) bad.push('no German name: ' + o.id);
-    if (!o.family) bad.push('no family: ' + o.de);
-    if (!o.familyDe) bad.push('no German family: ' + o.de);
     if (!o.supplier) bad.push('no supplier: ' + o.de);
-    /* A Mischung has no note and no botanical name because nobody publishes
-       one for it. Anything that is not a Mischung must have both. */
-    if (!o.blend && !o.notes.length) bad.push('no note: ' + o.de);
+    /* Two fields the app reads are allowed to be empty, and only where the
+       shop publishes nothing: a Mischung has no note or scent family because
+       nobody states one for it, and Purelia's Professional line states neither
+       for anything at all. Both exceptions are pinned to exactly those
+       entries below, so neither can quietly spread to a range that does
+       publish. */
+    const mayBeSilent = o.blend || o.supplier === 'Purelia';
+    if (!mayBeSilent && !o.family) bad.push('no family: ' + o.de);
+    if (!mayBeSilent && !o.familyDe) bad.push('no German family: ' + o.de);
+    if (!mayBeSilent && !o.notes.length) bad.push('no note: ' + o.de);
     if (o.blend && o.notes.length) bad.push('a Mischung with a note: ' + o.de);
+    if (o.supplier === 'Purelia' && !o.blend && (o.notes.length || o.family || o.latin || o.about)) {
+      bad.push('Purelia publishes none of this: ' + o.de);
+    }
+    /* A supplier bottle declares which plant it is; a Mischung is an entry and
+       not an oil, so it declares none. That declaration is what the catalogue
+       groups on — a bottle without one silently stops grouping. */
+    if (!o.blend && !o.plant) bad.push('no plant: ' + o.de);
+    if (o.blend && o.plant) bad.push('a Mischung with a plant: ' + o.de);
     for (const n of o.notes) if (!noteIds.has(n)) bad.push('unknown note ' + n + ' on ' + o.de);
     if (o.url && !o.url.startsWith(HOST[o.supplier])) bad.push('odd url on ' + o.de);
   }
   ok('oils: every field the app reads is filled', !bad.length, bad.slice(0, 4).join('; '));
+  /* Purelia sorts nothing into scent groups, so it contributes the empty
+     string and nothing else — the ten real families plus Blend plus that gap,
+     and Blend is deliberately absent from HARMONY. */
   ok('oils: ten scent families, and Mischungen is not one of them',
-    fams.size === 11 && fams.has('Blend') && !HARMONY.Blend, [...fams].join(','));
-  ok('oils: an RBM id cannot collide with an Aromen one',
-    OILS_RBM.every((o) => o.id.startsWith('rbm:')));
+    fams.size === 12 && fams.has('Blend') && fams.has('') && !HARMONY.Blend, [...fams].join(','));
+  ok('oils: a range\'s ids cannot collide with another range\'s',
+    OILS_RBM.every((o) => o.id.startsWith('rbm:')) &&
+    OILS_PURELIA.every((o) => o.id.startsWith('pur:')));
 }
 {
   /* Every oil whose note is not the supplier's own must say so. Eight of those
@@ -83,15 +108,22 @@ ok('oils: no Aromen entry claims to be a Mischung', !OILS.some((o) => o.blend));
     OILS_RBM.filter((o) => o.noteEstimated).length, 1);
   ok('oils: and no Mischung has a guessed anything',
     !OILS_RBM.some((o) => o.blend && (o.noteEstimated || o.latin || o.character)));
-  /* Aromen publishes no botanical names, so all 133 got one from Wikidata.
-     RBM publishes its own, and for exactly one single oil it does not. */
-  eq('oils: exactly one single oil has no botanical name',
-    ALL_OILS.filter((o) => !o.blend && !o.latin).length, 1);
+  /* Aromen publishes no botanical names, so all of them got one from Wikidata.
+     RBM publishes its own, and for exactly one single oil it does not. Purelia
+     publishes none at all, for anything. */
+  eq('oils: exactly one Aromen or RBM single oil has no botanical name',
+    OILS.concat(OILS_RBM).filter((o) => !o.blend && !o.latin).length, 1);
+  eq('oils: and Purelia has no botanical name for any of its 40',
+    OILS_PURELIA.filter((o) => !o.blend && !o.latin).length, 40);
   /* One entry has no page to link to — RBM's Ringelblume, which is on their
      price list and not in their shop (sources/open-questions.md). Everything
      else is checkable against a URL, and that is the point of pinning this. */
   eq('oils: exactly one entry has no URL to check it against',
     ALL_OILS.filter((o) => !o.url).length, 1);
+  /* Purelia has no per-product page at all: one portfolio page lists the whole
+     line, so all 47 point at the same link and that is the honest answer. */
+  eq('oils: Purelia points all 47 at the one page there is',
+    new Set(OILS_PURELIA.map((o) => o.url)).size, 1);
 
 }
 ok('oils: the Kaifubad range is searchable in Latin',
@@ -152,7 +184,10 @@ eq('search: the botanical name finds it', cat.search('santalum', { limit: 1 })[0
 eq('search: the English name finds it', cat.search('peppermint', { limit: 1 })[0].de, 'Pfefferminze');
 eq('search: the article code finds it', cat.search('w8', { limit: 1 })[0].de, 'Sandelholz');
 ok('search: a note name filters', cat.search('basisnote').length > 15);
-ok('search: a family name filters', cat.search('nadelholz').length >= 14);
+/* Fewer than the bottles Aromen files under Nadelholz, and that is right: a
+   plant whose shops disagree about the group has no group of its own to be
+   found under, and says so on its own page instead. */
+eq('search: a family name filters', cat.search('nadelholz').length, 13);
 ok('search: every word has to hit', cat.search('zitrone kiefer').length === 0);
 ok('search: nothing matches nonsense', cat.search('qqqzzz').length === 0);
 ok('search: an empty query is the whole catalogue', cat.search('').length === cat.all().length);
@@ -176,31 +211,57 @@ ok('search: an empty query is the whole catalogue', cat.search('').length === ca
    own names (sources/open-questions.md) — if one of these moves, the reading
    moved with it and the note in sources/ has to move too. */
 {
-  eq('plants: the catalogue is entries, not bottles', cat.all().length, 172);
-  eq('plants: and every bottle is still reachable', cat.bottles().length, 239);
-  const plants = cat.all().filter((o) => o.plant);
-  eq('plants: forty-five names gather more than one bottle', plants.length, 45);
+  eq('plants: the catalogue is entries, not bottles', cat.all().length, 147);
+  eq('plants: and every bottle is still reachable', cat.bottles().length, 286);
+  const plants = cat.all().filter((o) => o.isPlant);
+  eq('plants: sixty-three names gather more than one bottle', plants.length, 63);
   eq('plants: built out of this many bottles',
-    plants.reduce((n, p) => n + p.bottles.length, 0), 112);
+    plants.reduce((n, p) => n + p.bottles.length, 0), 202);
   ok('plants: no Mischung was ever folded into one',
     !plants.some((p) => p.bottles.some((b) => b.blend)));
+  /* The grouping is declared in the data, not read off the name. Every bottle
+     in a plant carries that plant's own slug, and a plant's id is that slug —
+     which is what makes a group checkable one line at a time. */
+  ok('plants: every bottle declares the plant it was grouped into',
+    plants.every((p) => p.bottles.every((b) => 'art:' + b.plant === p.id)));
 
   /* Where the two shops disagree the plant says nothing and records both
      sides. This is the whole point of the layer: no averaging, no majority,
      no quiet winner. */
   const split = (k) => plants.filter((p) => p.split && p.split[k]).length;
-  eq('plants: fourteen disagree about the note', split('note'), 14);
-  eq('plants: fifteen about the scent family', split('family'), 15);
-  eq('plants: twenty-five about the botanical name', split('latin'), 25);
+  eq('plants: twenty-six disagree about the note', split('note'), 26);
+  eq('plants: twenty-one about the scent family', split('family'), 21);
+  eq('plants: thirty-one about the botanical name', split('latin'), 31);
   ok('plants: a disagreement leaves the field empty rather than guessed',
     plants.every((p) => (!p.split || !p.split.note || !p.notes.length) &&
                         (!p.split || !p.split.family || !p.family) &&
                         (!p.split || !p.split.latin || !p.latin)));
   const kampfer = cat.byId('art:kampfer');
   eq('plants: Kampfer has no note of its own', kampfer.notes.length, 0);
-  eq('plants: because Aromen says one thing and RBM another',
+  eq('plants: because Aromen says one thing, RBM another, Purelia nothing',
     kampfer.split.note.map((r) => r.supplier + ':' + r.value).sort().join(' '),
-    'Aromen:top RBM:heart');
+    'Aromen:top Purelia:null RBM:heart');
+
+  /* Silence is not disagreement. Purelia publishes no note and no scent group
+     for anything, and joining a plant must not be able to wipe out what a shop
+     that does publish said about it. */
+  const zitrone = cat.byId('art:zitrone');
+  ok('plants: a shop that says nothing does not erase what the others said',
+    zitrone.bottles.some((b) => b.supplier === 'Purelia' && !b.notes.length) &&
+    zitrone.notes.length === 1 && !!zitrone.familyDe, JSON.stringify(zitrone.notes));
+  ok('plants: and a real contradiction still empties the field',
+    !zitrone.latin && !!zitrone.split.latin);
+
+  /* One article sold under two words keeps both. Purelia's Zitrone is
+     "italienisch/spanisch", one bottle from either country. */
+  eq('plants: an article that answers to two words offers both',
+    zitrone.variants.map((v) => v.label).join('/'), 'italienisch/spanisch');
+
+  /* A variety is declared, never read out of the leftover words of a name —
+     otherwise Aromen's own misspelling ("Steranis") would sit on a chip next
+     to a plant called Sternanis. */
+  eq('plants: a shop\'s misspelling is not offered as a variety',
+    cat.byId('art:sternanis').variants.map((v) => v.label).join(', '), 'CO2');
 
   /* An Aufguss written before any of this still points at the bottle it
      recorded. Losing that is the same failure as losing the Aufguss. */
@@ -209,7 +270,12 @@ ok('search: an empty query is the whole catalogue', cat.search('').length === ca
   eq('plants: and knows which plant it belongs to', cat.plantOf(bottle).id, 'art:minze');
   eq('plants: a plant offers its varieties',
     cat.byId('art:minze').variants.map((v) => v.label).sort().join(', '),
-    'chinesisch, indisch, japanisch');
+    'Tokyo, chinesisch, indisch, japanisch');
+  /* Five bottles from three shops under one name, which is the whole point. */
+  const mandarine = cat.byId('art:mandarine');
+  eq('plants: Mandarine is one row over eight bottles', mandarine.bottles.length, 8);
+  eq('plants: and the colours come before the countries',
+    mandarine.variants.map((v) => v.label).join(' '), 'grün orange rot gelb italienisch');
 }
 eq('search: how an oil smells finds it', cat.search('rauchig', { limit: 1 })[0].de, 'Birkenteer');
 /* A renamed product keeps a way back to the id it had, or every Aufguss
@@ -247,7 +313,7 @@ eq('catalogue: and the exact id still wins', cat.byId('m4-bio-grune-minze').code
 {
   const set = ['Zitrone', 'Belgian lavender', 'Sandelholz'].map((n) => cat.search(n, { limit: 1 })[0]);
   eq('blend: poured base first', blend.pourOrder(set).map((o) => o.de).join(' '),
-    'Sandelholz Belgian lavender Zitrone');
+    'Sandelholz Lavendel Zitrone');
   const b = blend.balance(set, '30-50-20');
   ok('blend: one of each note', b.have.top === 1 && b.have.heart === 1 && b.have.base === 1);
   const d = blend.drops('30-50-20', 20);
@@ -334,15 +400,18 @@ addOilByTyping('sandalwood');
   eq('new: three oils in the set', rows.length, 3);
   const names = findAll('.setrow .name', $('entryBody')).map((n) => n.textContent);
   eq('new: shown in pouring order, base first', names.join(' | '),
-    'Sandelholz | Belgian lavender | Zitrone');
+    'Sandelholz | Lavendel | Zitrone');
   ok('new: each row says its note, as an icon with a title',
     findAll('.setrow .step', $('entryBody'))
       .every((s) => /Kopfnote|Herznote|Basisnote/.test(s.title)));
   ok('new: no millilitre field cluttering the row',
     findAll('.setrow input', $('entryBody')).length === 0);
 }
-ok('new: the mixture is described', !!$('setCard'));
-ok('new: and it says the notes are all there', $('setCard').textContent.includes('alle da'));
+/* The Mischung card is gone on purpose: the owner reads the notes off the
+   rows, and a second opinion about the set was one card too many on a screen
+   that is trying to fit three Kugeln. What replaced it is nothing. */
+ok('new: no mixture card, and nothing telling anyone to fill a Kelle',
+  !$('setCard') && !/in die Kelle/.test($('entryBody').textContent));
 ok('new: suggestions start gated behind a button',
   !$('entryBody').textContent.includes('Passt dazu') &&
   $('entryBody').textContent.includes('Passende Öle vorschlagen'));
@@ -405,47 +474,50 @@ ok('done: the row names the theme and the oils',
 /* Picking an oil is two steps now, and the second one is optional. Step one
    is the plant — "Minze" is enough. Step two, if you care, is a variety and a
    supplier as chips under the oil in its Kugel; tapping an active chip puts it
-   back to just the plant. Nobody is ever made to choose a bottle. */
-function chipsUnder(label) {
-  for (const box of findAll('.setchips', $('entryBody'))) {
-    for (const wrap of box.childNodes) {
-      if (wrap.childNodes[0] && wrap.childNodes[0].textContent === label) {
-        return wrap.childNodes[1].childNodes;
-      }
-    }
-  }
-  return [];
+   back to just the plant. Nobody is ever made to choose a bottle.
+
+   The chips are one unlabelled row: varieties first, then a thin rule, then
+   the ranges. No headings over them, because which oil it is matters and where
+   it was bought mostly does not. */
+function chipRows() {
+  const box = findAll('.setchips', $('entryBody'))[0];
+  return box ? [...box.childNodes].filter((n) => (n.className || '').includes('chiprow')) : [];
 }
+const varietyChips = () => { const r = chipRows(); return r[0] ? [...r[0].childNodes] : []; };
+const supplierChips = () => { const r = chipRows(); return r[1] ? [...r[1].childNodes] : []; };
 {
   main.go('#/neu');
   const box = findAll('input', $('entryBody')).filter((n) => n.type === 'search').pop();
   type(box, 'minze');
   const offered = findAll('.ac-item', $('entryBody')).map((r) => r.textContent);
-  ok('pick: the three mints are offered once, as the plant',
+  ok('pick: the mints are offered once, as the plant',
     offered.some((t) => t.startsWith('Minze')) &&
     !offered.some((t) => t.includes('Minze chinesisch')));
+  ok('pick: and the row says what the varieties are, under the name',
+    findAll('.ac-item .s', $('entryBody'))[0].textContent.includes('Indisch | Japanisch | Chinesisch'));
   findAll('.ac-item', $('entryBody'))[0].click();
 
   eq('pick: one oil is in the Kugel', findAll('.setrow', $('entryBody')).length, 1);
-  const saved = () => Store.entries().find((e) => e.oils.some((o) => o.oilId === 'art:minze'));
 
-  const variants = chipsUnder('Variante');
-  ok('pick: its varieties sit under it, not in its name', !!variants && variants.length === 3);
+  const variants = varietyChips();
+  eq('pick: its varieties sit under it, not in its name', variants.length, 4);
+  ok('pick: with no heading over them, and the ranges beside them',
+    !$('entryBody').textContent.includes('Variante') && supplierChips().length === 2);
   ok('pick: and no bottle was chosen for you',
     findAll('.setrow', $('entryBody'))[0].textContent.includes('Minze'));
 
-  const chinese = [...variants].find((c) => c.textContent === 'chinesisch');
+  const chinese = varietyChips().find((c) => c.textContent === 'Chinesisch');
   chinese.click();
   {
     const rows = findAll('.setrow', $('entryBody'));
     ok('pick: tapping a variety narrows it to that bottle',
-      rows[0].textContent.includes('chinesisch'));
-    const on = [...chipsUnder('Variante')].filter((c) => c.className.includes('on'));
+      rows[0].textContent.includes('Chinesisch'));
+    const on = varietyChips().filter((c) => c.className.includes('on'));
     eq('pick: and only that chip is active', on.length, 1);
   }
-  [...chipsUnder('Variante')].find((c) => c.textContent === 'chinesisch').click();
+  varietyChips().find((c) => c.textContent === 'Chinesisch').click();
   {
-    const on = [...chipsUnder('Variante')].filter((c) => c.className.includes('on'));
+    const on = varietyChips().filter((c) => c.className.includes('on'));
     eq('pick: tapping it again goes back to just the plant', on.length, 0);
   }
   main.go('#/');
@@ -466,10 +538,9 @@ function chipsUnder(label) {
   Store.putEntry(old);
   main.go('#/e/smoke-old-entry');
   ok('old entry: it still names the exact bottle it recorded',
-    findAll('.setrow', $('entryBody'))[0].textContent.includes('chinesisch'));
+    findAll('.setrow', $('entryBody'))[0].textContent.includes('Chinesisch'));
   ok('old entry: and the variety chip reads as chosen',
-    [...chipsUnder('Variante')].some((c) => c.textContent === 'chinesisch' &&
-      c.className.includes('on')));
+    varietyChips().some((c) => c.textContent === 'Chinesisch' && c.className.includes('on')));
   /* Opening one does not rewrite it — reading is not editing. The new shape is
      written the first time something actually changes, and the bottle is kept
      beside the plant rather than replaced by it. */
@@ -561,7 +632,34 @@ main.go('#/mehr');
 ok('more: it counts what you have', text('moreBody').includes('Aufgüsse'));
 ok('more: it says the journal is only on this phone', text('moreBody').includes('nur auf diesem Gerät'));
 ok('more: it points at the sources', text('moreBody').includes('Aromen') &&
-  text('moreBody').includes('RBM'));
+  text('moreBody').includes('RBM') && text('moreBody').includes('Purelia'));
+
+/* Daten prüfen: every place the three shops contradict each other and every
+   field one of them leaves empty, counted in one screen. It reports and
+   resolves nothing — the answer comes off a supplier's page, not from here. */
+{
+  const issues = cat.inconsistencies();
+  ok('check: it finds the Kampfer note the shops disagree about',
+    issues.some((x) => x.kind === 'note' && x.de === 'Kampfer' &&
+      x.rows.some((r) => r.supplier === 'Aromen' && r.label === 'Kopfnote') &&
+      x.rows.some((r) => r.supplier === 'RBM' && r.label === 'Herznote')));
+  ok('check: and the fields a shop simply never published',
+    issues.some((x) => x.kind === 'missing' && x.field === 'note' &&
+      x.rows[0].supplier === 'Purelia'));
+  ok('check: a Mischung is not listed for the note nobody publishes for it',
+    !issues.some((x) => x.kind === 'missing' && x.field === 'note' &&
+      cat.byId(x.rows[0].id).blend));
+
+  main.go('#/pruefen');
+  ok('check: the screen opens off Mehr', visible('scCheck'));
+  ok('check: it names a disagreement in German', text('checkBody').includes('uneinheitlich'));
+  const ta = find('textarea', $('checkBody'));
+  ok('check: and hands over a text that asks rather than answers',
+    !!ta && /nachsehen/.test(ta.value) && /Kampfer/.test(ta.value));
+  ok('check: which says out loud that a gap stays a gap',
+    /nichts ergänzen/.test(ta.value));
+  main.go('#/mehr');
+}
 
 /* Out and back in. */
 {

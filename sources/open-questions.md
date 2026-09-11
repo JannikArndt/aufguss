@@ -329,36 +329,99 @@ this paragraph grows with it.
 
 ## Grouping bottles into a plant
 
-`src/core/catalog.js` now builds a second layer on top of the grouping above: a
-`nameParts().key` shared by two or more bottles becomes one `art:` entry —
-"Mandarine" instead of two separate bottles that both happen to start with that
-word. **This is a reading of the suppliers' own names, not a claim that two
-bottles are the same oil.** Nothing about a scent is asserted by it: the plant
-carries a field only where every one of its bottles already says the same
-thing, and says nothing where they don't, which is the same rule as everywhere
-else in this repository — a guess is worse than admitting there isn't one.
+`src/core/catalog.js` builds a second layer on top of the grouping above: two
+or more bottles that declare the same `plant` slug become one `art:` entry —
+"Mandarine" once instead of eight bottles that each say Mandarine somewhere in
+their name. **This is a reading of what the shops already wrote, not a claim
+that two bottles are the same oil.** Nothing about a scent is asserted by it:
+the plant carries a field only where its bottles that state one all state the
+same, and says nothing where they don't, which is the same rule as everywhere
+else here — a guess is worse than admitting there isn't one.
 
-Checked against the current catalogue: **45 plants, built from 112 of the 239
-bottles.** Of those 45, **14 disagree on which note they lead with, 15 disagree
-on scent family, and 25 disagree on botanical name.** A disagreement is shown,
-not resolved — the plant's `notes`, `family`/`familyDe` or `latin` comes back
-empty, and a `split` on the plant records what each bottle actually said, so
-the app can print "Aromen sagt Kopfnote, RBM sagt Herznote" instead of picking a
-winner. A plant with no agreed note lands exactly where an oil without one
-already does: poured last, counted as *ohne Note*, no family score. Nothing is
-averaged or majority-voted anywhere in this.
+Until 0.8.0 the key was derived: split the German name at the spaces and take
+the first word. That could never see that Aromen's *Grüne Mandarine*,
+*Mandarine, gelb* and *Rote Mandarine*, RBM's *Mandarine grün italienisch* and
+Purelia's three Mandarinen are one plant — the first words are "Grüne", "Rote"
+and "Mandarine". So the key is now **declared**: every supplier bottle in
+`src/data/` carries `plant`, one line next to the name it re-reads, and each
+line can be checked on its own. The derivation is gone; the reading is written
+down instead.
 
-A Mischung never joins a plant, however close its name sits to one. The key
-`jasmin` holds a plant of Aromen's *Jasmin absolut* and *Jasmin mix* — the
-Mischung *Jasmin Mix* sits next to it, untouched; the key `orange` holds a
-plant of two RBM single oils next to the untouched Mischung *Orange Sprizz*. A
-Mischung is an entry, not an oil (§4 of `CLAUDE.md`): it has no note, no
-botanical name and no scent family to begin with, so it has nothing to agree or
-disagree with a plant about, and folding one in would be inventing exactly the
-Duftnote §4 already refuses to derive from a Zusammensetzung line.
+Checked against the current catalogue: **63 plants, built from 202 of the 286
+bottles.** Of those 63, **26 disagree on which note they lead with, 21 on scent
+family, and 31 on botanical name.** A disagreement is shown, not resolved — the
+plant's `notes`, `family`/`familyDe` or `latin` comes back empty and a `split`
+records what each bottle said, so the app prints "Aromen sagt Kopfnote, RBM
+sagt Herznote" rather than picking a winner. Mehr → **Daten prüfen** lists all
+of them in one place and writes out a text to take to the shops' own pages.
 
-**What would settle it:** the same field the previous section is waiting on — a
-supplier field naming the plant separately from the variant. Neither
-`sources/oils.md` nor `sources/oils-rbm.md` lists one among the fields either
-shop publishes, so the grouping above is read off the name and nothing else,
-and stays exactly as re-checkable, and exactly as fallible, as that reading is.
+**Silence is not disagreement.** Purelia publishes no note, no scent group and
+no botanical name for anything in its Professional line. A Purelia bottle
+joining a plant therefore has no opinion to be at odds with, and agreement is
+counted only over the bottles that actually state a value — otherwise adding a
+range that says nothing would have quietly emptied every field RBM does fill
+in. A bottle that says nothing still gets a row in the `split`, marked as
+saying nothing, because "Purelia sagt nichts dazu" and "Purelia sagt Herznote"
+are different facts.
+
+A Mischung never joins a plant, however close its name sits to one. A Mischung
+is an entry, not an oil (§4 of `CLAUDE.md`): it has no note, no botanical name
+and no scent family to begin with, so it has nothing to agree or disagree with
+a plant about.
+
+### The calls that were close
+
+- **Krauseminze.** Aromen's *Grüne Minze* is filed under `krauseminze`, not
+  under `minze`. Its botanical name is *Mentha spicata*, the same as both
+  Krauseminzen; and Aromen's own `wasId` records that this article used to be
+  called *Krauseminze / Grüne Minze* before they renamed it on 10 September
+  2026. **What would settle it:** Aromen saying whether M4 is still the same
+  oil it sold under the old name.
+- **Zedernholz** gathers eight bottles across three spellings — *Cederholz*,
+  *Cedernholz*, *Zeder*, *Zederholz* — and their botanical names do not agree
+  at all: *Cedrus deodara*, *Cedrus atlantica*, *Juniperus virginiana*, and on
+  RBM's *Cedernholz chinesisch* a *Boswellia carteri*, which is frankincense
+  and looks like an error on their page rather than a cedar. They are grouped
+  because they are one shelf commercially; the `latin` disagreement is recorded
+  rather than cleaned up, and it is one of the rows Daten prüfen lists.
+  **What would settle it:** RBM correcting or confirming that line.
+- **Cajeput** is *Melaleuca cajuputi* at Aromen and *Melaleuca leucadendra* at
+  RBM; **Pfefferminze amerikanisch** is *Pycnanthemum pilosum* at RBM and
+  *Mentha ×piperita* everywhere else; **Kamille blau** is *Anthemis nobilis* at
+  RBM where Aromen's Kamille is *Chamaemelum nobile*. Each is grouped by the
+  name the shop sells it under, with the botanical disagreement recorded.
+- **Schwarz Fichte** (*Picea mariana*), **Aleppo-Kiefer**, **Maritime Kiefer**,
+  **Latschenkiefer**, **Zirbelkiefer** and **Wacholder-Teer** are each kept out
+  of the obvious larger group, because their botanical names say they are
+  different species and their names say so too.
+- **Krauseminze, Pfefferminze, Bergamottminze** are each their own plant,
+  separate from **Minze**. Compounds are not stemmed together.
+
+### The variety, cut out of the name
+
+`variety` holds what a shop printed after the plant's name — `colour`,
+`origin`, `method`, `kind`, `part` — and every value is a word that shop
+already used. Three readings sit inside that and are worth naming:
+
+- **Adjectives are put back into their base form** so three shops' inflections
+  compare: Aromen's "Grüne" and Purelia's "grün" are both `colour: "grün"`;
+  "Indische" and "indisch" are both `origin: "indisch"`. The name in `de` is
+  untouched — it still says exactly what the label says.
+- **Two misspellings of one Latin epithet are spelled once**: RBM's
+  *Eukalyptus citrodora* carries `kind: "citriodora"`, and its *Melisse
+  indikum* carries `kind: "indicum"`, so each sits on the same chip as the
+  other shops' bottle rather than next to it. Aromen's French *Virginie* is
+  **not** folded into RBM's *Virginia*: that would be a translation, and this
+  repository does not translate a supplier's word.
+- **`plantDe` names a plant where counting the spellings picks badly.** Aromen
+  writes *Steranis* twice and RBM and Purelia write *Sternanis* once each, so
+  the count ties and the shorter word — the typo — would have won. Twelve
+  bottles carry the override, one for each plant that needed it, and the rest
+  of the catalogue is named by counting. It names the plant; it never corrects
+  what a shop printed.
+
+**What would settle all of this:** a supplier field naming the plant and the
+variant separately. Neither `sources/oils.md`, `sources/oils-rbm.md` nor
+`sources/oils-purelia.md` lists one among the fields any of the three shops
+publishes, so the grouping above is read off the names and nothing else, and
+stays exactly as re-checkable, and exactly as fallible, as that reading is.

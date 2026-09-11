@@ -134,33 +134,6 @@ function noteDot(oil) {
   return el('i', 'note-dot' + (n ? ' note-' + n : ''));
 }
 
-/* How much of the set is top, heart and base — a bar rather than three
-   numbers, because the only question anyone asks of it is "is one missing?" */
-export function balanceBar(bal) {
-  var total = bal.count || 1;
-  var bar = el('div', 'bal');
-  [['top', 't'], ['heart', 'h'], ['base', 'b']].forEach(function (p) {
-    var n = bal.have[p[0]];
-    if (!n) return;
-    var i = el('i', p[1]);
-    i.style.width = (n / total * 100) + '%';
-    bar.appendChild(i);
-  });
-  /* Oils nobody gives a note for — a fertige Mischung, or one of your own —
-     leave the rest of the track showing. Naming them in the key is the
-     difference between a bar that is short and a bar that looks broken. */
-  var keys = ['top', 'heart', 'base'].map(function (id) {
-    return el('span', null, [
-      el('i', 'note-dot note-' + id),
-      noteName(id) + ' ' + bal.have[id] + '×',
-    ]);
-  });
-  if (bal.unknown) {
-    keys.push(el('span', null, [el('i', 'note-dot note-none'), 'ohne Note ' + bal.unknown + '×']));
-  }
-  return el('div', null, [bar, el('div', 'balkey', keys)]);
-}
-
 /* ── Autocomplete ──────────────────────────────────────────────────────────
    One input, a list under it, and the rule that the list is only ever a faster
    way to reach something the list below could also reach. Enter takes the
@@ -296,10 +269,11 @@ function highlight(text, query) {
   ]);
 }
 
-/* A label and a row of chips under it, scrolling sideways the same way the
-   Öle screen's filters do — the same two classes, so a chip looks like a chip
-   everywhere it shows up. `items` is `[{ id, label }]`; `isOn` and `onToggle`
-   work off `id`, `label` is only ever shown. */
+/* A row of chips, optionally with a label over it, scrolling sideways the same
+   way the Öle screen's filters do — the same two classes, so a chip looks like
+   a chip everywhere it shows up. `items` is `[{ id, label }]`; `isOn` and
+   `onToggle` work off `id`, `label` is only ever shown. Pass a null label where
+   the chips say plainly enough what they are. */
 export function chipRow(label, items, isOn, onToggle) {
   var row = el('div', 'chiprow', items.map(function (it) {
     var c = el('button', 'chip' + (isOn(it.id) ? ' on' : ''), it.label);
@@ -311,7 +285,7 @@ export function chipRow(label, items, isOn, onToggle) {
     c.addEventListener('click', function () { onToggle(it.id); });
     return c;
   }));
-  return el('div', null, [el('div', 'tiny', label), row]);
+  return label ? el('div', null, [el('div', 'tiny', label), row]) : row;
 }
 
 /* A labelled field. `input` is built by the caller so it can keep a handle. */

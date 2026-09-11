@@ -9,6 +9,18 @@
 
    Write each note for someone who has never read the code. */
 export var RELEASES = [
+  { v: '0.8.0', date: '2026-09-11',
+    text: 'Ein drittes Sortiment ist dazugekommen: Purelia, 40 Öle und 7 ' +
+          'Mischungen. Purelia schreibt zu seinen Ölen nichts weiter — keine ' +
+          'Duftgruppe, keine Note, keinen botanischen Namen — und das steht ' +
+          'jetzt so da, statt dass irgendwer es sich ausdenkt. Dafür weiß ' +
+          'jede Flasche jetzt selbst, welche Pflanze sie ist und was an ihr ' +
+          'die Sorte ist: Herkunft, Reife, Gewinnung. Du suchst den Namen, ' +
+          'siehst darunter die Sorten („Grün | Orange | Rot“) und tippst ' +
+          'danach Sorte und Anbieter an, wenn du magst. Die Mischung als ' +
+          'eigener Abschnitt ist weg, und der Satz über die Kelle auch. Neu ' +
+          'unter Mehr: Daten prüfen — dort steht jeder Widerspruch zwischen ' +
+          'den drei Anbietern, mit einem Text zum Weitergeben.' },
   { v: '0.7.0', date: '2026-09-11',
     text: 'Du suchst jetzt das Öl, nicht die Flasche. „Mandarine“ steht einmal ' +
           'in der Liste statt dreimal, und das reicht auch — Sorte und Anbieter ' +

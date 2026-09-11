@@ -23,9 +23,30 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { OILS } = await import('../src/data/oils.js');
 const { OILS_RBM } = await import('../src/data/oils-rbm.js');
+const { OILS_PURELIA } = await import('../src/data/oils-purelia.js');
 
 const CATEGORY = 'https://www.aromen.be/de/shop/category/atherische-ole-einzelole-26';
 const PLAN = 'https://www.baederland.de/media/kaifu-bad_aufgussplan_web.pdf';
+const PURELIA = 'https://schrader24.eu/portfolio/aetherische-oele/';
+/* The names exactly as the page prints them, misspellings included — the file
+   src/data/oils-purelia.js re-cuts these, so what is compared here is the
+   original, not the re-cut. sources/oils-purelia.md lists the same set. */
+const PURELIA_NAMES = [
+  'Basilikumöl', 'Blutorangenöl', 'Bergamotteöl italienisch', 'Cassiaöl chinesisch',
+  'Dillkrautöl', 'Edeltannenöl', 'Eukalyptusöl chinesisch', 'Fenchelöl',
+  'Fichtennadelöl sibirisch', 'Grapeftruitöl Florida', 'Ho-Blätteröl',
+  'Ingweröl chinesisch', 'Kampferöl hell', 'Kiefernnadelöl', 'Krauseminzöl',
+  'Latschenkieferöl Tirol', 'Lavandinöl Abrialis', 'Lemongrasöl indisch',
+  'Limettenöl', 'Litsea Cubea', 'Mandarinenöl grün italienisch',
+  'Mandarinenöl orange italienisch', 'Mandarinenöl rot italienisch',
+  'Melissenöl indicum', 'Nelkenöl', 'Orangenöl süß brasilianisch', 'Patchouliöl',
+  'Pfefferöl schwarz indisch', 'Pfefferminzöl indisch', 'Rosenholzöl rekon.',
+  'Rosmarinöl', 'Salbeiöl spanisch', 'Sternanisöl', 'Teebaumöl australisch',
+  'Thymianöl', 'Vetiveröl Java', 'Zederholzöl Texas', 'Zirbelkieferöl',
+  'Zitronenöl italienisch/spanisch', 'Zypressenöl',
+  'Orange-Citrus', 'Euka-Pfefferminze', 'Eukalyptus-Menthol', 'Tigerminzöl',
+  'Minz-Citrus', 'Minz-Orange', 'Polarminze',
+];
 const RBM_SITEMAP = 'https://www.rbm-wellness.de/sitemap.xml';
 const RBM_API = 'https://eu-fra4-storefront-api.ecwid.com/storefront/api/v1/75784548/catalog/products';
 /* The six RBM categories the app carries. "Sonstiges" is hardware and courses
@@ -164,6 +185,34 @@ try {
   if (!fresh.length && !gone.length && !drift.length) say('  nothing has moved');
 } catch (e) {
   flag('could not read the RBM range: ' + e.message);
+}
+
+/* ── The Purelia range ───────────────────────────────────────────────────── */
+/* One page lists the whole Professional line, by name and nothing else, so
+   there is no field here to compare — only whether every name the app carries
+   is still printed on it. The page's own misspellings are what to match
+   against, since that is what is actually there; src/data/oils-purelia.js
+   keeps them in its ids for exactly this reason. */
+say('');
+say('Purelia professional — Schrader');
+try {
+  const res = await fetch(PURELIA, { headers: { 'user-agent': 'aufguss/check-sources' } });
+  if (!res.ok) {
+    flag('the portfolio page answered ' + res.status);
+  } else {
+    const text = (await res.text()).replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
+    const gone = PURELIA_NAMES.filter((n) => text.indexOf(n) < 0);
+    say('  ' + PURELIA_NAMES.length + ' names checked, ' +
+      OILS_PURELIA.length + ' entries in src/data/oils-purelia.js');
+    if (gone.length) flag('no longer printed on the page: ' + gone.join(', '));
+    else say('  every name is still on the page');
+    if (/Duftnote|Duftgruppe|Botanischer/i.test(text)) {
+      flag('the page now says something about notes or groups — ' +
+        'src/data/oils-purelia.js leaves all of that empty on purpose, so re-read it');
+    }
+  }
+} catch (e) {
+  flag('could not reach the Purelia page: ' + e.message);
 }
 
 /* ── The Kaifubad plan ───────────────────────────────────────────────────── */

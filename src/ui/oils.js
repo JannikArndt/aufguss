@@ -6,7 +6,7 @@
 
 import { $, el, clear, notice, agoText } from '../core/util.js';
 import { Store } from '../core/store.js';
-import { byId, search, families, suppliers, noteName, customOil, invalidate, plantOf } from '../core/catalog.js';
+import { byId, search, families, suppliers, noteName, customOil, invalidate, plantOf, varietyOf } from '../core/catalog.js';
 import { NOTES, DOSAGE, leadNote } from '../core/blend.js';
 import { history } from '../core/suggest.js';
 import { oilRow, noteChip, field, card } from './parts.js';
@@ -22,7 +22,7 @@ var currentOil = null;
 function isFav(o) {
   if (!o) return false;
   if (Store.personalFor(o.id).fav) return true;
-  if (o.plant) {
+  if (o.isPlant) {
     for (var i = 0; i < o.bottles.length; i++) if (Store.personalFor(o.bottles[i].id).fav) return true;
   }
   return false;
@@ -102,7 +102,7 @@ export function renderList() {
     var used = usedCount(o, hist);
     list.appendChild(oilRow(o, {
       fav: isFav(o),
-      sub: o.plant ? plantSub(o) : undefined,
+      sub: o.isPlant ? plantSub(o) : undefined,
       trail: used ? used + '×' : '',
       onTap: function () { location.hash = '#/oel/' + encodeURIComponent(o.id); },
     }));
@@ -114,7 +114,7 @@ export function renderList() {
    Aufguss ever names the plant directly. */
 function usedCount(o, hist) {
   var n = hist.used[o.id] || 0;
-  if (o.plant) for (var i = 0; i < o.bottles.length; i++) n += hist.used[o.bottles[i].id] || 0;
+  if (o.isPlant) for (var i = 0; i < o.bottles.length; i++) n += hist.used[o.bottles[i].id] || 0;
   return n;
 }
 function chip(text, on, fn, note) {
@@ -167,7 +167,7 @@ export function renderOne(id) {
      own page never shows this, since plantOf() on a plant id returns the
      plant itself. */
   var pl = plantOf(o);
-  if (pl && pl.plant && pl.id !== o.id) {
+  if (pl && pl.isPlant && pl.id !== o.id) {
     body.appendChild(el('div', 'chips', [backChip(pl)]));
   }
 
@@ -178,7 +178,7 @@ export function renderOne(id) {
     (o.notes && o.notes.length) ? noteChip(o) : null,
     o.familyDe ? el('span', 'pill', o.familyDe) : null,
   ];
-  if (o.plant) headChips = headChips.concat(o.suppliers.map(function (s) { return el('span', 'pill', s); }));
+  if (o.isPlant) headChips = headChips.concat(o.suppliers.map(function (s) { return el('span', 'pill', s); }));
   else if (o.supplier) headChips.push(el('span', 'pill', o.supplier));
   if (o.code) headChips.push(el('span', 'pill', o.code));
 
@@ -209,7 +209,7 @@ export function renderOne(id) {
   if (o.noteEstimated) {
     var famBit = o.familyDe ? ' aus der Duftgruppe „' + o.familyDe + '“' : '';
     body.appendChild(card('Zur Note', [
-      el('p', 'prose small', (o.plant ? o.suppliers.join('/') : (o.supplier || 'Die Quelle')) +
+      el('p', 'prose small', (o.isPlant ? o.suppliers.join('/') : (o.supplier || 'Die Quelle')) +
         ' gibt für dieses Öl keine Note an. ' + noteName(leadNote(o)) + ' ist' + famBit +
         ' geschätzt — siehe sources/ im Repository.'),
     ]));
@@ -223,7 +223,7 @@ export function renderOne(id) {
         'zählt sie deshalb nicht mit, und in die Kelle kommt sie zuletzt.'),
     ]));
   }
-  if (o.plant) {
+  if (o.isPlant) {
     var sc = splitCard(o);
     if (sc) body.appendChild(sc);
     body.appendChild(bottlesCard(o));
@@ -243,8 +243,11 @@ function backChip(pl) {
   return c;
 }
 
-/* Where a plant's bottles do not agree, both sides — never resolved, never
-   averaged, never marked as the one that is right (§1). Built off the
+/* Where a plant's bottles do not agree, every side — never resolved, never
+   averaged, never marked as the one that is right (§1). A shop that publishes
+   nothing about the field is in the sentence too, saying so: "Purelia sagt
+   nichts dazu" is a different fact from "Purelia sagt Herznote", and silence
+   is not what caused the disagreement. Built off the
    bottles themselves rather than o.split: split's family value is the
    English family id catalog.js already translates familyDe from, and the
    supplier's own word for it is familyDe, not that id. Grouped by supplier so
@@ -254,7 +257,7 @@ function backChip(pl) {
 function disagreeSentence(bottles, valueFn, renderFn) {
   var seen = {}, kids = [];
   for (var i = 0; i < bottles.length; i++) {
-    var b = bottles[i], v = valueFn(b) || 'keine Angabe';
+    var b = bottles[i], v = valueFn(b) || 'nichts dazu';
     var key = b.supplier + '|' + v;
     if (seen[key]) continue;
     seen[key] = true;
@@ -277,25 +280,56 @@ function splitCard(o) {
     disagreeSentence(o.bottles, function (b) { return b.familyDe; }, function (v) { return v; })));
   if (!o.latin) kids.push(el('p', 'prose small',
     disagreeSentence(o.bottles, function (b) { return b.latin; },
-      function (v) { return v === 'keine Angabe' ? v : el('i', null, v); })));
+      function (v) { return v === 'nichts dazu' ? v : el('i', null, v); })));
   if (!kids.length) return null;
   return card('Die Anbieter sind sich uneinig', kids);
 }
 
-/* Every bottle behind the plant, each a row of its own — supplier, its own
-   family, note, article code and botanical name, tapping through to that
-   exact bottle (byId() already resolves a bottle id). oilRow's default sub
-   line is name-only-caring, so it is built explicitly here to also carry the
-   article code, which a plant itself never has. */
+/* Where the plant can actually be bought, one shop at a time and under each
+   shop the varieties it sells. This is the question the screen exists to
+   answer: Zitrone gibt es von Purelia und von RBM, Purelia italienisch, RBM
+   italienisch — and whichever of the two wrote a note and a description, that
+   bottle says so on its own row.
+
+   Grouped by supplier rather than listed flat, because "welche Flasche" is
+   really two questions in a row: whose shelf, and then which bottle off it.
+   Tapping a row opens that exact bottle — byId() resolves a bottle id — so the
+   description, the Harmonie line and the article number are one tap away
+   without any of it being crammed in here. */
 function bottlesCard(o) {
-  var rows = o.bottles.map(function (b) {
-    return oilRow(b, {
-      fav: isFav(b),
-      sub: [b.supplier, b.familyDe, b.latin, b.code].filter(Boolean).join(' · '),
-      onTap: function () { location.hash = '#/oel/' + encodeURIComponent(b.id); },
+  var kids = [];
+  for (var i = 0; i < o.suppliers.length; i++) {
+    var sup = o.suppliers[i];
+    var mine = o.bottles.filter(function (b) { return b.supplier === sup; });
+    kids.push(el('div', 'daymark', sup + ' · ' + mine.length +
+      (mine.length === 1 ? ' Flasche' : ' Flaschen')));
+    mine.forEach(function (b) {
+      kids.push(oilRow(b, {
+        flat: true,
+        fav: isFav(b),
+        sub: bottleSub(b),
+        onTap: function () { location.hash = '#/oel/' + encodeURIComponent(b.id); },
+      }));
     });
-  });
-  return card('Alle Flaschen', rows);
+  }
+  return card('Wo du es bekommst', kids);
+}
+
+/* One bottle's line: first what tells it apart from its neighbour on the same
+   shelf — the variety the shop declared, or failing that the rest of the name
+   it printed — then what that shop says about it. A shop that publishes no
+   note and no Duftgruppe simply contributes nothing to the line rather than a
+   run of empty separators. */
+function bottleSub(b) {
+  var vs = varietyOf(b).map(function (v) { return v.label; });
+  var bits = vs.length ? [vs.join(', ')] : [];
+  var n = leadNote(b);
+  if (n) bits.push(noteName(n) + (b.noteEstimated ? ' (geschätzt)' : ''));
+  if (b.familyDe) bits.push(b.familyDe);
+  if (b.latin) bits.push(b.latin);
+  if (b.code) bits.push(b.code);
+  if (!bits.length) bits.push(b.de);
+  return bits.join(' · ');
 }
 
 function link(text, href) {
@@ -368,7 +402,7 @@ function usageCard(o) {
      id did not exist yet when it was poured. So "how often" sums every
      bottle the plant groups, plus the plant's own id in case a future
      Aufguss ever names it directly. */
-  var ids = o.plant ? o.bottles.map(function (b) { return b.id; }).concat([o.id]) : [o.id];
+  var ids = o.isPlant ? o.bottles.map(function (b) { return b.id; }).concat([o.id]) : [o.id];
   var n = 0, last = null;
   for (var i = 0; i < ids.length; i++) {
     n += hist.used[ids[i]] || 0;
@@ -421,7 +455,7 @@ export function wireOne() {
        stuck on — isFav() would still find that old bottle favourite. Clearing
        it here is a direct answer to the tap that was just made, not a silent
        loss of data. */
-    if (currentOil.plant && !next) {
+    if (currentOil.isPlant && !next) {
       currentOil.bottles.forEach(function (b) { Store.setPersonal(b.id, { fav: false }); });
     }
     renderOne(currentOil.id);

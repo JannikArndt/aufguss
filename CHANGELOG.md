@@ -7,6 +7,54 @@ cache-first, so the change lands on the next cold start, unless it is taken
 early from Mehr → **Update jetzt laden**. Mehr also shows the last few
 entries below this list in short; this file is the whole history.
 
+## 0.8.0 — 2026-09-11
+
+A third range, and the oil data grew a spine. Until now a bottle's variety
+lived inside the name its shop happened to print, and the catalogue had to
+guess its way back out again by splitting at the spaces. Now each bottle says
+which plant it is and what about it is the variety, and the catalogue reads
+that instead of guessing.
+
+- **Purelia is in.** 40 single oils and 7 Ölmischungen from the *PURELIA
+  professional* line, which the manufacturer does not list anywhere — the only
+  published list of it is the dealer's portfolio page. That page prints names
+  and nothing else: **no Duftgruppe, no Duftnote, no botanical name, no
+  description**, for anything. All four stay empty rather than being filled in
+  from what Aromen or RBM say about the same plant. The names are re-cut the
+  way the owner asked — the `-öl` ending dropped, the page's spelling slips
+  corrected with the original recorded next to each, and the variety split off
+  into its own field, so *Mandarinenöl rot italienisch* is Mandarine, rot, aus
+  Italien.
+- **A bottle declares its plant.** `plant` is a slug on every supplier bottle
+  and it is what the catalogue groups on. The old rule — split the German name
+  at the spaces and take the first word — could never see that *Grüne
+  Mandarine*, *Mandarine, gelb* and *Mandarine rot italienisch* are the same
+  plant under three shops' spellings. Now they are one row.
+- **A bottle declares its variety.** Country of origin, ripeness, extraction
+  (CO2, rekon., kalt gepresst), cultivar, plant part — each in its own field,
+  in the supplier's own words. One article that answers to two words keeps
+  both: Purelia's Zitrone is *italienisch* **and** *spanisch*.
+- **Silence is no longer disagreement.** A plant used to lose a field the
+  moment its bottles did not all state the same thing — which would have meant
+  Purelia, who states nothing, wiping out RBM's note on every plant they share.
+  Agreement is now counted only over the bottles that actually say something.
+  A real contradiction still empties the field and still shows every side.
+- **The search says what the varieties are.** Under the name, "Grün | Orange |
+  Rot" instead of the old supplier-and-family line — that is the question the
+  name leaves open. After picking, Sorte and Anbieter are one small unlabelled
+  row instead of two labelled ones. Neither was ever required and neither is
+  now.
+- **The oil's page groups its bottles by shop.** Which shops sell it, and under
+  each what varieties it sells, with that bottle's own note, Duftgruppe and
+  botanical name where it has them.
+- **Mehr → Daten prüfen.** Every place the three ranges contradict each other,
+  every field a shop leaves empty, counted and listed in one place — plus a
+  block of text to paste wherever the answer is going to be looked up. It
+  reports; it resolves nothing.
+- **Gone: „Die Mischung".** The card that scored the set's balance, and the
+  line telling anyone what order to put things in a Kelle. Nothing goes into a
+  Kelle.
+
 ## 0.7.0 — 2026-09-11
 
 The catalogue was 239 bottles, and finding a Mandarine meant scrolling past

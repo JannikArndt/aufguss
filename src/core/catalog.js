@@ -1,11 +1,11 @@
 /* 2. The catalogue, and finding something in it.
 
-   One list of oils: the 133 from Aromen, the 81 from RBM, and whatever you
-   have added yourself. Which supplier an oil came from is a fact about where
-   to buy it, not about how it smells, so it is carried on the oil and shown
-   where it helps — and nowhere else does anything in the app branch on it.
-   Both ranges have a Zitrone and a Zirbelkiefer in them; that is not a
-   duplicate to clean up, it is two bottles.
+   One list of oils: Aromen's range, RBM's, Purelia's, and whatever you have
+   added yourself. Which supplier an oil came from is a fact about where to buy
+   it, not about how it smells, so it is carried on the oil and shown where it
+   helps — and nowhere else does anything in the app branch on it. All three
+   ranges have a Zitrone in them; that is not a duplicate to clean up, it is
+   three bottles of one plant.
 
    Custom oils carry a `custom: true` flag and an id that starts `own:` — that
    prefix is the only thing that distinguishes them anywhere in the app, and it
@@ -17,6 +17,7 @@
 
 import { OILS } from '../data/oils.js';
 import { OILS_RBM } from '../data/oils-rbm.js';
+import { OILS_PURELIA } from '../data/oils-purelia.js';
 import { NOTES } from '../data/blending.js';
 import { Store } from './store.js';
 import { fold } from './util.js';
@@ -49,39 +50,95 @@ export function nameParts(oil) {
 /* Both ranges, in one list, sorted the way a German-speaking finger scrolls.
    Sorting here rather than in either data file means neither has to know the
    other exists. */
-export var CATALOGUE = OILS.concat(OILS_RBM).sort(function (a, b) {
+export var CATALOGUE = OILS.concat(OILS_RBM).concat(OILS_PURELIA).sort(function (a, b) {
   return a.de.localeCompare(b.de, 'de');
 });
 
-/* Plants: the owner picks "Mandarine", not which of the two bottles that says
-   Mandarine on it. This groups CATALOGUE by nameParts().key wherever two or
-   more bottles share one — never a Mischung and never a custom oil, so the
-   grouping only ever runs on the 239 supplier bottles above.
+/* The variety of one bottle: the country, the ripeness, the way it was got
+   out of the plant, the cultivar. Every value is the supplier's own word, cut
+   out of the name they already printed — "chinesisch" stays "chinesisch" and
+   never becomes China, because translating it would be this app writing a
+   fact nobody published.
 
-   A Mischung is an entry, not an oil (§4): it stays out of every group it
-   would otherwise fall into, which is why the "jasmin" key holds a plant made
-   of Aromen's Jasmin absolut and Jasmin mix while RBM's Mischung Jasmin Mix
-   sits beside it unchanged, and why "orange" is a plant of two RBM oils next
-   to the untouched Mischung Orange Sprizz. A custom oil is already exactly
-   what someone meant to write down, so it never joins a plant either.
+   `kind` says which of the five it is, so a screen can say "aus Italien" in
+   one place and "CO2" in another without either being guessed at. A bottle
+   whose supplier gave no variety at all comes back empty, and the leftover
+   words of its name stand in for it further down.
 
-   The plant id is `art:` plus the key with its spaces turned to hyphens — a
-   fourth id prefix alongside `own:` and `rbm:`, and like them the only thing
-   that ever tells the app what kind of entry it is looking at.
+   A value may be a list, because a shop sometimes sells one article under two
+   answers: Purelia's Zitrone is "italienisch/spanisch", one bottle from either
+   country, and flattening that to one of them would throw away half of what
+   the page says. Each value becomes its own chip. */
+var VARIETY_KEYS = ['colour', 'origin', 'method', 'kind', 'part'];
+export function varietyOf(oil) {
+  var out = [], v = (oil && oil.variety) || null;
+  if (!v) return out;
+  for (var i = 0; i < VARIETY_KEYS.length; i++) {
+    var k = VARIETY_KEYS[i], val = v[k];
+    if (!val) continue;
+    var many = Array.isArray(val) ? val : [val];
+    for (var j = 0; j < many.length; j++) {
+      if (!many[j]) continue;
+      out.push({ id: fold(String(many[j])), label: String(many[j]), kind: k });
+    }
+  }
+  return out;
+}
 
-   What a plant says about itself is only what its bottles agree on. Two
-   suppliers naming the same plant differently is not a typo to fix — the
-   disagreement is the fact, so a field the bottles do not all agree on comes
-   back empty and the plant carries a `split` recording what each bottle said,
-   the same honesty §1 asks of everything else here. Nothing is averaged or
-   voted on: a plant without an agreed note lands exactly where an oil without
-   one already does — poured last, counted as *ohne Note*. */
+/* The bottle's name with its declared variety taken back out of it — which is
+   the plant's own name, in that supplier's spelling. "Mandarine rot
+   italienisch" minus rot and italienisch is "Mandarine"; so is "Grüne
+   Mandarine" minus Grüne. Nothing is added and nothing is translated: this
+   only removes words the data already says are a variety, and a bottle with
+   no variety comes back exactly as it was printed.
+
+   A word counts as the variety when it folds to the variety's own value, or to
+   that value plus up to two letters — German inflects its adjectives, so one
+   shop's "grün" is another's "Grüne", and both are the same colour. Two
+   letters and no more, so "Dillkraut" never loses itself to a `part` of
+   "Kraut": that is a compound, not an inflection. */
+function isVarietyWord(folded, id) {
+  if (folded === id) return true;
+  return folded.indexOf(id) === 0 && folded.length - id.length <= 2;
+}
+function strippedName(oil) {
+  var vs = varietyOf(oil), name = oil.de || '';
+  if (!vs.length) return name;
+  var words = name.replace(/,/g, ' ').split(/\s+/).filter(Boolean);
+  var keep = [];
+  for (var w = 0; w < words.length; w++) {
+    var folded = fold(words[w]), drop = false;
+    for (var i = 0; i < vs.length; i++) if (isVarietyWord(folded, vs[i].id)) drop = true;
+    if (!drop) keep.push(words[w]);
+  }
+  return keep.length ? keep.join(' ') : name;
+}
+
+/* Plants: the owner picks "Mandarine", not which of the five bottles that say
+   Mandarine on them. What gathers them is the `plant` slug declared on each
+   bottle in src/data/ — not a rule applied to the name. A declared key is the
+   one thing that survives "Grüne Mandarine", "Mandarine, gelb" and "Mandarine
+   rot italienisch" being the same plant under three shops' spellings, which no
+   amount of splitting at the spaces ever managed; and because it sits in the
+   data next to the name it re-reads, it can be checked a line at a time. It
+   is a *reading* of what the suppliers wrote, and sources/open-questions.md
+   says so.
+
+   A Mischung carries no `plant` and never joins one — a Mischung is an entry,
+   not an oil (§4), which is why RBM's Mischung Jasmin Mix sits beside the
+   Jasmin plant rather than inside it. A custom oil is already exactly what
+   someone meant to write down, so it never joins one either. A slug only one
+   bottle uses is not a plant; it is that oil.
+
+   The plant id is `art:` plus the slug — a fourth id prefix alongside `own:`,
+   `rbm:` and `pur:`, and like them the only thing that ever tells the app what
+   kind of entry it is looking at. */
 function buildPlants() {
   var groups = {}, order = [], i, k;
   for (i = 0; i < CATALOGUE.length; i++) {
     var o = CATALOGUE[i];
-    if (o.blend) continue;                    /* a Mischung is an entry, not an oil — §4 */
-    var key = nameParts(o).key;
+    if (o.blend || !o.plant) continue;        /* a Mischung is an entry, not an oil — §4 */
+    var key = o.plant;
     if (!groups[key]) { groups[key] = []; order.push(key); }
     groups[key].push(o);
   }
@@ -96,20 +153,73 @@ function buildPlants() {
   return { plants: plants, byBottle: byBottle };
 }
 
+/* Agreement, counted only over the bottles that actually say something.
+
+   Silence is not disagreement. Purelia publishes no scent group, no note and
+   no botanical name for its Professional line, so a Purelia bottle joining a
+   plant must not be able to wipe out what RBM does publish about it — it has
+   no opinion to be at odds with. Three answers come back:
+
+     agreed   every bottle that states a value states the same one
+     none     nobody states one at all
+     split    two bottles state different ones, and that is the fact
+
+   Only a split empties the field and records both sides. Nothing is averaged,
+   nothing is voted on, and the longer range never wins (§4). */
+function consensus(list, valueOf) {
+  var stated = [], i;
+  for (i = 0; i < list.length; i++) {
+    var v = valueOf(list[i]);
+    if (v === null || v === undefined || v === '') continue;
+    stated.push(v);
+  }
+  if (!stated.length) return { state: 'none', value: null };
+  for (i = 1; i < stated.length; i++) {
+    if (stated[i] !== stated[0]) return { state: 'split', value: null };
+  }
+  return { state: 'agreed', value: stated[0] };
+}
+
+/* One row per bottle, for a field its bottles do not agree on. `value` is the
+   id the code reasons with and `label` is the word that supplier actually
+   printed — `label` is the one that goes on a screen (§4). A bottle that says
+   nothing gets a row too, saying so: "Purelia sagt nichts dazu" is a different
+   sentence from "Purelia sagt Herznote", and both are worth reading. */
+function splitRows(list, valueOf, labelOf) {
+  return list.map(function (o) {
+    var v = valueOf(o);
+    return {
+      supplier: o.supplier, de: o.de, id: o.id,
+      value: (v === '' || v === undefined) ? null : v,
+      label: v ? labelOf(v, o) : '',
+    };
+  });
+}
+
 function buildPlant(key, list) {
   var i;
 
-  /* The label follows the tie-break families() already uses for familyDe:
-     the spelling most of the bottles carry, decided by count rather than by
-     whichever happens to sort first — otherwise the label could change its
-     wording whenever the catalogue is re-sorted, which is a fact about
-     nothing. */
-  var de = nameParts(list[0]).base, deCount = {};
-  for (i = 0; i < list.length; i++) {
-    var base = nameParts(list[i]).base;
-    deCount[base] = (deCount[base] || 0) + 1;
-    if (deCount[base] > (deCount[de] || 0)) de = base;
+  /* The name the plant goes by: the bottles' own names with their declared
+     variety taken back out, and the spelling most of them carry when those
+     still differ — decided by count, then by length, so the label cannot
+     change its wording just because the catalogue was re-sorted.
+
+     A bottle may override that with `plantDe`, and it is there for the handful
+     of plants where counting picks something silly: Aromen writes "Steranis"
+     twice and RBM and Purelia write "Sternanis" once each, so the count is
+     tied and the shorter word — the typo — would win. The override is a name
+     for the plant, never a correction of what the shop printed: `de` on that
+     bottle still says Steranis, because that is what is on the label. */
+  var declared = null;
+  for (i = 0; i < list.length; i++) if (list[i].plantDe) { declared = list[i].plantDe; break; }
+  var stripped = list.map(strippedName), deCount = {};
+  for (i = 0; i < stripped.length; i++) deCount[stripped[i]] = (deCount[stripped[i]] || 0) + 1;
+  var de = stripped[0];
+  for (i = 0; i < stripped.length; i++) {
+    var n = deCount[stripped[i]], best = deCount[de];
+    if (n > best || (n === best && stripped[i].length < de.length)) de = stripped[i];
   }
+  if (declared) de = declared;
 
   var suppliers = [], seenSup = {};
   for (i = 0; i < list.length; i++) {
@@ -118,67 +228,73 @@ function buildPlant(key, list) {
     seenSup[s] = true; suppliers.push(s);
   }
 
-  /* The exact dedupe roundBlock()'s Variante chips already do in
-     src/ui/entry.js: fold each word, drop anything that folds to under two
-     characters, keep the first spelling seen. A plant's variants are what
-     that chip row would offer, computed once here instead of on every
-     keystroke. */
+  /* What the chips under a chosen oil offer: only what the bottles declare.
+     Reading the leftover words of a name would put a shop's own typo on a chip
+     — Aromen writes "Steranis", and next to a plant called Sternanis that word
+     is not a variety, it is a misspelling. A bottle with no `variety` is a
+     bottle its shop sells in one version, and it offers no chip at all.
+
+     Deduped by folded value, first spelling seen wins, anything under two
+     characters dropped; ordered by what kind of variety it is, so the colours
+     sit together and the countries sit together rather than in whatever order
+     the shelf happened to be walked. */
   var variants = [], seenVar = {};
-  for (i = 0; i < list.length; i++) {
-    var words = nameParts(list[i]).words;
-    for (var w = 0; w < words.length; w++) {
-      var word = words[w], vk = fold(word);
-      if (vk.length < 2 || seenVar[vk]) continue;
-      seenVar[vk] = true; variants.push({ id: vk, label: word });
-    }
-  }
-
-  /* An oil can lead with two notes ("top-to-heart"); only the first is what
-     it is counted as anywhere in the app — leadNote() in blend.js decides
-     that. blend.js imports catalog.js, not the other way round (§3), so
-     importing it here would invert the dependency graph; notes[0] is exactly
-     what leadNote() reads, so it is read directly instead. */
-  var leads = [], notesAgree = true;
-  for (i = 0; i < list.length; i++) {
-    leads.push((list[i].notes && list[i].notes.length) ? list[i].notes[0] : null);
-    if (leads[i] !== leads[0]) notesAgree = false;
-  }
-  var estimated = false;
-  if (notesAgree) for (i = 0; i < list.length; i++) if (list[i].noteEstimated) estimated = true;
-
-  var familyAgree = true;
-  for (i = 1; i < list.length; i++) if (list[i].family !== list[0].family) familyAgree = false;
-  var familyDe = list[0].familyDe, famCount = {};
-  if (familyAgree) {
+  for (var vk = 0; vk < VARIETY_KEYS.length; vk++) {
     for (i = 0; i < list.length; i++) {
-      famCount[list[i].familyDe] = (famCount[list[i].familyDe] || 0) + 1;
-      if (famCount[list[i].familyDe] > (famCount[familyDe] || 0)) familyDe = list[i].familyDe;
+      var vs = varietyOf(list[i]);
+      for (var v = 0; v < vs.length; v++) {
+        if (vs[v].kind !== VARIETY_KEYS[vk]) continue;
+        if (vs[v].id.length < 2 || seenVar[vs[v].id]) continue;
+        seenVar[vs[v].id] = true;
+        variants.push({ id: vs[v].id, label: vs[v].label, kind: vs[v].kind });
+      }
     }
   }
 
-  var latinAgree = true;
-  for (i = 1; i < list.length; i++) if (list[i].latin !== list[0].latin) latinAgree = false;
+  /* An oil can lead with two notes ("top-to-heart"); only the first is what it
+     is counted as anywhere in the app — leadNote() in blend.js decides that.
+     blend.js imports catalog.js, not the other way round (§3), so importing it
+     here would invert the dependency graph; notes[0] is exactly what
+     leadNote() reads, so it is read directly instead. */
+  function leadOf(o) { return (o.notes && o.notes.length) ? o.notes[0] : null; }
+  var note = consensus(list, leadOf);
+  var estimated = false;
+  if (note.state === 'agreed') {
+    for (i = 0; i < list.length; i++) if (list[i].noteEstimated) estimated = true;
+  }
 
-  /* Both sides of a disagreement, one row per bottle. `value` is the id the
-     rest of the app reasons with; `label` is the word that supplier actually
-     printed, and it is the one to put on a screen — Aromen's Kampfer is
-     "Frisch" and RBM's is "Kräuter", where `value` would say Fresh and
-     Herbal, which is this app's English shorthand and nobody's own words. */
+  var family = consensus(list, function (o) { return o.family; });
+  var familyDe = '';
+  if (family.state === 'agreed') {
+    /* The two shops write the same group differently — Aromen's Holzig is
+       RBM's Hölzer — so the German label is the one more bottles carry. */
+    var famCount = {};
+    for (i = 0; i < list.length; i++) {
+      var fd = list[i].familyDe;
+      if (!fd) continue;
+      famCount[fd] = (famCount[fd] || 0) + 1;
+      if (famCount[fd] > (famCount[familyDe] || 0)) familyDe = fd;
+    }
+  }
+  var latin = consensus(list, function (o) { return o.latin; });
+
   var split = {};
-  if (!notesAgree) split.note = list.map(function (o, idx) {
-    return { supplier: o.supplier, de: o.de, value: leads[idx], label: noteName(leads[idx] || '') };
-  });
-  if (!familyAgree) split.family = list.map(function (o) {
-    return { supplier: o.supplier, de: o.de, value: o.family, label: o.familyDe };
-  });
-  if (!latinAgree) split.latin = list.map(function (o) {
-    return { supplier: o.supplier, de: o.de, value: o.latin, label: o.latin };
-  });
+  if (note.state === 'split') split.note = splitRows(list, leadOf, function (v) { return noteName(v); });
+  if (family.state === 'split') split.family = splitRows(list, function (o) { return o.family; },
+    function (v, o) { return o.familyDe || v; });
+  if (latin.state === 'split') split.latin = splitRows(list, function (o) { return o.latin; },
+    function (v) { return v; });
 
   var plant = {
-    id: 'art:' + key.replace(/ /g, '-'),
+    id: 'art:' + key,
     de: de,
-    plant: true,
+    /* `isPlant` marks the entry; `plant` carries the same slug its bottles
+       carry, so plantOf(x).plant answers "which plant is this" for a bottle
+       and for a plant alike. Two separate keys because a bottle's `plant` is a
+       string and truthy: one key doing both jobs made every bottle look like a
+       plant. */
+    isPlant: true,
+    plant: key,
     bottles: list,
     custom: false,
     code: '',
@@ -186,16 +302,15 @@ function buildPlant(key, list) {
     supplier: '',
     suppliers: suppliers,
     variants: variants,
-    /* Agreeing that there is no note is still no note. Every single oil has
-       one today, so this never fires — but a supplier who ships one without,
-       the way RBM already does for its Mischungen, would otherwise give the
-       plant a notes array holding nothing, which every reader would count as
-       a note it does not have. */
-    notes: (notesAgree && leads[0]) ? [leads[0]] : [],
+    /* Agreeing that there is no note is still no note. A range that ships
+       without one — Purelia's whole Professional line does — would otherwise
+       give the plant a notes array holding nothing, which every reader would
+       count as a note it does not have. */
+    notes: note.value ? [note.value] : [],
     noteEstimated: estimated,
-    family: familyAgree ? list[0].family : '',
-    familyDe: familyAgree ? familyDe : '',
-    latin: latinAgree ? list[0].latin : '',
+    family: family.value || '',
+    familyDe: family.value ? familyDe : '',
+    latin: latin.value || '',
   };
   if (Object.keys(split).length) plant.split = split;
   return plant;
@@ -204,10 +319,10 @@ function buildPlant(key, list) {
 var PLANT_LAYER = buildPlants();
 var BOTTLE_TO_PLANT = PLANT_LAYER.byBottle;
 
-/* The 172 entries all() walks and the lists show: every CATALOGUE bottle that
-   did not join a plant — an ungrouped single oil or a Mischung, unchanged —
-   plus the 45 plants, sorted the same way CATALOGUE is so a plant sits where
-   its name would put a bottle. Built once: neither CATALOGUE nor the grouping
+/* The entries all() walks and the lists show: every CATALOGUE bottle that did
+   not join a plant — an ungrouped single oil or a Mischung, unchanged — plus
+   the plants, sorted the same way CATALOGUE is so a plant sits where its name
+   would put a bottle. Built once: neither CATALOGUE nor the grouping
    depends on the custom oils, so there is nothing here for invalidate() to
    reach. */
 var BASE_ENTRIES = (function () {
@@ -298,8 +413,8 @@ export function all() {
 }
 export function invalidate() { cache = null; }
 
-/* The flat 239 (now 172-plant-shaped when walked through all(), but every
-   bottle is still here) plus the custom oils — what the oil page reads to
+/* Every bottle all three ranges sell (plant-shaped when walked through all(),
+   but each bottle is still here) plus the custom oils — what the oil page reads to
    show one concrete bottle, and what tools/smoke.mjs walks to check every
    field a bottle must have regardless of whether it also sits inside a
    plant. */
@@ -330,7 +445,7 @@ export function byId(id) {
 }
 
 /* The plant an oil or a bottle id belongs to — or the entry itself when it
-   was never grouped, so callers never need to branch on `.plant` before
+   was never grouped, so callers never need to branch on `.isPlant` before
    asking. Checked directly against the bottle→plant map first, and again
    after resolving through byId(), so a bottle passed by its old `wasId`
    still finds the plant it now lives in rather than the bare bottle. */
@@ -359,7 +474,7 @@ function uniqueList(arr) {
    leave empty. */
 export function familiesOf(entry) {
   if (!entry) return [];
-  if (entry.plant) {
+  if (entry.isPlant) {
     var out = [];
     for (var i = 0; i < entry.bottles.length; i++) out.push(entry.bottles[i].family);
     return uniqueList(out);
@@ -368,7 +483,7 @@ export function familiesOf(entry) {
 }
 export function suppliersOf(entry) {
   if (!entry) return [];
-  if (entry.plant) {
+  if (entry.isPlant) {
     var out = [];
     for (var i = 0; i < entry.bottles.length; i++) out.push(entry.bottles[i].supplier);
     return uniqueList(out);
@@ -377,7 +492,7 @@ export function suppliersOf(entry) {
 }
 export function notesOf(entry) {
   if (!entry) return [];
-  if (entry.plant) {
+  if (entry.isPlant) {
     var out = [], seen = {};
     for (var i = 0; i < entry.bottles.length; i++) {
       var ns = entry.bottles[i].notes || [];
@@ -388,10 +503,74 @@ export function notesOf(entry) {
   return entry.notes || [];
 }
 
+/* Everything the data is at odds with itself about, or silent on — what the
+   Daten prüfen screen lists and turns into a prompt.
+
+   It resolves nothing. Three shops describe the same plant in their own words
+   and sometimes those words disagree: Aromen calls Kampfer a Kopfnote and RBM
+   calls it a Herznote, and that disagreement is the fact (§4). What this does
+   is make every one of them countable and readable in one place, so the answer
+   can be gone and looked for at the source rather than decided here.
+
+   `kind` is 'note', 'family' or 'latin' for a disagreement, and 'missing' for
+   a field a supplier simply never published. A missing field is not a fault —
+   Purelia publishes no note for anything in its Professional line — it is
+   listed so that nobody later fills it in from memory. */
+export function inconsistencies() {
+  var out = [], i, j;
+  var plants = PLANT_LAYER.plants;
+  for (i = 0; i < plants.length; i++) {
+    var p = plants[i];
+    if (!p.split) continue;
+    if (p.split.note) out.push(issue('note', p, p.split.note, 'Duftnote'));
+    if (p.split.family) out.push(issue('family', p, p.split.family, 'Duftgruppe'));
+    if (p.split.latin) out.push(issue('latin', p, p.split.latin, 'botanischer Name'));
+  }
+  var wanted = [
+    { field: 'family', de: 'Duftgruppe', has: function (o) { return !!o.family; } },
+    { field: 'note', de: 'Duftnote', has: function (o) { return !!(o.notes && o.notes.length); } },
+    { field: 'latin', de: 'botanischer Name', has: function (o) { return !!o.latin; } },
+    { field: 'url', de: 'Produktseite', has: function (o) { return !!o.url; } },
+  ];
+  for (i = 0; i < CATALOGUE.length; i++) {
+    var o = CATALOGUE[i];
+    for (j = 0; j < wanted.length; j++) {
+      var w = wanted[j];
+      /* A Mischung has no note, no botanical name and no scent family on
+         purpose, and nobody publishes one — listing all of them every time
+         would bury the rows that can actually be answered. */
+      if (o.blend && w.field !== 'url') continue;
+      if (w.has(o)) continue;
+      out.push({
+        kind: 'missing', field: w.field,
+        plantId: o.plant ? 'art:' + o.plant : o.id,
+        de: o.de,
+        rows: [{ supplier: o.supplier, de: o.de, id: o.id, value: null, label: '' }],
+        text: o.supplier + ' gibt für „' + o.de + '“ keine ' + w.de + ' an.',
+      });
+    }
+  }
+  return out;
+}
+function issue(kind, plant, rows, de) {
+  var said = [], i;
+  for (i = 0; i < rows.length; i++) {
+    said.push(rows[i].supplier + ' sagt ' + (rows[i].label || 'nichts dazu'));
+  }
+  return {
+    kind: kind, field: kind, plantId: plant.id, de: plant.de, rows: rows,
+    text: 'Bei „' + plant.de + '“ ist die ' + de + ' uneinheitlich: ' + said.join(', ') + '.',
+  };
+}
+
 /* Everything one oil can be found by, folded once and kept on the oil.
    Fields are kept separate so a hit on the name can outrank a hit on the
    description — which matters, because the descriptions mention half the
    catalogue by name.
+
+   `aka` rides along with the German name at the same weight, because that is
+   what it is: another spelling of the word you would type. It is a search aid
+   and never a fact about the oil, so nothing shows it anywhere.
 
    RBM's `goesWith` is the one field on an oil that is deliberately not in
    here. It is a list of other oils' names, so indexing it would put every oil
@@ -402,9 +581,9 @@ export function notesOf(entry) {
    haystack already leaves goesWith and parts out, so the union does too
    without anything extra to remember here. */
 function haystack(o) {
-  if (o.plant) return plantHaystack(o);
+  if (o.isPlant) return plantHaystack(o);
   return {
-    de: fold(o.de),
+    de: fold(o.de) + (o.aka && o.aka.length ? ' ' + fold(o.aka.join(' ')) : ''),
     en: fold(o.en),
     latin: fold(o.latin),
     fam: fold((o.family || '') + ' ' + (o.familyDe || '')),
@@ -417,7 +596,11 @@ function haystack(o) {
   };
 }
 function plantHaystack(p) {
-  var merged = { de: '', en: '', latin: '', fam: '', note: '', good: '', char: '', code: '', supplier: '', about: '' };
+  /* The plant's own name goes in first, and that ordering is the whole
+     ranking: typing "minze" has to put Minze above Bergamottminze, and it only
+     does so if "minze" starts the field rather than sitting somewhere inside
+     the run of its five bottles' names. */
+  var merged = { de: fold(p.de), en: '', latin: '', fam: '', note: '', good: '', char: '', code: '', supplier: '', about: '' };
   for (var i = 0; i < p.bottles.length; i++) {
     var h = haystack(p.bottles[i]);
     for (var key in merged) merged[key] = (merged[key] ? merged[key] + ' ' : '') + h[key];
