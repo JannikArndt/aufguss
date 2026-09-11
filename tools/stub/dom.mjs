@@ -75,6 +75,9 @@ class Node {
   click() { this.dispatch('click'); }
   focus() { this.dispatch('focus'); }
   blur() { this.dispatch('blur'); }
+  /* Nothing here has real layout, so a zeroed rect is all parts.js needs to
+     see for its guards ("was this measurable at all?") to behave. */
+  getBoundingClientRect() { return { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 }; }
 
   get textContent() {
     if (this.tagName === '#TEXT') return this._text;
@@ -115,6 +118,8 @@ class Style {
   get width() { return this._props.width || ''; }
   set display(v) { this._props.display = v; }
   get display() { return this._props.display || ''; }
+  set maxHeight(v) { this._props.maxHeight = v; }
+  get maxHeight() { return this._props.maxHeight || ''; }
   set marginBottom(v) { this._props.marginBottom = v; }
   get marginBottom() { return this._props.marginBottom || ''; }
   set textAlign(v) { this._props.textAlign = v; }
@@ -236,6 +241,12 @@ export function install(htmlPath) {
   const doc = {
     body: root,
     documentElement,
+    /* Nothing in this stub ever calls focus()/blur() on the app's behalf —
+       tools/smoke.mjs drives the app by calling its exported functions and
+       clicking buttons, not by moving real focus — so this stays null. It
+       exists so code that reads it (entry.js's focusout handler) doesn't
+       throw for want of the property. */
+    activeElement: null,
     /* The markup's own ids are in the map; anything the app creates and gives
        an id to has to be found by walking, because that is what a browser
        does and the app relies on it (#setCard and #lastTime are built at
@@ -271,6 +282,11 @@ export function install(htmlPath) {
     prompt: () => null,
     setTimeout, clearTimeout,
     URL: { createObjectURL: () => 'blob:stub', revokeObjectURL() {} },
+    /* No layout, so no real computed style — just enough that reading
+       --app-h off the root (parts.js's autocomplete sizing) doesn't throw;
+       an empty string fails the finite-number check the same way a missing
+       custom property would in a real browser. */
+    getComputedStyle: () => ({ getPropertyValue: () => '' }),
   };
 
   /* A hash that fires hashchange the way a browser does, since the whole

@@ -279,7 +279,7 @@ function roundBlock(r) {
   var oilAc = autocomplete(input, {
     find: function (q) {
       var chosen = entry.oils.map(function (x) { return x.oilId; });
-      var hits = search(q, { limit: 8, exclude: chosen });
+      var hits = search(q, { limit: 12, exclude: chosen });
       var rows = hits.map(function (o) {
         var reason = why(o, q);
         return {
@@ -438,6 +438,28 @@ function notesCard() {
 
   return card('Notiz', [ta, field('Wie gut', stars)]);
 }
+
+/* While a field on this screen has focus, the foot is dead weight — Fertig
+   and Zurück both just close the screen, and "‹ Zurück" in the head already
+   does that — so the class trades it for scroll room the oil suggestions can
+   use. A timeout on focusout, checked against where focus actually landed,
+   is what keeps tabbing between two fields (or tapping a suggestion, which
+   keeps focus on the input) from flickering the foot off and back on. */
+function wireTyping() {
+  var sc = $('scEntry');
+  function isField(t) { return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA'); }
+  sc.addEventListener('focusin', function (ev) {
+    if (isField(ev.target)) sc.className = 'screen typing';
+  });
+  sc.addEventListener('focusout', function () {
+    setTimeout(function () {
+      var a = document.activeElement;
+      if (!isField(a)) sc.className = 'screen';
+    }, 120);
+  });
+}
+
+export function wire() { wireTyping(); }
 
 export function currentId() { return entry ? entry.id : null; }
 export function removeCurrent() {

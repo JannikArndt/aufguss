@@ -175,6 +175,10 @@ export function autocomplete(input, opts) {
      document yet, and it is what the caller places. Reaching for
      input.parentNode instead only works when the field has already been built,
      which is never the order these screens are written in. */
+  /* Marks "a field whose results appear underneath it" — main.js reads this
+     to scroll the field to the top of .body instead of centring it, and to
+     know when the screen should give the list the rest of the space. */
+  input.className = (input.className ? input.className + ' ' : '') + 'ac-input';
   var wrap = el('div', 'ac');
   if (input.parentNode) input.parentNode.insertBefore(wrap, input);
   wrap.appendChild(input);
@@ -182,7 +186,11 @@ export function autocomplete(input, opts) {
   wrap.appendChild(list);
   var rows = [], sel = -1;
 
-  function close() { while (list.firstChild) list.removeChild(list.firstChild); rows = []; sel = -1; }
+  function close() {
+    while (list.firstChild) list.removeChild(list.firstChild);
+    rows = []; sel = -1;
+    list.style.maxHeight = '';
+  }
 
   function open() {
     close();
@@ -203,6 +211,20 @@ export function autocomplete(input, opts) {
       btn.addEventListener('click', function () { take(i); });
       list.appendChild(btn);
     });
+    /* The CSS max-height is a guess (46vh); the real number is however much
+       room is actually left below the field before the keyboard's edge, and
+       that is only knowable once the field has a position. Guarded all the
+       way through because the stub DOM this runs against in tests has none
+       of it. */
+    var box = input.getBoundingClientRect ? input.getBoundingClientRect() : null;
+    if (box) {
+      var appH = window.getComputedStyle
+        ? parseFloat(window.getComputedStyle(document.documentElement).getPropertyValue('--app-h'))
+        : NaN;
+      if (!isFinite(appH)) appH = window.innerHeight;
+      var avail = appH - box.bottom - 12;
+      if (avail > 160) list.style.maxHeight = avail + 'px';
+    }
     move(0);
   }
   function move(n) {

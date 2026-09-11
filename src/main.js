@@ -139,13 +139,18 @@ function fitHeight() {
 function nudgeFieldIntoView(ev) {
   var t = ev.target;
   if (!t || (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA')) return;
+  /* A field an autocomplete list hangs off (parts.js marks it 'ac-input')
+     goes to the top of .body instead of the middle — that puts the whole rest
+     of the screen below it, which is where the list needs the room. */
+  var toTop = (' ' + (t.className || '') + ' ').indexOf(' ac-input ') >= 0;
   setTimeout(function () {
-    if (t.scrollIntoView) t.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (t.scrollIntoView) t.scrollIntoView({ block: toTop ? 'start' : 'center', behavior: 'smooth' });
   }, 300);
 }
 
 function wire() {
   Journal.wire();
+  Entry.wire();
   Oils.wireList();
   Oils.wireOne();
 

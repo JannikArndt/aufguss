@@ -119,6 +119,14 @@ body { height: var(--app-h); overflow: hidden; }
 }
 .foot:empty { display: none; }
 
+/* While a field on the entry screen has focus, Fertig/Zurück are dead weight
+   (both just close the screen, and the head's ‹ Zurück already does that) —
+   trade the foot for scroll room, and pad .body so even the last Kugel's
+   field can reach the top of it. entry.js sets this class off a focus timer,
+   never straight from a tap, so it never lingers once focus moves off. */
+.screen.typing .foot { display: none; }
+.screen.typing .body { padding-bottom: calc(var(--app-h) * 0.72); }
+
 /* ── Tab bar ───────────────────────────────────────────────────────────── */
 .tabs {
   display: flex; border-top: 1px solid var(--line); background: var(--ground);
@@ -286,6 +294,9 @@ textarea { min-height: 84px; resize: vertical; }
 .ac-list {
   position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  /* 46vh is the fallback for when parts.js can't measure (the stub DOM, or a
+     field with no layout yet) — once open() runs it sets an inline max-height
+     to whatever space is actually left below the field. */
   max-height: 46vh; overflow-y: auto; box-shadow: 0 12px 30px rgba(0,0,0,.18);
 }
 .ac-list:empty { display: none; }

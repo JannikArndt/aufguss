@@ -295,3 +295,34 @@ Bäderland's three levels describe the **Aufguss** — how hot, how much steam, 
 long — not the oils. Nothing was found that maps a scent onto them, and the app
 does not pretend one: the intensity is recorded next to the oils and never used
 to filter them. If a pattern exists it will show up in the journal first.
+
+## Which part of an oil's name is the variant
+
+The oil search now groups two bottles of the same plant together and offers the
+difference between them as a chip — *Minze* with *chinesisch*, *indisch*,
+*japanisch* next to it; *Zitrone* with *Aromen* and *RBM*. Every word on a chip
+is lifted verbatim out of the oil's own German name or its `supplier` field, so
+nothing is invented. But **which** word is the plant and which is the variant is
+read off the string, not off a source: the first word is the plant, except after
+*Grüne*, *Grüner*, *Frischer* and *Ylang*, where it is the first two. Neither
+supplier publishes a separate field saying so.
+
+That rule is right for the current 239 entries — it was checked against all of
+them — and it will be wrong for something eventually. It reads *Petitgrain,
+Mandarine* as Petitgrain in the Mandarine variant, which is what Aromen's own
+name says and probably what a nose would say too, but it is a reading. It cuts
+*kalt gepresst* into two words, so *kalt* and *gepresst* are separate chips. And
+it keeps Aromen's *Cederholz* apart from RBM's *Cedernholz*, because §9 says the
+two ranges are not spell-checked against each other.
+
+Nothing downstream depends on the grouping: it narrows a list of search results
+and nothing else. No oil is merged, renamed, hidden or given a property it did
+not have, and an Aufguss still records the exact bottle by its own id.
+
+**What would settle it:** a field from either supplier naming the variant
+separately from the plant. Neither of the two field lists written down in
+`sources/oils.md` and `sources/oils-rbm.md` has one — Aromen publishes a name, a
+Duftgruppe and Gut-Für tags, RBM six labelled lines — so as far as this
+repository has looked, the variant only ever exists inside the name. Failing
+such a field, the list of exceptions grows by hand as new suppliers arrive, and
+this paragraph grows with it.
