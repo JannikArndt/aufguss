@@ -11,13 +11,13 @@
    that quietly throws away the Aufguss you just poured. The foot carries
    "Fertig", which only closes the screen. */
 
-import { $, el, clear, uid, todayISO, nearestHour, agoText, notice } from '../core/util.js';
+import { $, el, clear, uid, todayISO, nearestHour, agoText, notice, fold } from '../core/util.js';
 import { Store } from '../core/store.js';
-import { byId, search, why, customOil, invalidate, noteName, families } from '../core/catalog.js';
+import { byId, search, why, customOil, invalidate, noteName, families, nameParts } from '../core/catalog.js';
 import { THEMES, INTENSITIES } from '../data/themes.js';
 import { RATIOS, DOSAGE, pourOrder, balance, remarks, drops, leadNote } from '../core/blend.js';
 import { suggest, history } from '../core/suggest.js';
-import { oilRow, balanceBar, autocomplete, field, card, kellenOf, kellenIcon, noteGlyph } from './parts.js';
+import { oilRow, balanceBar, autocomplete, field, card, kellenOf, kellenIcon, noteGlyph, chipRow } from './parts.js';
 
 var entry = null;      /* the one being edited */
 var isNew = false;
@@ -264,6 +264,10 @@ function oilsCard() {
   return card('Öle', kids);
 }
 
+/* Which oils are already on this ball, so the search can leave them out and
+   the "add as own oil" row can find the right spot for them. */
+function chosenIds() { return entry.oils.map(function (x) { return x.oilId; }); }
+
 function roundBlock(r) {
   var oils = entry.oils.filter(function (x) { return x.round === r; })
     .map(function (x) { return byId(x.oilId); }).filter(Boolean);
@@ -272,14 +276,68 @@ function roundBlock(r) {
   var rows = el('div');
   ordered.forEach(function (oil) { rows.appendChild(setRow(oil)); });
 
+  /* When the hits share a name across a spelling ("Minze chinesisch" /
+     "indisch" / "japanisch") or a supplier ("Zitrone" from both Aromen and
+     RBM), the chips above the list let a tap narrow it — never a requirement,
+     the unfiltered list is what a fresh search always shows first. Both start
+     empty and reset the moment the search moves to a different name, so a
+     chip left over from "minze" cannot silently empty the results for
+     "zitrone". */
+  var selVariants = [], selSuppliers = [], selGroup = '';
+  var oilAc;
+
   var input = el('input');
   input.type = 'search';
   input.placeholder = oils.length ? 'Öl hinzufügen' : 'Öl suchen — Name, Latein, Duftgruppe';
   input.autocomplete = 'off';
-  var oilAc = autocomplete(input, {
+  oilAc = autocomplete(input, {
+    head: function (q) {
+      var hits = search(q, { limit: 40, exclude: chosenIds() });
+      if (!hits.length) return null;
+      var group = nameParts(hits[0]).key;
+      if (group !== selGroup) { selVariants = []; selSuppliers = []; selGroup = group; }
+
+      var variants = [], seenV = {};
+      hits.forEach(function (o) {
+        if (nameParts(o).key !== group) return;
+        nameParts(o).words.forEach(function (w) {
+          var k = fold(w);
+          if (k.length < 2 || seenV[k]) return;
+          seenV[k] = true; variants.push({ id: k, label: w });
+        });
+      });
+      var sups = [], seenS = {};
+      hits.forEach(function (o) {
+        if (!o.supplier || seenS[o.supplier]) return;
+        seenS[o.supplier] = true; sups.push({ id: o.supplier, label: o.supplier });
+      });
+      if (variants.length < 2 && sups.length < 2) return null;   /* one chip is not a choice */
+
+      var kids = [];
+      if (variants.length >= 2) {
+        kids.push(chipRow('Variante', variants,
+          function (id) { return selVariants.indexOf(id) >= 0; },
+          function (id) { toggleIn(selVariants, id); oilAc.refresh(); }));
+      }
+      if (sups.length >= 2) {
+        kids.push(chipRow('Anbieter', sups,
+          function (id) { return selSuppliers.indexOf(id) >= 0; },
+          function (id) { toggleIn(selSuppliers, id); oilAc.refresh(); }));
+      }
+      return el('div', 'ac-head', kids);
+    },
     find: function (q) {
-      var chosen = entry.oils.map(function (x) { return x.oilId; });
-      var hits = search(q, { limit: 12, exclude: chosen });
+      var hits = search(q, { limit: 12, exclude: chosenIds() });
+      if (selVariants.length) {
+        hits = hits.filter(function (o) {
+          var words = nameParts(o).words.map(fold);
+          for (var i = 0; i < selVariants.length; i++) if (words.indexOf(selVariants[i]) < 0) return false;
+          return true;
+        });
+      }
+      if (selSuppliers.length) {
+        hits = hits.filter(function (o) { return selSuppliers.indexOf(o.supplier) >= 0; });
+      }
       var rows = hits.map(function (o) {
         var reason = why(o, q);
         return {
@@ -294,6 +352,7 @@ function roundBlock(r) {
       return rows;
     },
     onPick: function (v) {
+      selVariants = []; selSuppliers = []; selGroup = '';
       if (v.newOil) { addCustom(v.newOil, r); return; }
       addOil(v.id, r);
       input.value = '';
@@ -305,6 +364,10 @@ function roundBlock(r) {
     rows,
     field(null, oilAc.node),
   ]);
+}
+function toggleIn(arr, v) {
+  var i = arr.indexOf(v);
+  if (i < 0) arr.push(v); else arr.splice(i, 1);
 }
 
 function setRow(oil) {

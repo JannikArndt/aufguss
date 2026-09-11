@@ -25,6 +25,27 @@ var noteDe = {};
 for (var i = 0; i < NOTES.length; i++) noteDe[NOTES[i].id] = NOTES[i].de;
 export function noteName(id) { return noteDe[id] || id; }
 
+/* Re-cuts a name the supplier already wrote, so two bottles of the same plant
+   ("Minze chinesisch", "Minze indisch") can be found next to each other in
+   the oil search. It is bookkeeping on the supplier's own string — never a
+   claim that two oils are the same, and it never invents a word: base and
+   words are exactly what `de` already said, just split at the spaces.
+
+   The base is the first word, except for four first words that are only part
+   of the name: "grüne", "grüner", "frischer" and "ylang" (folded — fold()
+   turns "ü" into "ue", so the keys below read "gruene"/"gruener", not
+   "grune"/"gruner"). Without that exception "Grüne Mandarine" and "Grüne
+   Minze" would land in one nonsense "Grüne" group, and "Ylang ylang III"
+   would split mid-name. Checked against the current 239: these four are the
+   only collisions. */
+var TWO_WORD_BASE = { gruene: true, gruener: true, frischer: true, ylang: true };
+export function nameParts(oil) {
+  var words = (oil.de || '').replace(/,/g, '').split(/\s+/).filter(Boolean);
+  var n = TWO_WORD_BASE[fold(words[0] || '')] ? 2 : 1;
+  var base = words.slice(0, n).join(' ');
+  return { base: base, key: fold(base), words: words.slice(n) };
+}
+
 /* Both ranges, in one list, sorted the way a German-speaking finger scrolls.
    Sorting here rather than in either data file means neither has to know the
    other exists. */

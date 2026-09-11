@@ -174,6 +174,24 @@ eq('catalogue: and the exact id still wins', cat.byId('m4-bio-grune-minze').code
 }
 
 {
+  /* nameParts re-cuts a name the supplier already wrote — it must never say a
+     word the oil's own `de` (or, for a supplier chip, its own `supplier`)
+     does not already say. */
+  const bad = [];
+  for (const o of ALL_OILS) {
+    const np = cat.nameParts(o);
+    if (!o.de.includes(np.base)) bad.push('base not in de: ' + np.base + ' / ' + o.de);
+    for (const w of np.words) if (!o.de.includes(w)) bad.push('word not in de: ' + w + ' / ' + o.de);
+  }
+  ok('catalogue: nameParts invents no word — base and words come straight off the name',
+    !bad.length, bad.slice(0, 5).join('; '));
+  eq('catalogue: "Minze chinesisch" splits into a shared base and its variant',
+    JSON.stringify(cat.nameParts({ de: 'Minze chinesisch' })), JSON.stringify({ base: 'Minze', key: 'minze', words: ['chinesisch'] }));
+  eq('catalogue: "Grüne Minze" keeps its two-word base, so it does not collide with Grüne Mandarine',
+    cat.nameParts({ de: 'Grüne Minze' }).base, 'Grüne Minze');
+}
+
+{
   const set = ['Zitrone', 'Belgian lavender', 'Sandelholz'].map((n) => cat.search(n, { limit: 1 })[0]);
   eq('blend: poured base first', blend.pourOrder(set).map((o) => o.de).join(' '),
     'Sandelholz Belgian lavender Zitrone');
@@ -328,6 +346,44 @@ ok('done: the row names the theme and the oils',
   type(t, 'Auffrischende');
   findAll('.ac-item', $('entryBody'))[0].click();
   ok('last time: nothing shown when there is no last time', $('lastTime').childNodes.length === 0);
+  main.go('#/');
+}
+
+/* Oil search: when the hits offer a choice, two rows of chips sit above the
+   list — never a requirement, since the unfiltered list is what a fresh
+   search always shows first. */
+function chipLabels(head, label) {
+  for (const wrap of head.childNodes) {
+    if (wrap.childNodes[0] && wrap.childNodes[0].textContent === label) {
+      return wrap.childNodes[1].childNodes.map((c) => c.textContent);
+    }
+  }
+  return null;
+}
+{
+  main.go('#/neu');
+  const box = findAll('input', $('entryBody')).filter((n) => n.type === 'search').pop();
+  type(box, 'minze');
+  const head = find('.ac-head', $('entryBody'));
+  ok('search: "minze" offers a row of variants', !!head);
+  const variants = head && chipLabels(head, 'Variante');
+  ok('search: and its chips are chinesisch, indisch and japanisch', variants &&
+    variants.slice().sort().join(', ') === 'chinesisch, indisch, japanisch');
+
+  const before = findAll('.ac-item', $('entryBody')).length;
+  const chip = findAll('.ac-head .chip', $('entryBody')).find((c) => c.textContent === 'chinesisch');
+  ok('search: the variant chip is there to tap', !!chip);
+  chip.click();
+  const narrowed = findAll('.ac-item', $('entryBody')).length;
+  ok('search: tapping it narrows the list', narrowed > 0 && narrowed < before);
+  chip.click();
+  eq('search: tapping it again restores the list', findAll('.ac-item', $('entryBody')).length, before);
+
+  type(box, 'zitrone');
+  const head2 = find('.ac-head', $('entryBody'));
+  const suppliers = head2 && chipLabels(head2, 'Anbieter');
+  ok('search: "zitrone" offers an Anbieter row with both suppliers', suppliers &&
+    suppliers.includes('Aromen') && suppliers.includes('RBM'));
   main.go('#/');
 }
 

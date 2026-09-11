@@ -9,6 +9,15 @@
 
    Write each note for someone who has never read the code. */
 export var RELEASES = [
+  { v: '0.6.0', date: '2026-09-11',
+    text: 'Die Ölsuche im Aufguss hat jetzt Platz. Fertig geht zur Seite, ' +
+          'solange du tippst — Zurück oben macht dasselbe —, das Suchfeld ' +
+          'rutscht nach oben, und die Vorschläge bekommen alles darunter statt ' +
+          'zwei Zeilen über der Tastatur. Zwölf Treffer statt acht. Und wo es ' +
+          'etwas zu wählen gibt, stehen über der Liste Knöpfe dafür: bei ' +
+          '„Minze“ chinesisch, indisch, japanisch, bei „Zitrone“ Aromen und ' +
+          'RBM. Tippen grenzt ein, nochmal tippen nimmt es zurück, und wer ' +
+          'nichts antippt, sieht wie immer alles.' },
   { v: '0.5.1', date: '2026-09-10',
     text: 'Aromen hat sein Sortiment geändert: Kampfer gibt es dort wieder, und ' +
           'aus „Krauseminze / Grüne Minze“ sind zwei Öle geworden. Beides ist ' +

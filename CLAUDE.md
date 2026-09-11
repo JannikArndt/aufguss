@@ -30,6 +30,14 @@ Three things follow:
 - **The sources are re-checkable.** `node tools/check-sources.mjs` goes back and
   looks. It is not run by CI — it would fail on a bad day at Bäderland rather
   than a bad commit — but it is the thing to run before trusting the data.
+- **Restructuring is not inventing.** The rule bans new oils, new effects and
+  new claims. It does not ban carefully re-cutting what a supplier already
+  wrote: reading "Minze" out of "Minze chinesisch" so the three mints can be
+  found together invents no word, asserts nothing about the oil, and changes no
+  entry — the id an Aufguss recorded still names the same bottle. Do it where
+  it makes the app easier to use, keep the supplier's own spelling, and write
+  the reading down in `sources/open-questions.md` the way `nameParts()` is,
+  because a reading can be wrong even when every word in it is sourced.
 
 And the second half of the same rule: **it is not a science.** Aufguss is a
 craft with a lot of taste in it. The app suggests, reports and remembers; it
@@ -182,7 +190,7 @@ the source file is brought along.
 node tools/smoke.mjs
 ```
 
-141 checks. It loads the whole app — `src/main.js` and everything under it —
+150 checks. It loads the whole app — `src/main.js` and everything under it —
 against the stub DOM in `tools/stub/`, and drives it the way a finger does: open
 a new Aufguss, pick a theme off the plan, type three oil names in three
 different languages, read what the screen says back, tap Fertig, reopen it,

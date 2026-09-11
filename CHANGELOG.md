@@ -7,6 +7,30 @@ cache-first, so the change lands on the next cold start, unless it is taken
 early from Mehr → **Update jetzt laden**. Mehr also shows the last few
 entries below this list in short; this file is the whole history.
 
+## 0.6.0 — 2026-09-11
+
+Typing an oil name left about two suggestions visible. The field sat in the
+middle of the screen, the keyboard took the bottom half, and the Fertig button
+held a strip in between that the list could not use.
+
+- **Fertig steps out of the way while you type.** It only ever closed the
+  screen, and the header's Zurück does the same thing, so it is not worth the
+  strip it stood on. It comes back the moment no field has focus.
+- **The search field goes to the top, not the middle.** Everything below it is
+  then list. The list also measures the space it actually has rather than
+  taking 46 % of the window height, which is a number iOS stops telling the
+  truth about the moment the keyboard is up.
+- **Twelve hits instead of eight**, now that there is somewhere to put them.
+- **Chips for the choice, where there is one.** Search for *Minze* and
+  *chinesisch*, *indisch*, *japanisch* sit above the list; search for *Zitrone*
+  and *Aromen* and *RBM* do. A tap narrows, another tap gives it back, and not
+  tapping shows everything — nobody is made to pick a variant to find an oil.
+  Every word on a chip is lifted out of the oil's own name or its supplier
+  field; `nameParts()` in `src/core/catalog.js` is the whole of the rule, and
+  which part of a name it reads as the plant is written down in
+  `sources/open-questions.md`, because that part is a reading rather than a
+  source.
+
 ## 0.5.1 — 2026-09-10
 
 Aromen's range had moved since it was read on 8 September.

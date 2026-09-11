@@ -184,11 +184,11 @@ export function autocomplete(input, opts) {
   wrap.appendChild(input);
   var list = el('div', 'ac-list');
   wrap.appendChild(list);
-  var rows = [], sel = -1;
+  var rows = [], rowNodes = [], sel = -1;
 
   function close() {
     while (list.firstChild) list.removeChild(list.firstChild);
-    rows = []; sel = -1;
+    rows = []; rowNodes = []; sel = -1;
     list.style.maxHeight = '';
   }
 
@@ -196,6 +196,13 @@ export function autocomplete(input, opts) {
     close();
     var q = input.value.trim();
     if (q.length < (o.minChars || 2)) return;
+    /* The filter chips, when the search has a choice worth offering — built
+       first so they sit above the rows rather than after them. Returning null
+       here means the query did not earn a choice, and nothing is added. */
+    if (o.head) {
+      var head = o.head(q);
+      if (head) list.appendChild(head);
+    }
     var found = o.find(q) || [];
     for (var i = 0; i < found.length; i++) rows.push(found[i]);
     rows.forEach(function (r, i) {
@@ -210,6 +217,7 @@ export function autocomplete(input, opts) {
       btn.addEventListener('mousedown', function (ev) { ev.preventDefault(); });
       btn.addEventListener('click', function () { take(i); });
       list.appendChild(btn);
+      rowNodes.push(btn);
     });
     /* The CSS max-height is a guess (46vh); the real number is however much
        room is actually left below the field before the keyboard's edge, and
@@ -227,11 +235,12 @@ export function autocomplete(input, opts) {
     }
     move(0);
   }
+  /* Off `rowNodes`, not every child of the list — the filter chips `head`
+     adds are not a row to land on with the arrow keys. */
   function move(n) {
-    var kids = list.childNodes;
-    if (!kids.length) { sel = -1; return; }
-    sel = (n + kids.length) % kids.length;
-    for (var i = 0; i < kids.length; i++) kids[i].className = 'ac-item' + (i === sel ? ' sel' : '');
+    if (!rowNodes.length) { sel = -1; return; }
+    sel = (n + rowNodes.length) % rowNodes.length;
+    for (var i = 0; i < rowNodes.length; i++) rowNodes[i].className = 'ac-item' + (i === sel ? ' sel' : '');
   }
   function take(i) {
     if (i < 0 || i >= rows.length) return;
@@ -279,6 +288,24 @@ function highlight(text, query) {
   return el('span', null, [
     text.slice(0, from), el('mark', null, text.slice(from, to)), text.slice(to),
   ]);
+}
+
+/* A label and a row of chips under it, scrolling sideways the same way the
+   Öle screen's filters do — the same two classes, so a chip looks like a chip
+   everywhere it shows up. `items` is `[{ id, label }]`; `isOn` and `onToggle`
+   work off `id`, `label` is only ever shown. */
+export function chipRow(label, items, isOn, onToggle) {
+  var row = el('div', 'chiprow', items.map(function (it) {
+    var c = el('button', 'chip' + (isOn(it.id) ? ' on' : ''), it.label);
+    c.type = 'button';
+    /* Same trick the suggestion rows use: without it the tap takes the focus
+       off the field, the field's blur closes the list, and the chip you just
+       tapped takes the list with it. A filter is not somewhere to type. */
+    c.addEventListener('mousedown', function (ev) { ev.preventDefault(); });
+    c.addEventListener('click', function () { onToggle(it.id); });
+    return c;
+  }));
+  return el('div', null, [el('div', 'tiny', label), row]);
 }
 
 /* A labelled field. `input` is built by the caller so it can keep a handle. */

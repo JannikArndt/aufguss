@@ -300,6 +300,13 @@ textarea { min-height: 84px; resize: vertical; }
   max-height: 46vh; overflow-y: auto; box-shadow: 0 12px 30px rgba(0,0,0,.18);
 }
 .ac-list:empty { display: none; }
+/* The variant/supplier chips, when the hits offer a choice — sticky so the
+   choice stays reachable while the list under it scrolls. */
+.ac-head {
+  position: sticky; top: 0; z-index: 1; background: var(--card);
+  border-bottom: 1px solid var(--line); padding: 8px 12px 2px;
+}
+.ac-head .chiprow { margin-right: 0; }
 .ac-item {
   display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
   background: none; border: 0; border-bottom: 1px solid var(--line);

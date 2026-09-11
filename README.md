@@ -111,7 +111,7 @@ There is nothing to build. It is static files, served as committed.
 
 ```bash
 python3 -m http.server 8000      # then open http://localhost:8000
-node tools/smoke.mjs             # the whole app, in Node, 141 checks
+node tools/smoke.mjs             # the whole app, in Node, 150 checks
 node tools/check-sources.mjs     # go and look at the sources again
 ```
 
