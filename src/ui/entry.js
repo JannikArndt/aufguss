@@ -35,7 +35,7 @@ export function open(id, opts) {
       id: uid(),
       date: todayISO(), time: nearestHour(),
       theme: '', themeKind: '', intensity: '', sauna: Store.prefs().venue,
-      oils: [], rounds: ROUNDS_DEFAULT, ratio: Store.prefs().ratio, notes: '', rating: 0,
+      oils: [], rounds: ROUNDS_DEFAULT, notes: '', rating: 0,
       written: new Date().toISOString(),
     };
     if (o.oils) entry.oils = o.oils.slice();
@@ -449,10 +449,9 @@ function bottleVariantId(bottle, plant) {
    to the first bottle that carries it, keeping whatever the other chip already
    chose when a bottle exists for both.
 
-   One row, no labels over it. Which oil it is matters; whether the Mandarine
-   came from Italy mostly does not, and two labelled rows spent more of the
-   screen asking than the question is worth. A thin rule separates the
-   varieties from the ranges so the two do not read as one list. */
+   Two lines, no labels over them: what the oil is on the first — Italien, rot,
+   Bio — and who sells it on the second. Different questions, so different
+   lines; headings over them would only repeat what the words already say. */
 function chipsFor(x) {
   var plant = plantFor(x.oilId);
   if (!plant) return null;
@@ -465,7 +464,6 @@ function chipsFor(x) {
       function (id) { toggleVariant(x, plant, id); }));
   }
   if (plant.suppliers.length >= 2) {
-    if (kids.length) kids.push(el('span', 'sep'));
     kids.push(chipRow(null, plant.suppliers.map(function (s) { return { id: s, label: s }; }),
       function (id) { return !!bottle && bottle.supplier === id; },
       function (id) { toggleSupplier(x, plant, id); }));
@@ -550,8 +548,8 @@ function suggestCard(oils) {
   }
   var hist = history();
   var fams = themeFamilies();
-  var picks = suggest(oils, entry.ratio, { history: hist, limit: 5, families: fams });
-  if (!picks.length && fams.length) picks = suggest(oils, entry.ratio, { history: hist, limit: 5 });
+  var picks = suggest(oils, { history: hist, limit: 5, families: fams });
+  if (!picks.length && fams.length) picks = suggest(oils, { history: hist, limit: 5 });
   if (!picks.length) return el('div');
   var rows = picks.map(function (p) {
     return oilRow(p.oil, {

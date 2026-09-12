@@ -15,8 +15,11 @@ the file says so, and the app says so too.
 |---|---|
 | [`oils.md`](oils.md) | the 133 single oils from Aromen, their families, notes and descriptions |
 | [`oils-rbm.md`](oils-rbm.md) | the 81 single oils from RBM, and how a JavaScript shop was read |
+| [`oils-rbm-sdb.md`](oils-rbm-sdb.md) | RBM's 100 Sicherheitsdatenblätter — CAS numbers, colours and what is actually in each bottle |
 | [`oils-purelia.md`](oils-purelia.md) | the 40 single oils and 7 Ölmischungen from Purelia professional, and the four things that range publishes nothing about |
 | [`botanical-names.md`](botanical-names.md) | the Latin names of the Aromen oils, and which ones are a judgement call |
+| [`corrections.md`](corrections.md) | the 25 botanical names a shop got wrong on its face, what each was, and why it changed |
+| [`names.md`](names.md) | the other names a plant answers to — a search index, held to a narrower rule than the rest |
 | [`aufgussplan.md`](aufgussplan.md) | the Aufguss themes, times and intensities |
 | [`blending.md`](blending.md) | notes, ratios, mixing order, which families go together |
 | [`open-questions.md`](open-questions.md) | what could not be settled, and what it would take |

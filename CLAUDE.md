@@ -5,6 +5,27 @@ before editing. `README.md` says what the app is; this file is the contract.
 
 ---
 
+## 0. What the app is for
+
+**Quickly writing down what you did in which Aufguss.** That is the whole job.
+
+Finding patterns in the journal, being offered a scent that would go with the
+two you have, reading what a supplier says about an oil — all of it is nice to
+have, and none of it may ever get in the way of writing an Aufguss down.
+
+Two things follow, and they settle most arguments about scope:
+
+- **An accurate representation of one supplier's product range is not the
+  goal.** Which shelf a bottle came from, what its article number is, whether
+  it is still stocked — none of that is the point. The plant is the point; the
+  shop is a chip you may tap. Ranges are there so the same plant can be found
+  under whatever name it has this week, not so the app can be a catalogue.
+- **The Bäderland connection is incidental.** The Aufgusspläne are a
+  convenience — one plan per day, an asterisk for the ones that only run at
+  weekends, roughly hourly in winter and roughly two-hourly in summer, none of
+  it strict. A theme off the plan may prefill a time and an intensity. It must
+  never restrict what can be written down.
+
 ## 1. The rule that outranks the others
 
 **Nothing about essential oils is written from memory.**
@@ -19,8 +40,7 @@ Three things follow:
 
 - **A guess is labelled.** Nine oils have a note the family implied rather than
   their supplier stated — eight of Aromen's, one of RBM's; they carry
-  `noteEstimated: true` and the app says so on the oil. One single oil has no
-  botanical name at all; RBM's 23 Mischungen and Purelia's 7 have no note, no
+  `noteEstimated: true` and the app says so on the oil. RBM's 23 Mischungen and Purelia's 7 have no note, no
   botanical name and no scent family; and Purelia's whole Professional line has
   none of those and no description either, because the only page that lists it
   prints names and nothing else. Nobody publishes any of it and nobody here is
@@ -40,6 +60,23 @@ Three things follow:
   it makes the app easier to use, keep the supplier's own spelling, and write
   the reading down in `sources/open-questions.md` the way `nameParts()` is,
   because a reading can be wrong even when every word in it is sourced.
+
+Two files sit outside that rule on purpose, and both say so at the top of
+themselves:
+
+- **`src/data/names.js`** holds the other names a plant answers to — Spearmint,
+  Krauseminze, *Mentha spicata*, Ährige Minze. No shop publishes a synonym
+  list, so these come from general knowledge. They are a **search index and
+  never a claim**: only names, only for a plant the catalogue has, never a
+  note, a group, an effect or a dose. `sources/names.md` says how to check one.
+  A wrong synonym costs a search hit; a wrong note costs an Aufguss.
+- **`latinFixed: true`** marks a botanical name this repository supplies because
+  the shop's is wrong on its face — RBM filed its Chinese cedarwood under
+  *Boswellia carteri*, which is frankincense. A correction is never silent: the
+  oil's page prints *(korrigiert)*, and `sources/corrections.md` lists what was
+  there and why it changed. Only for an error anybody can check; a genuine
+  judgement call between two plausible species is still left alone and still
+  shows both sides.
 
 And the second half of the same rule: **it is not a science.** Aufguss is a
 craft with a lot of taste in it. The app suggests, reports and remembers; it
@@ -67,6 +104,7 @@ other; they survived being split into files and should stay.
 
 | file | contents |
 |---|---|
+| `src/data/names.js` | the other names a plant answers to — search only |
 | `src/core/util.js` | 0. `$`, `el`, `clear`, `fold`, dates, `notice` |
 | `src/core/store.js` | 1. the journal, custom oils, favourites, prefs, export/import |
 | `src/core/catalog.js` | 2. the merged catalogue, the plant layer and the search |
@@ -102,17 +140,24 @@ knows there are three.
   `familyDe`, and at least one `notes` entry, on everything except a Mischung
   (nobody publishes either for one) and everything except Purelia (which
   publishes neither for anything in its Professional line); and `latin` on
-  every Aromen and RBM single oil but one, and on nothing of Purelia's.
+  every Aromen and RBM single oil — the last gap, RBM's Bergamottminze, was
+  closed by their own safety data sheet — and on nothing of Purelia's.
 - **A supplier bottle declares which plant it is.** `plant` is a folded slug
   (`"mandarine"`), and it is what the catalogue groups on — not a rule applied
   to the name. A Mischung carries none, because a Mischung is an entry and not
   an oil. `variety` holds what the supplier printed *after* the plant's name,
   cut into `colour`, `origin`, `method`, `kind` and `part`, all optional, any
   of them a single value or a list where one article answers to two words
-  (Purelia's Zitrone is italienisch **and** spanisch). `aka` is a search-only
-  list of other spellings and is never shown as a fact about anything. All
-  three are *readings* of what a shop already wrote — never a new word, never a
-  translation — and `sources/open-questions.md` records them as readings.
+  (Purelia's Zitrone is italienisch **and** spanisch), plus `quality`, which is
+  the one read off the id rather than the name: Aromen's own slug says `-bio-`
+  on seventy articles. All of it is a *reading* of what a shop already wrote —
+  never a new word, never a translation — and `sources/open-questions.md`
+  records them as readings.
+- **A plant's `aka` is its other names, and only a search index.** It comes
+  from `src/data/names.js`, keyed by the plant slug, and it is the one thing in
+  `src/data/` no supplier published — see §1. It is folded into the search at
+  the same weight as the shop's own name and shown on the oil's page under
+  *Heißt auch*; nothing else in the app reads it.
 - **An oil's `family` is its own supplier's scent group**, verbatim in
   `familyDe`, and `family` is the English label the app already uses for that
   group — a translation and nothing more. The suppliers do not agree with each
@@ -126,6 +171,13 @@ knows there are three.
   ranks on it except the filter chip that exists to say "only the shelf I am
   standing at". All three ranges have a Zitrone and that is three bottles of
   one plant, not a duplicate to clean up.
+- **An RBM entry may carry what its safety data sheet says.** `cas`, `colour`,
+  `main` (the constituents at 1 % or more, with the band as printed) and `sdb`
+  (which sheet, revised when). 100 of the 104 have one. It is supplier data
+  like any other and follows §1: `sources/oils-rbm-sdb.md` has the method and
+  the four entries with no sheet. `main` and `colour` are searchable at the
+  weakest weight — "menthol" is a real question in front of a shelf, but half
+  the catalogue contains a little limonene.
 - **RBM's `goesWith` and `parts` stay out of the search index.** Both name
   other oils, so indexing either would return every oil whose Harmonie line
   mentions Zitrone, and every Mischung containing some, for a query of
@@ -140,6 +192,12 @@ knows there are three.
   about what the room smells first, which no ingredient list answers. The app
   already handles a note-less oil — poured last, counted as *ohne Note*, no
   family score — so nothing needs bending to make one fit.
+- **Nothing scores a set.** There were four published ratios of Kopf to Herz to
+  Basis, a balance bar and a card of remarks. Four pages recommended four
+  different ratios, picking between them never once helped anybody write an
+  Aufguss down, and the app is not a grader (§0, §9). What is left is the pour
+  order, which note the set does not have yet, and whether the families are
+  ones a source pairs. Do not put a ratio back.
 - **A note is `top`, `heart` or `base`.** An oil may carry two, as Aromen writes
   "top-to-heart note"; the **first** is the one that counts everywhere —
   `leadNote()` in `blend.js` is the only place that decides this. Half an oil in
@@ -221,6 +279,14 @@ The scripts that read the sources are not in the repository; the *method* is, in
   field empty. `sources/oils-purelia.md` has the list as the page prints it,
   every re-cut spelled out one line at a time, and the spelling slips on the
   page that were corrected — with the page's own spelling kept next to each.
+- **Oils, RBM, the safety data sheets** — RBM publishes a
+  Sicherheitsdatenblatt next to the shop for 100 of its 104 entries, and those
+  PDFs say things the product pages do not: a CAS number, a colour, and an
+  ABSCHNITT 3 list of what is in the bottle with percentage bands. Fetch the
+  PDFs, cut each to ABSCHNITT 1, 3 and 9, and read the labelled lines off them
+  — `.claude/agents/sdb-extract.md` is the agent that does it and is the
+  specification for what to take and what to leave. `sources/oils-rbm-sdb.md`
+  has the method, what was found and the four entries with no sheet.
 - **Oils, RBM** — their shop renders in JavaScript and a fetched product URL
   returns a 404 shell, so there is nothing to scrape. Read `sitemap.xml` for
   the product ids, POST them 25 at a time to the storefront's own
@@ -245,10 +311,10 @@ When the data changes, the matching `sources/*.md` changes in the same commit.
 `tools/smoke.mjs` pins the counts on purpose — 135 Aromen oils, 104 RBM entries
 of which 23 are Mischungen, 47 Purelia entries of which 7 are, ten scent
 families plus Mischungen plus the gap Purelia leaves, eight estimated Aromen
-notes, one estimated RBM note, one Aromen-or-RBM single oil with no botanical
-name and all 40 of Purelia's, one entry with no URL, and 63 plants over 202 of
-the 286 bottles — so a regeneration that moves any of them fails until the
-source file is brought along.
+notes, one estimated RBM note, no Aromen-or-RBM single oil without a botanical
+name and all 40 of Purelia's, one entry with no URL, 63 plants over 202 of the
+286 bottles, and 25 corrected botanical names — so a regeneration that moves
+any of them fails until the source file is brought along.
 
 ## 6. Testing
 
@@ -256,7 +322,7 @@ source file is brought along.
 node tools/smoke.mjs
 ```
 
-190 checks. It loads the whole app — `src/main.js` and everything under it —
+200 checks. It loads the whole app — `src/main.js` and everything under it —
 against the stub DOM in `tools/stub/`, and drives it the way a finger does: open
 a new Aufguss, pick a theme off the plan, type three oil names in three
 different languages, read what the screen says back, tap Fertig, reopen it,
@@ -346,6 +412,12 @@ version and takes the new one on the next cold start. That is the design.
 - Let a storage failure interrupt anything. `Store` degrades to unavailable and
   reports on the Mehr screen; it never throws mid-Aufguss.
 - Add scores, streaks, badges or grading. The journal reports what happened.
+- Put the ratios back, or anything else that asks you to configure a preference
+  before an Aufguss can be written down (§0).
+- Let a theme off an Aufgussplan restrict what can be saved. It may prefill; it
+  may never refuse.
+- Put anything but names in `src/data/names.js`, or a correction in
+  `src/data/` without `latinFixed` and a row in `sources/corrections.md`.
 - Call `skipWaiting()` in the worker's `install`, or make the fetch handler
   network-first. Both look like improvements and both break the guarantee that
   the page and the modules under it come from the same version.

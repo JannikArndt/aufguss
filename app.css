@@ -297,15 +297,15 @@ textarea { min-height: 84px; resize: vertical; }
 /* Sorte and Anbieter, when a plant's bottles offer either — indented under the
    name they belong to, never required, so a fresh pick shows no chip lit.
 
-   One wrapped row and no labels over it. Which oil it is matters; whether it
-   came from Italy or from Spain mostly does not, and two labelled rows spent
-   more of a phone screen saying so than the question is worth. A chip that is
-   lit says what was chosen, and a row with nothing lit is a question nobody
-   has to answer. The Anbieter chips are set slightly apart so the two kinds do
-   not read as one list. */
-.setchips { margin: -4px 0 10px 34px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+   Two wrapped lines and no labels over them: what the oil is (Italien, rot,
+   Bio) on the first, who sells it on the second. They are different questions
+   and they read as one list when they share a line — but a heading over each
+   spent more of a phone screen asking than either question is worth. A chip
+   that is lit says what was chosen, and a line with nothing lit is a question
+   nobody has to answer. */
+.setchips { margin: -4px 0 10px 34px; display: flex; flex-direction: column; gap: 4px; }
+.setchips .chiprow { flex-wrap: wrap; overflow-x: visible; margin-right: 0; padding-bottom: 0; }
 .setchips .chip { font-size: 12.5px; padding: 5px 10px; min-height: 30px; }
-.setchips .sep { width: 1px; align-self: stretch; margin: 2px 3px; background: var(--line); }
 
 /* ── Autocomplete ──────────────────────────────────────────────────────── */
 .ac { position: relative; }
@@ -330,6 +330,11 @@ textarea { min-height: 84px; resize: vertical; }
 .ac-item .t { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ac-item .s { display: block; color: var(--ink-2); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ac-item mark { background: none; color: var(--ember); font-weight: 700; }
+
+/* A list that is a list of facts rather than a list of links: no bullets, no
+   indent, one line each, in the same quiet grey the rest of a card's detail
+   uses. */
+ul.plain { list-style: none; margin: 0 0 8px; padding: 0; font: 14px/1.7 var(--sans); color: var(--ink-2); }
 
 /* ── Prose inside a card ───────────────────────────────────────────────── */
 .prose { font: 15px/1.6 var(--sans); color: var(--ink-2); }

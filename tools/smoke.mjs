@@ -36,7 +36,7 @@ const { OILS } = await import('../src/data/oils.js');
 const { OILS_RBM } = await import('../src/data/oils-rbm.js');
 const { OILS_PURELIA } = await import('../src/data/oils-purelia.js');
 const { THEMES, INTENSITIES } = await import('../src/data/themes.js');
-const { NOTES, RATIOS, HARMONY, MIX_ORDER, DOSAGE, CLASSICS } = await import('../src/data/blending.js');
+const { NOTES, HARMONY, MIX_ORDER, DOSAGE, CLASSICS } = await import('../src/data/blending.js');
 
 /* Three ranges, one catalogue. Counts are pinned per range on purpose: a
    regeneration that moves any of them has to bring its own sources/ file
@@ -109,10 +109,12 @@ ok('oils: no Aromen entry claims to be a Mischung', !OILS.some((o) => o.blend));
   ok('oils: and no Mischung has a guessed anything',
     !OILS_RBM.some((o) => o.blend && (o.noteEstimated || o.latin || o.character)));
   /* Aromen publishes no botanical names, so all of them got one from Wikidata.
-     RBM publishes its own, and for exactly one single oil it does not. Purelia
+     RBM publishes its own — and the one single oil it left blank, its
+     Bergamottminze, turned out to be named on its own safety data sheet
+     ("Mentha-Citrataöl"), so there is no gap left in either range. Purelia
      publishes none at all, for anything. */
-  eq('oils: exactly one Aromen or RBM single oil has no botanical name',
-    OILS.concat(OILS_RBM).filter((o) => !o.blend && !o.latin).length, 1);
+  eq('oils: every Aromen and RBM single oil has a botanical name',
+    OILS.concat(OILS_RBM).filter((o) => !o.blend && !o.latin).length, 0);
   eq('oils: and Purelia has no botanical name for any of its 40',
     OILS_PURELIA.filter((o) => !o.blend && !o.latin).length, 40);
   /* One entry has no page to link to — RBM's Ringelblume, which is on their
@@ -158,8 +160,13 @@ ok('themes: the Kaifubad plan is in there', THEMES.filter((t) => t.venue === 'Ka
   ok('blending: the harmony table only names real families', !bad.length, bad.join('; '));
   ok('blending: Gourmand and Earthy are deliberately absent',
     !HARMONY.Gourmand && !HARMONY.Earthy);
-  ok('blending: four ratios, each adding up', RATIOS.length === 4 &&
-    RATIOS.every((r) => r.parts.top + r.parts.heart + r.parts.base > 0));
+  /* The four published ratios are gone on purpose: four pages recommended four
+     different ones, picking between them helped nobody write an Aufguss down,
+     and nothing in the app may ask you to. */
+  ok('blending: no ratio survived anywhere',
+    !/RATIOS|ratioById/.test(read('src/data/blending.js') + read('src/core/blend.js') +
+      read('src/core/suggest.js') + read('src/ui/entry.js') + read('src/ui/more.js') +
+      read('src/core/store.js')));
   eq('blending: base first, then heart, then top', MIX_ORDER.join('>'), 'base>heart>top');
   ok('blending: the dosage figures are a range', DOSAGE.dropsPerLitre.length === 2 && CLASSICS.length === 4);
 }
@@ -197,7 +204,25 @@ ok('search: an empty query is the whole catalogue', cat.search('').length === ca
      same goes for the filter, which is what keeps "only what I can buy here"
      honest for a Zitrone both ranges sell. */
   const hits = cat.search('rbm');
-  ok('search: the range itself is a search term',
+  {
+  /* A plant answers to every name it is known by, not only the one a shop
+     printed. src/data/names.js is search-only and says so. */
+  const first = (q) => (cat.search(q, { limit: 1 })[0] || {}).de;
+  eq('names: an English name finds the German plant', first('spearmint'), 'Krauseminze');
+  eq('names: so does a botanical synonym', first('mentha spicata'), 'Krauseminze');
+  eq('names: and an old spelling', first('campher'), 'Kampfer');
+  eq('names: cornmint is the third mint, not the first two', first('cornmint'), 'Minze');
+  eq('names: and Tulsi finds the basil it belongs to', first('tulsi'), 'Heiliger Basilikum');
+  /* Every entry is a list of strings and nothing else: no note, no family, no
+     field the app would read as a fact about a scent. */
+  const NAMES = (await import('../src/data/names.js')).PLANT_NAMES;
+  ok('names: every entry is a plain list of names and nothing else',
+    Object.values(NAMES).every((v) => Array.isArray(v) && v.every((x) => typeof x === 'string')));
+  ok('names: and every key is a plant the catalogue actually has',
+    Object.keys(NAMES).every((k) => !!cat.byId('art:' + k)),
+    Object.keys(NAMES).filter((k) => !cat.byId('art:' + k)).join(', '));
+}
+ok('search: the range itself is a search term',
     hits.length > 80 && hits.every((o) => cat.suppliersOf(o).includes('RBM')));
   const filtered = cat.search('', { suppliers: ['RBM'] });
   ok('search: and a filter',
@@ -231,7 +256,37 @@ ok('search: an empty query is the whole catalogue', cat.search('').length === ca
   const split = (k) => plants.filter((p) => p.split && p.split[k]).length;
   eq('plants: twenty-six disagree about the note', split('note'), 26);
   eq('plants: twenty-one about the scent family', split('family'), 21);
-  eq('plants: thirty-one about the botanical name', split('latin'), 31);
+  eq('plants: twenty-one about the botanical name', split('latin'), 21);
+
+  /* Twenty-five botanical names this repository supplies rather than the shop:
+     RBM filed its Chinese cedarwood under Boswellia carteri, which is
+     frankincense, and its American peppermint under a mountain mint. Each is
+     marked `latinFixed` and listed in sources/corrections.md with the reason,
+     so a correction can never be mistaken for something a shop published. */
+  eq('data: the corrected botanical names are marked as corrected',
+    ALL_OILS.filter((o) => o.latinFixed).length, 25);
+  eq('data: RBM\'s Chinese cedarwood is no longer frankincense',
+    cat.byId('rbm:Cedernholz-chinesisch').latin, 'Cupressus funebris');
+
+  /* RBM publishes a Sicherheitsdatenblatt next to the shop for 100 of its 104
+     entries, and those sheets say things the product page does not: the CAS
+     number that actually identifies an oil, the colour, and what is in the
+     bottle at one per cent or more. Four entries have no sheet. */
+  eq('data: a hundred RBM entries carry their safety sheet',
+    OILS_RBM.filter((o) => o.sdb).length, 100);
+  ok('data: and a Mischung finally says what is in it',
+    (cat.byId('rbm:Advent-Mix').main || []).some((x) => /Zimtaldehyd/.test(x)));
+  ok('data: the sheet named the species the product page left blank',
+    cat.byId('rbm:Bergamottminze').latin === 'Mentha citrata');
+  eq('search: and what is in the bottle is searchable',
+    cat.search('zimtaldehyd').length > 0, true);
+
+  /* The three mints are three species, and the botanical name is what splits
+     them — not the word on the label. Each is one plant and they never merge. */
+  const mints = ['art:pfefferminze', 'art:krauseminze', 'art:minze'].map((id) => cat.byId(id));
+  eq('plants: the three mints each agree on one species',
+    mints.map((m) => m.latin).join(' | '),
+    'Mentha × piperita | Mentha spicata | Mentha arvensis');
   ok('plants: a disagreement leaves the field empty rather than guessed',
     plants.every((p) => (!p.split || !p.split.note || !p.notes.length) &&
                         (!p.split || !p.split.family || !p.family) &&
@@ -255,13 +310,18 @@ ok('search: an empty query is the whole catalogue', cat.search('').length === ca
   /* One article sold under two words keeps both. Purelia's Zitrone is
      "italienisch/spanisch", one bottle from either country. */
   eq('plants: an article that answers to two words offers both',
-    zitrone.variants.map((v) => v.label).join('/'), 'italienisch/spanisch');
+    zitrone.variants.filter((v) => v.kind === 'origin').map((v) => v.label).join('/'),
+    'italienisch/spanisch');
+  /* Bio is read off Aromen's own slug, which says -bio- on seventy articles —
+     the shop saying it, not the app deciding it. */
+  ok('plants: and Bio is a variety like any other',
+    zitrone.variants.some((v) => v.kind === 'quality' && v.label === 'Bio'));
 
   /* A variety is declared, never read out of the leftover words of a name —
      otherwise Aromen's own misspelling ("Steranis") would sit on a chip next
      to a plant called Sternanis. */
   eq('plants: a shop\'s misspelling is not offered as a variety',
-    cat.byId('art:sternanis').variants.map((v) => v.label).join(', '), 'CO2');
+    cat.byId('art:sternanis').variants.map((v) => v.label).join(', '), 'CO2, Bio');
 
   /* An Aufguss written before any of this still points at the bottle it
      recorded. Losing that is the same failure as losing the Aufguss. */
@@ -270,12 +330,12 @@ ok('search: an empty query is the whole catalogue', cat.search('').length === ca
   eq('plants: and knows which plant it belongs to', cat.plantOf(bottle).id, 'art:minze');
   eq('plants: a plant offers its varieties',
     cat.byId('art:minze').variants.map((v) => v.label).sort().join(', '),
-    'Tokyo, chinesisch, indisch, japanisch');
+    'Bio, Tokyo, chinesisch, indisch, japanisch');
   /* Five bottles from three shops under one name, which is the whole point. */
   const mandarine = cat.byId('art:mandarine');
   eq('plants: Mandarine is one row over eight bottles', mandarine.bottles.length, 8);
   eq('plants: and the colours come before the countries',
-    mandarine.variants.map((v) => v.label).join(' '), 'grün orange rot gelb italienisch');
+    mandarine.variants.map((v) => v.label).join(' '), 'grün orange rot gelb italienisch Bio');
 }
 eq('search: how an oil smells finds it', cat.search('rauchig', { limit: 1 })[0].de, 'Birkenteer');
 /* A renamed product keeps a way back to the id it had, or every Aufguss
@@ -314,30 +374,24 @@ eq('catalogue: and the exact id still wins', cat.byId('m4-bio-grune-minze').code
   const set = ['Zitrone', 'Belgian lavender', 'Sandelholz'].map((n) => cat.search(n, { limit: 1 })[0]);
   eq('blend: poured base first', blend.pourOrder(set).map((o) => o.de).join(' '),
     'Sandelholz Lavendel Zitrone');
-  const b = blend.balance(set, '30-50-20');
+  const b = blend.balance(set);
   ok('blend: one of each note', b.have.top === 1 && b.have.heart === 1 && b.have.base === 1);
-  const d = blend.drops('30-50-20', 20);
-  eq('blend: twenty drops stay twenty', d.top + d.heart + d.base, 20);
-  eq('blend: 30-50-20 of twenty', [d.top, d.heart, d.base].join('-'), '6-10-4');
-  const r = blend.remarks(set, '30-50-20', 6);
-  ok('blend: it says all three notes are there', r.some((x) => /alle da/.test(x.text)));
-  ok('blend: it never scolds', !r.some((x) => /falsch|fehler|nicht erlaubt/i.test(x.text)));
+  eq('blend: nothing is missing from a set that has all three',
+    blend.missingNote(set), null);
 }
 {
   const twoTops = ['Zitrone', 'Grapefruit'].map((n) => cat.search(n, { limit: 1 })[0]);
-  eq('blend: with two top notes the heart is what is missing',
-    blend.missingNote(twoTops, '30-50-20'), 'heart');
-  const r = blend.remarks(twoTops, '30-50-20', 4);
-  ok('blend: and it says so without telling anyone off',
-    r.some((x) => /Kopfnote/.test(x.text)) && !r.some((x) => /solltest/.test(x.text)));
+  /* Heaviest first, so two Kopfnoten are offered a Basis before a Herz. */
+  eq('blend: with two top notes the base is what is missing',
+    blend.missingNote(twoTops), 'base');
 }
 {
   const lemon = cat.search('Zitrone', { limit: 1 })[0];
   const empty = { pair: {}, used: {}, last: {}, entries: 0, together: () => 0 };
-  const picks = sug.suggest([lemon], '30-50-20', { history: empty, limit: 5 });
+  const picks = sug.suggest([lemon], { history: empty, limit: 5 });
   ok('suggest: something is suggested for one oil', picks.length === 5);
   ok('suggest: it fills the note that is missing',
-    picks.every((p) => p.oil.notes[0] === 'heart'));
+    picks.every((p) => p.oil.notes[0] === 'base'));
   ok('suggest: every suggestion says why', picks.every((p) => p.reasons.length));
   ok('suggest: it never suggests what is already chosen',
     !picks.some((p) => p.oil.id === lemon.id));
@@ -500,7 +554,7 @@ const supplierChips = () => { const r = chipRows(); return r[1] ? [...r[1].child
   eq('pick: one oil is in the Kugel', findAll('.setrow', $('entryBody')).length, 1);
 
   const variants = varietyChips();
-  eq('pick: its varieties sit under it, not in its name', variants.length, 4);
+  eq('pick: its varieties sit under it, not in its name', variants.length, 5);
   ok('pick: with no heading over them, and the ranges beside them',
     !$('entryBody').textContent.includes('Variante') && supplierChips().length === 2);
   ok('pick: and no bottle was chosen for you',
@@ -601,14 +655,10 @@ ok('oil: back goes where you came from', visible('scOils'));
     /geraten wird hier nichts/.test(body));
   ok('mix: it is poured last and counts as no note',
     blend.leadNote(mix) === null &&
-    blend.balance([mix], '30-50-20').unknown === 1);
+    blend.balance([mix]).unknown === 1);
   const set = [cat.search('Zitrone', { limit: 1 })[0], mix];
   eq('mix: so the pour order puts it after the oils that have one',
     blend.pourOrder(set).map((o) => o.de).join(' | '), 'Zitrone | 1001 Nacht');
-  const r = blend.remarks(set, '30-50-20', 4);
-  ok('mix: and the set says so in words, without scolding',
-    r.some((x) => /keine angegebene Note/.test(x.text)) &&
-    !r.some((x) => /Alles null|undefined/.test(x.text)));
   main.go('#/oele');
 }
 

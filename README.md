@@ -34,11 +34,22 @@ the article code. `santalum`, `sandalwood`, `Sandelholz` and `w8` all find the
 same bottle. All three ranges sell a Zitrone; that is one row, and under it
 whose each bottle is.
 
+**Find it under whatever name you have in your head.** Spearmint, Grüne Minze,
+Krauseminze, *Mentha spicata* and Ährige Minze are one plant, and typing any of
+them finds it. The three mints are three species and stay three rows —
+*Mentha × piperita*, *Mentha spicata*, *Mentha arvensis* — because that is what
+actually tells them apart, not the word on the label.
+
 **See where the shops disagree.** Three ranges describe overlapping plants and
 they do not always say the same thing: Aromen calls Kampfer a Kopfnote, RBM
 calls it a Herznote, and Purelia says nothing about any of it. The app reports
 that rather than picking a winner, and Mehr → Daten prüfen counts every such
 case in one place, with a text to take back to the shops' own pages.
+
+**Nothing scores what you poured.** There is no ratio to pick, no balance to
+hit, no grade at the end. The app writes down what you did, puts the oils in
+the order they go in, and says which note the set does not have yet if you ask
+for a suggestion. That is the lot.
 
 **Start with one scent and be offered the rest.** Type Zitrone and the app
 suggests what would go with it, and says why each one: it fills the missing

@@ -4,7 +4,7 @@
    suggestion you cannot see the reason for is a suggestion you cannot argue
    with:
 
-     1. the note gap    — what the chosen ratio still wants (sourced)
+     1. the note gap    — a note the set does not have yet (sourced order)
      2. family harmony  — Floria's table, widened by aroma1x1 (sourced)
      3. your history    — how often you have actually poured these together
 
@@ -22,7 +22,7 @@ import { leadNote, missingNote, pairState } from './blend.js';
 import { HARMONY } from '../data/blending.js';
 
 var W = {
-  note: 40,        /* fills the note the ratio is short of */
+  note: 40,        /* fills a note the set does not have yet */
   noteSpare: 8,    /* a note the set already has, but not too many of */
   family: 22,      /* every chosen oil's family lists this one, or the reverse */
   familySome: 11,  /* at least one does */
@@ -66,11 +66,11 @@ function key(a, b) { return a < b ? a + ' ' + b : b + ' ' + a; }
 /* Suggest partners for a set. `chosen` may be empty — then it opens with your
    favourites and your most-used oils, which is the honest answer to "surprise
    me" before there is anything to go on. */
-export function suggest(chosen, ratioId, opts) {
+export function suggest(chosen, opts) {
   var o = opts || {};
   var hist = o.history || history();
   var favs = Store.favourites();
-  var want = missingNote(chosen, ratioId);
+  var want = missingNote(chosen);
   var chosenIds = chosen.map(function (x) { return x.id; });
   var pool = o.pool || all();
   var out = [];

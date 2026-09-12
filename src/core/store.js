@@ -116,7 +116,6 @@ export var Store = {
     var p = this._read(K.prefs, {});
     return {
       venue: p.venue || 'Kaifubad',
-      ratio: p.ratio || '30-50-20',
       defaultMl: typeof p.defaultMl === 'number' ? p.defaultMl : 2,
     };
   },

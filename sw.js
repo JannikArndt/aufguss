@@ -17,7 +17,7 @@
    keep them in step, so tools/smoke.mjs asserts it, along with SHELL listing
    exactly the files on disk. */
 
-const VERSION = '0.8.0';
+const VERSION = '0.9.0';
 const CACHE = 'aufguss-' + VERSION;
 
 const SHELL = [
@@ -46,6 +46,7 @@ const SHELL = [
   './src/data/oils-purelia.js',
   './src/data/themes.js',
   './src/data/blending.js',
+  './src/data/names.js',
 ];
 
 self.addEventListener('install', (e) => {

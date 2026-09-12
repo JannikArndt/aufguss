@@ -185,6 +185,8 @@ export function renderOne(id) {
   body.appendChild(card(null, [
     el('div', 'chips', headChips),
     el('dl', 'kv', [
+      (o.aka && o.aka.length) ? el('dt', null, 'Heißt auch') : null,
+      (o.aka && o.aka.length) ? el('dd', null, o.aka.join(', ')) : null,
       o.en ? el('dt', null, 'Englisch') : null, o.en ? el('dd', null, o.en) : null,
       o.latin ? el('dt', null, 'Botanisch') : null, o.latin ? el('dd', null, el('i', null, o.latin)) : null,
       o.plantFamily ? el('dt', null, 'Pflanzenfamilie') : null,
@@ -196,9 +198,24 @@ export function renderOne(id) {
       (o.goodDe && o.goodDe.length) ? el('dd', null, o.goodDe.join(', ')) : null,
       (o.goesWith && o.goesWith.length) ? el('dt', null, 'Harmoniert mit') : null,
       (o.goesWith && o.goesWith.length) ? el('dd', null, o.goesWith.join(', ')) : null,
+      o.colour ? el('dt', null, 'Farbe') : null, o.colour ? el('dd', null, o.colour) : null,
+      o.cas ? el('dt', null, 'CAS') : null, o.cas ? el('dd', null, o.cas) : null,
       el('dt', null, 'Menge'), el('dd', null, DOSAGE.mlPerOil[0] + '–' + DOSAGE.mlPerOil[1] + ' ml'),
     ].filter(Boolean)),
   ]));
+
+  /* What is actually in the bottle, off the supplier's own safety data sheet:
+     the constituents at one per cent or more, in their order. It is the one
+     thing a fertige Mischung says about itself beyond its name — and for a
+     single oil it answers the question a Duftgruppe never quite does, which is
+     why the Pfefferminze in your hand is sharper than the last one. */
+  if (o.main && o.main.length) {
+    body.appendChild(card('Was drin ist', [
+      el('ul', 'plain', o.main.map(function (x) { return el('li', null, x); })),
+      el('p', 'tiny', 'Aus dem Sicherheitsdatenblatt von ' + (o.supplier || 'der Quelle') +
+        (o.sdb ? ': ' + o.sdb : '') + '. Nur was dort mit mindestens einem Prozent steht.'),
+    ]));
+  }
 
   if (o.about) {
     body.appendChild(card('Wie es riecht', [
@@ -326,8 +343,7 @@ function bottleSub(b) {
   var n = leadNote(b);
   if (n) bits.push(noteName(n) + (b.noteEstimated ? ' (geschätzt)' : ''));
   if (b.familyDe) bits.push(b.familyDe);
-  if (b.latin) bits.push(b.latin);
-  if (b.code) bits.push(b.code);
+  if (b.latin) bits.push(b.latin + (b.latinFixed ? ' (korrigiert)' : ''));
   if (!bits.length) bits.push(b.de);
   return bits.join(' · ');
 }

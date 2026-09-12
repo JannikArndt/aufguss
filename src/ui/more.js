@@ -10,7 +10,7 @@
 import { $, el, clear, notice, todayISO, AppUpdate } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { all, bottles, suppliers } from '../core/catalog.js';
-import { RATIOS, DOSAGE } from '../core/blend.js';
+import { DOSAGE } from '../core/blend.js';
 import { card, field } from './parts.js';
 import { RELEASE, RELEASES } from '../release.js';
 
@@ -128,14 +128,6 @@ function prefsFields() {
   venue.type = 'text'; venue.value = p.venue;
   venue.addEventListener('change', function () { Store.setPref('venue', venue.value); });
 
-  var ratio = el('select');
-  RATIOS.forEach(function (r) {
-    var o = new Option(r.label + ' — ' + r.de, r.id);
-    if (p.ratio === r.id) o.selected = true;
-    ratio.appendChild(o);
-  });
-  ratio.addEventListener('change', function () { Store.setPref('ratio', ratio.value); });
-
   var ml = el('input');
   ml.type = 'number'; ml.min = '0.5'; ml.max = '10'; ml.step = '0.5';
   ml.inputMode = 'decimal'; ml.value = String(p.defaultMl);
@@ -146,7 +138,6 @@ function prefsFields() {
 
   return [
     field('Sauna', venue),
-    field('Verhältnis', ratio, 'Womit ein neuer Aufguss aufmacht.'),
     field('Menge pro Öl', ml, 'Millilitre, voreingestellt beim Hinzufügen. Üblich sind ' +
       DOSAGE.mlPerOil[0] + '–' + DOSAGE.mlPerOil[1] + '.'),
   ];

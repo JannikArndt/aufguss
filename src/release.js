@@ -9,6 +9,18 @@
 
    Write each note for someone who has never read the code. */
 export var RELEASES = [
+  { v: '0.9.0', date: '2026-09-12',
+    text: 'Das Öl heißt jetzt so, wie du es nennst. „Spearmint“, „Grüne ' +
+          'Minze“, „Mentha spicata“ und „Ährige Minze“ finden alle dieselbe ' +
+          'Krauseminze, und die drei Minzen bleiben drei — Pfefferminze, ' +
+          'Krauseminze und die schlichte Minze sind botanisch drei Arten, und ' +
+          'danach sind sie sortiert. 25 botanische Namen waren bei den ' +
+          'Anbietern schlicht falsch: RBM führte sein chinesisches Zedernholz ' +
+          'als Weihrauch. Die stehen jetzt richtig da, mit „korrigiert“ ' +
+          'dahinter. Neu als Chip: Bio, bei den 70 Aromen-Ölen, die selbst so ' +
+          'heißen. Weg sind die Mischverhältnisse — vier Seiten empfahlen vier ' +
+          'verschiedene, und keins davon hat je geholfen, einen Aufguss ' +
+          'aufzuschreiben.' },
   { v: '0.8.0', date: '2026-09-11',
     text: 'Ein drittes Sortiment ist dazugekommen: Purelia, 40 Öle und 7 ' +
           'Mischungen. Purelia schreibt zu seinen Ölen nichts weiter — keine ' +

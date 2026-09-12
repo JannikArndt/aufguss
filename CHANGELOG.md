@@ -7,6 +7,50 @@ cache-first, so the change lands on the next cold start, unless it is taken
 early from Mehr → **Update jetzt laden**. Mehr also shows the last few
 entries below this list in short; this file is the whole history.
 
+## 0.9.0 — 2026-09-12
+
+Names, not bottles. The app's job is writing down what you poured; this release
+takes several things out of the way of that and puts the plant's real identity
+in front.
+
+- **A plant answers to every name it has.** *Spearmint*, *Grüne Minze*,
+  *Krauseminze*, *Mentha spicata*, *Ährige Minze*, *Lamb mint* — all one row.
+  The oil's page lists them under *Heißt auch*. `src/data/names.js` is a search
+  index and nothing else, and `sources/names.md` says why it is held to a
+  narrower rule than anything about a scent.
+- **The three mints are three species.** *Mentha × piperita* is Pfefferminze,
+  *Mentha spicata* is Krauseminze and Grüne Minze, *Mentha arvensis* is the
+  plain Minze both shops sell. The botanical name splits them, not the word on
+  the label — which is also why Aromen's *Grüne Minze* sits with the
+  Krauseminzen and not with the Minzen.
+- **25 botanical names corrected.** RBM filed its Chinese cedarwood under
+  *Boswellia carteri*, which is frankincense, and its American peppermint under
+  a mountain mint. Those are errors anybody can check, not judgements between
+  two plausible species, and they broke both the search and the grouping. Each
+  carries `latinFixed`, shows *(korrigiert)* on the oil's page, and is listed
+  with its reason in `sources/corrections.md`. Genuine disagreements are still
+  left alone and still show both sides.
+- **RBM's safety data sheets, read.** 100 PDFs they publish next to the shop.
+  Each entry now carries its CAS number, its colour, and what is in the bottle
+  at one per cent or more — *Estragol 75 – 90 %*, *Menthol 25 – 50 %* — which
+  is the first thing any of their fertige Mischungen has ever said about itself
+  beyond a name. It is searchable, weakly. The sheet also named the one species
+  RBM's product page left blank, so no single oil in either range is without a
+  botanical name now.
+- **Bio is a chip.** Seventy of Aromen's articles say `-bio-` in their own
+  slug, so the shelf you are standing at can be narrowed to it.
+- **Sorte and Anbieter are two lines, not one.** What the oil is on the first,
+  who sells it on the second. Still optional, still deselectable.
+- **Gone: the Mischverhältnisse.** Four pages recommended four different ratios
+  of Kopf to Herz to Basis, the app made you pick one in the settings, and
+  knowing which one you had picked never once helped anybody write down what
+  they poured. The balance bar and the card of remarks went with them. What is
+  left is the pour order and, if you ask for a suggestion, which note the set
+  does not have yet.
+- **`CLAUDE.md` now opens with what the app is for**, because most of the
+  above is that question answered: quickly writing down what you did in which
+  Aufguss. Everything else is nice to have.
+
 ## 0.8.0 — 2026-09-11
 
 A third range, and the oil data grew a spine. Until now a bottle's variety

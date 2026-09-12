@@ -18,6 +18,7 @@
 import { OILS } from '../data/oils.js';
 import { OILS_RBM } from '../data/oils-rbm.js';
 import { OILS_PURELIA } from '../data/oils-purelia.js';
+import { PLANT_NAMES } from '../data/names.js';
 import { NOTES } from '../data/blending.js';
 import { Store } from './store.js';
 import { fold } from './util.js';
@@ -60,8 +61,11 @@ export var CATALOGUE = OILS.concat(OILS_RBM).concat(OILS_PURELIA).sort(function 
    never becomes China, because translating it would be this app writing a
    fact nobody published.
 
-   `kind` says which of the five it is, so a screen can say "aus Italien" in
-   one place and "CO2" in another without either being guessed at. A bottle
+   `kind` says which of the six it is, so a screen can say "aus Italien" in
+   one place and "CO2" in another without either being guessed at. `quality` is
+   the one that is read off the id rather than the name: Aromen's own slug says
+   `-bio-` on seventy of its articles, which is the shop saying it, not this
+   app deciding it. A bottle
    whose supplier gave no variety at all comes back empty, and the leftover
    words of its name stand in for it further down.
 
@@ -69,7 +73,7 @@ export var CATALOGUE = OILS.concat(OILS_RBM).concat(OILS_PURELIA).sort(function 
    answers: Purelia's Zitrone is "italienisch/spanisch", one bottle from either
    country, and flattening that to one of them would throw away half of what
    the page says. Each value becomes its own chip. */
-var VARIETY_KEYS = ['colour', 'origin', 'method', 'kind', 'part'];
+var VARIETY_KEYS = ['colour', 'origin', 'method', 'kind', 'part', 'quality'];
 export function varietyOf(oil) {
   var out = [], v = (oil && oil.variety) || null;
   if (!v) return out;
@@ -302,6 +306,11 @@ function buildPlant(key, list) {
     supplier: '',
     suppliers: suppliers,
     variants: variants,
+    /* The other names this plant answers to — a search index and never a claim
+       (src/data/names.js says where they come from and why they are held to a
+       lower bar than anything about a scent). Empty for a plant nobody has
+       written a second name for yet. */
+    aka: PLANT_NAMES[key] || [],
     /* Agreeing that there is no note is still no note. A range that ships
        without one — Purelia's whole Professional line does — would otherwise
        give the plant a notes array holding nothing, which every reader would
@@ -589,8 +598,11 @@ function haystack(o) {
     fam: fold((o.family || '') + ' ' + (o.familyDe || '')),
     note: fold((o.notes || []).map(noteName).join(' ') + ' ' + (o.notes || []).join(' ')),
     good: fold((o.goodDe || []).join(' ') + ' ' + (o.good || []).join(' ')),
-    char: fold((o.character || []).join(' ')),
-    code: fold(o.code),
+    /* What is in the bottle is searchable — "menthol" is a real question in
+       front of a shelf — but at the character weight, under the name and the
+       family, because half the catalogue contains a little limonene. */
+    char: fold((o.character || []).join(' ') + ' ' + (o.main || []).join(' ') + ' ' + (o.colour || '')),
+    code: fold(o.code) + (o.cas ? ' ' + fold(o.cas) : ''),
     supplier: fold(o.supplier),
     about: fold(o.about),
   };
@@ -599,8 +611,13 @@ function plantHaystack(p) {
   /* The plant's own name goes in first, and that ordering is the whole
      ranking: typing "minze" has to put Minze above Bergamottminze, and it only
      does so if "minze" starts the field rather than sitting somewhere inside
-     the run of its five bottles' names. */
-  var merged = { de: fold(p.de), en: '', latin: '', fam: '', note: '', good: '', char: '', code: '', supplier: '', about: '' };
+     the run of its five bottles' names. Its other names follow, at the same
+     weight, because "Spearmint" and "Krauseminze" are the same question asked
+     in two languages. */
+  var merged = {
+    de: fold(p.de) + (p.aka.length ? ' ' + fold(p.aka.join(' ')) : ''),
+    en: '', latin: '', fam: '', note: '', good: '', char: '', code: '', supplier: '', about: '',
+  };
   for (var i = 0; i < p.bottles.length; i++) {
     var h = haystack(p.bottles[i]);
     for (var key in merged) merged[key] = (merged[key] ? merged[key] + ' ' : '') + h[key];

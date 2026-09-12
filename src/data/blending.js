@@ -2,8 +2,12 @@
 
    None of this is invented. Every rule below was read off a named page on
    8 September 2026 and the page is written down in sources/blending.md, with
-   the sentence it came from. Where two sources disagree — and they do, about
-   ratios — both are here, because that disagreement is the honest answer.
+   the sentence it came from.
+
+   What used to be here and is not any more: four published ratios of Kopf to
+   Herz to Basis. Four pages recommended four different numbers, the app made
+   you pick one, and knowing which one you had picked never once helped anybody
+   write down what they poured. Writing it down is what this app is for.
 
    And it is not a science. Aufguss is a craft with a lot of taste in it, so
    the app suggests and never insists: everything here is a hint next to a
@@ -29,20 +33,6 @@ export const NOTES = [
 
 /* The order to combine them in, heaviest first (aroma1x1.com). */
 export const MIX_ORDER = ['base', 'heart', 'top'];
-
-/* Ratios. Four of them, because four different pages recommend four different
-   things and none of them is wrong. Percentages are of the total drop count.
-   `parts` reads top : heart : base, the way all four sources write it. */
-export const RATIOS = [
-  { id: '30-50-20', label: '30 · 50 · 20', parts: { top: 30, heart: 50, base: 20 },
-    de: 'Ausgewogen, Herz betont', note: 'Die Faustregel bei aroma1x1: 30 % Kopf, 50 % Herz, 20 % Basis.' },
-  { id: '3-5-2', label: '3 · 5 · 2', parts: { top: 3, heart: 5, base: 2 },
-    de: 'Harmonisch, sinnlich', note: 'Bei 10 Tropfen dasselbe wie 30·50·20 — so schreibt es Floria.' },
-  { id: '5-2-3', label: '5 · 2 · 3', parts: { top: 5, heart: 2, base: 3 },
-    de: 'Basis betont', note: 'Floria, wenn die Basis tragen soll.' },
-  { id: '3-2-1', label: '3 · 2 · 1', parts: { top: 3, heart: 2, base: 1 },
-    de: 'Leicht, heiter', note: 'Floria, für eine leichte Mischung.' },
-];
 
 /* Which families sit well next to which. Floria publishes this as a table;
    aroma1x1 adds that citrus goes with nearly everything, and that floral over
