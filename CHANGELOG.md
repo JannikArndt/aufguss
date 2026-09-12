@@ -7,6 +7,14 @@ cache-first, so the change lands on the next cold start, unless it is taken
 early from Mehr → **Update jetzt laden**. Mehr also shows the last few
 entries below this list in short; this file is the whole history.
 
+## 0.9.1 — 2026-09-12
+
+- **Dasselbe Öl darf auf mehrere Kugeln.** Drei Güsse mit derselben Mischung
+  sind ein ganz gewöhnlicher Aufguss; bisher war ein Öl nach der ersten Kugel
+  aus der Suche aller anderen verschwunden und ließ sich nirgends mehr
+  hinzufügen. Die Suche lässt jetzt nur noch weg, was auf *dieser* Kugel schon
+  liegt, und zweimal dasselbe Öl auf eine Kugel bleibt ausgeschlossen.
+
 ## 0.9.0 — 2026-09-12
 
 Names, not bottles. The app's job is writing down what you poured; this release

@@ -9,6 +9,11 @@
 
    Write each note for someone who has never read the code. */
 export var RELEASES = [
+  { v: '0.9.1', date: '2026-09-12',
+    text: 'Dasselbe Öl darf jetzt auf mehrere Kugeln. Wer drei Güsse mit ' +
+          'derselben Mischung macht, sucht es einfach auf jeder Kugel wieder ' +
+          'heraus — vorher war es nach der ersten aus der Suche verschwunden. ' +
+          'Zweimal auf dieselbe Kugel geht weiterhin nicht.' },
   { v: '0.9.0', date: '2026-09-12',
     text: 'Das Öl heißt jetzt so, wie du es nennst. „Spearmint“, „Grüne ' +
           'Minze“, „Mentha spicata“ und „Ährige Minze“ finden alle dieselbe ' +

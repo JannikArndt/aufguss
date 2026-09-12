@@ -593,6 +593,39 @@ const supplierChips = () => { const r = chipRows(); return r[1] ? [...r[1].child
   main.go('#/');
 }
 
+/* Three Güsse of the same oil is an ordinary Aufguss, and pouring the same
+   mix on every Kugel is the most ordinary one there is — so an oil already on
+   one ball is still offered on the next, and lands there as its own row. Twice
+   on the same ball is still a slip and is still ignored. */
+{
+  const before = new Set(Store.entries().map((e) => e.id));
+  main.go('#/neu');
+  const searchBoxes = () => findAll('input', $('entryBody')).filter((n) => n.type === 'search');
+  const offeredIn = (r, q) => {
+    type(searchBoxes()[r - 1], q);
+    return findAll('.ac-item', $('entryBody')).map((row) => row.textContent);
+  };
+  const addTo = (r, q) => {
+    if (!offeredIn(r, q).length) throw new Error('nothing offered for ' + q);
+    findAll('.ac-item', $('entryBody'))[0].click();
+  };
+  addTo(1, 'zitrone');
+  ok('rounds: an oil on Kugel 1 is still offered on Kugel 2',
+    offeredIn(2, 'zitrone').some((t) => t.startsWith('Zitrone')));
+  addTo(2, 'zitrone');
+  addTo(3, 'zitrone');
+  eq('rounds: the same oil sits on all three balls', findAll('.setrow', $('entryBody')).length, 3);
+  ok('rounds: but not twice on the same ball',
+    !offeredIn(1, 'zitrone').some((t) => t.startsWith('Zitrone')));
+  {
+    const saved = Store.entries().find((e) => !before.has(e.id));
+    eq('rounds: and the store keeps one row per ball', saved.oils.length, 3);
+    eq('rounds: each on its own', saved.oils.map((x) => x.round).sort().join(''), '123');
+    main.go('#/');
+    Store.removeEntry(saved.id);
+  }
+}
+
 /* An Aufguss written before any of this recorded a bottle id. Opening it must
    still show that exact bottle — losing the oil out of a saved Aufguss is the
    same failure as losing the Aufguss, and it is the whole reason bottleId

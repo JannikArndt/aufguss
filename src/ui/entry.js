@@ -295,9 +295,13 @@ function oilsCard() {
   return card('Öle', kids);
 }
 
-/* Which oils are already on this ball, so the search can leave them out and
-   the "add as own oil" row can find the right spot for them. */
-function chosenIds() { return entry.oils.map(function (x) { return x.oilId; }); }
+/* Which oils are already on this ball, so the search can leave them out. Only
+   this ball: three Güsse of the same oil is an ordinary Aufguss, and the same
+   mix on every Kugel is the most ordinary one there is. */
+function chosenIds(r) {
+  return entry.oils.filter(function (x) { return x.round === r; })
+    .map(function (x) { return x.oilId; });
+}
 
 function roundBlock(r) {
   var items = entry.oils.filter(function (x) { return x.round === r; });
@@ -321,7 +325,7 @@ function roundBlock(r) {
   input.autocomplete = 'off';
   var oilAc = autocomplete(input, {
     find: function (q) {
-      var hits = search(q, { limit: 12, exclude: chosenIds() });
+      var hits = search(q, { limit: 12, exclude: chosenIds(r) });
       var rows = hits.map(function (o) {
         var reason = why(o, q);
         return { title: o.de, value: o, sub: searchSub(o, reason), lead: leadDot(o) };
@@ -522,8 +526,13 @@ function famDe(id) {
 }
 
 function addOil(id, round) {
-  for (var i = 0; i < entry.oils.length; i++) if (entry.oils[i].oilId === id) return;
-  entry.oils.push({ oilId: id, bottleId: '', ml: Store.prefs().defaultMl, round: round || 1 });
+  var r = round || 1;
+  /* Twice on the same ball is a slip; the same oil on the next Kugel is the
+     usual thing, so only this round's oils count as already there. */
+  for (var i = 0; i < entry.oils.length; i++) {
+    if (entry.oils[i].oilId === id && entry.oils[i].round === r) return;
+  }
+  entry.oils.push({ oilId: id, bottleId: '', ml: Store.prefs().defaultMl, round: r });
   save(); render();
 }
 
