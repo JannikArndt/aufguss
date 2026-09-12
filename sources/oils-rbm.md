@@ -7,6 +7,11 @@ price list *Preisliste ab 01.08.2026* (PDF, handed over by the owner as
 **Fetched:** 10 September 2026
 **Result:** `src/data/oils-rbm.js` — 104 entries: 81 single oils and 23 Mischungen
 
+Every count in this file is what **the shop** publishes. The data file now holds
+105, because a second Thymian turned up that the shop has no page for and only a
+safety data sheet describes — that one is [`oils-rbm-sdb.md`](oils-rbm-sdb.md)'s,
+not this file's, and it carries `sdbOnly: true` so the two can never be confused.
+
 RBM Natur Sauna & Wellness is the second range this sauna buys from. Their oils
 sit next to Aromen's in one list; which one an oil is from is on the oil, and
 nothing in the app treats one range differently from the other. Both ranges

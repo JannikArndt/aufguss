@@ -20,7 +20,9 @@ export var RELEASES = [
           'dahinter. Neu als Chip: Bio, bei den 70 Aromen-Ölen, die selbst so ' +
           'heißen. Weg sind die Mischverhältnisse — vier Seiten empfahlen vier ' +
           'verschiedene, und keins davon hat je geholfen, einen Aufguss ' +
-          'aufzuschreiben.' },
+          'aufzuschreiben. Und RBM hat zwei Thymiane: einen mit Produktseite ' +
+          'und einen, den es nur als Sicherheitsdatenblatt gibt. Beide stehen ' +
+          'jetzt da, und das Öl sagt, welcher welcher ist.' },
   { v: '0.8.0', date: '2026-09-11',
     text: 'Ein drittes Sortiment ist dazugekommen: Purelia, 40 Öle und 7 ' +
           'Mischungen. Purelia schreibt zu seinen Ölen nichts weiter — keine ' +

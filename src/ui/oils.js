@@ -230,6 +230,16 @@ export function renderOne(id) {
         ' gibt für dieses Öl keine Note an. ' + noteName(leadNote(o)) + ' ist' + famBit +
         ' geschätzt — siehe sources/ im Repository.'),
     ]));
+  } else if (o.sdbOnly) {
+    /* An article the shop sells but does not have a page for: everything known
+       about it is on one PDF, and a PDF carries no Duftgruppe and no Duftnote.
+       Borrowing either from the oil next to it — RBM's other thyme, in the one
+       case this covers — would be inventing the one thing this app does not. */
+    body.appendChild(card('Zur Note', [
+      el('p', 'prose small', (o.supplier || 'Der Anbieter') + ' hat zu diesem Öl keine ' +
+        'Produktseite, nur ein Sicherheitsdatenblatt. Daraus geht weder Duftgruppe ' +
+        'noch Duftnote hervor, und vom Öl daneben geborgt wird hier nichts.'),
+    ]));
   } else if (o.blend) {
     /* A fertige Mischung has a note only in the sense that its ingredients do,
        and nobody publishes which one wins. Guessing it off the Zusammensetzung
@@ -283,12 +293,21 @@ function disagreeSentence(bottles, valueFn, renderFn) {
       if (bottles[j].supplier === b.supplier && valueFn(bottles[j]) && valueFn(bottles[j]) !== v) supplierSplits = true;
     }
     if (kids.length) kids.push(', ');
-    kids.push((supplierSplits ? b.supplier + ' (' + b.de + ')' : b.supplier) + ' sagt ');
+    kids.push((supplierSplits ? b.supplier + ' (' + bottleTag(b) + ')' : b.supplier) + ' sagt ');
     kids.push(renderFn(v));
   }
   kids.push('.');
   return kids;
 }
+/* Which of one shop's two bottles this is. Usually its own name does it —
+   Limette destilliert against Limette gepresst. Where a shop sells two under
+   the very same name, as RBM does with its two thymes, the name says nothing
+   and the variety it declared is the only thing that tells them apart. */
+function bottleTag(b) {
+  var vs = varietyOf(b).map(function (v) { return v.label; });
+  return vs.length ? b.de + ' ' + vs.join(' ') : b.de;
+}
+
 function splitCard(o) {
   var kids = [];
   if (!o.notes.length) kids.push(el('p', 'prose small',

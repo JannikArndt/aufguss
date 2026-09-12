@@ -1,6 +1,7 @@
-/* The RBM catalogue — 104 entries from RBM Natur Sauna & Wellness
-   (rbm-wellness.de), the second range this sauna buys from: 81 single oils and
-   23 of their own Mischungen. Every field here was read off their own product
+/* The RBM catalogue — 105 entries from RBM Natur Sauna & Wellness
+   (rbm-wellness.de), the second range this sauna buys from: 82 single oils and
+   23 of their own Mischungen. One of the 82 has no product page at all and is
+   known only from a safety data sheet — see `sdbOnly` below. Every field here was read off their own product
    pages and their price list on 10 September 2026; nothing about a scent is
    guessed. See sources/oils-rbm.md for how.
 
@@ -27,9 +28,15 @@
                  Mischung says anything about itself beyond its name
      sdb         which sheet it came from, and when that sheet was revised
 
-   The sheets print no botanical name, with one exception worth the trouble:
-   the Bergamottminze sheet is headed "Mentha-Citrataöl", which is the species
-   their product page leaves blank, so `latin` there is theirs after all.
+   The sheets print no botanical name, with two exceptions worth the trouble.
+   The Bergamottminze sheet is headed "Mentha-Citrataöl", which is the species
+   their product page leaves blank, so `latin` there is theirs after all. And
+   the sheet headed "Thymianöl (ex Thymus serpyllum)" is a second thyme: their
+   product page sells Thymus vulgaris and says nothing about a serpyllum, so
+   these are two articles, one with a page and no sheet and one with a sheet
+   and no page. The second carries `sdbOnly: true` — the whole of what is known
+   about it is on that one PDF, which means no Duftgruppe and no Duftnote, and
+   neither is borrowed from the thyme next to it.
 
    `goesWith` and `parts` both name other oils, so neither is in the search
    index — a query for Zitrone should not turn up the twelve oils whose
@@ -754,8 +761,15 @@ export const OILS_RBM = [
     plantFamily: "Cupressaceae", character: ["kampferartig", "scharf", "frisch"], goesWith: ["Eukalyptus", "Muskatellersalbei", "Geranium", "Zitrone"],
     about: "Charakter: kampferartig, scharf, frisch. Für 1 Liter ätherisches Öl werden 55 kg der Zweige benötigt. Die Gewinnung erfolgt durch eine Wasserdampfdestillation.",
     url: "https://www.rbm-wellness.de/Thuja-p472788916" },
-  { id: "rbm:Thymian", code: "166 - 169", de: "Thymian", en: "", latin: "Thymus vulgaris",
+  { id: "rbm:Thymian-serpyllum", code: "", de: "Thymian", en: "", latin: "Thymus serpyllum",
     cas: "84776-98-7", colour: "gelbbraun", main: ["Thymol 10 – 25 %", "Carvacrol 10 – 25 %", "p-Cymol 10 – 25 %", "gamma-Terpinen 10 – 25 %", "Geraniol 10 – 25 %"], sdb: "Thymianöl (ex Thymus serpyllum) (19.02.2026)",
+    plant: "thymian", variety: { kind: "serpyllum" },
+    family: "", familyDe: "", notes: [], noteEstimated: false,
+    good: [], goodDe: [], supplier: "RBM",
+    sdbOnly: true,
+    about: "",
+    url: null },
+  { id: "rbm:Thymian", code: "166 - 169", de: "Thymian", en: "", latin: "Thymus vulgaris",
     plant: "thymian",
     family: "Herbal", familyDe: "Kräuter", notes: ["heart"], noteEstimated: false,
     good: [], goodDe: [], supplier: "RBM",

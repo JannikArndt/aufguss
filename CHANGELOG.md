@@ -34,9 +34,15 @@ in front.
   Each entry now carries its CAS number, its colour, and what is in the bottle
   at one per cent or more — *Estragol 75 – 90 %*, *Menthol 25 – 50 %* — which
   is the first thing any of their fertige Mischungen has ever said about itself
-  beyond a name. It is searchable, weakly. The sheet also named the one species
+  beyond a name. It is searchable, weakly. The sheets also named the one species
   RBM's product page left blank, so no single oil in either range is without a
-  botanical name now.
+  botanical name now — and turned up a second thyme: the shop sells *Thymus
+  vulgaris* and has no sheet for it, while a sheet exists for *Thymus
+  serpyllum* that the shop has no page for. Two articles, so both are in the
+  catalogue, as two bottles of one Thymian. The one that exists only as a sheet
+  is marked as such and has no Duftgruppe and no Duftnote, because a safety
+  data sheet carries neither and the thyme beside it is not a place to borrow
+  from.
 - **Bio is a chip.** Seventy of Aromen's articles say `-bio-` in their own
   slug, so the shelf you are standing at can be narrowed to it.
 - **Sorte and Anbieter are two lines, not one.** What the oil is on the first,

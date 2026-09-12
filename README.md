@@ -20,12 +20,12 @@ whole of the short path, and everything else on the screen is optional.
 **Find an oil however you happen to think of it.** You search the plant, not
 the bottle: „Mandarine“ stands once in the list, and the variety and the
 supplier are chips you may tap afterwards or ignore. That is 147 entries over
-286 bottles from three
+287 bottles from three
 ranges — 135 single oils from
 [Aromen](https://www.aromen.be/de/shop/category/atherische-ole-einzelole-26),
 from
 [RBM](https://www.rbm-wellness.de/Naturreine-atherische-Ole-c134687002)
-81 single oils plus their 23 fertige Mischungen, and from
+82 single oils plus their 23 fertige Mischungen, and from
 [Purelia professional](https://schrader24.eu/portfolio/aetherische-oele/)
 40 single oils plus 7 Ölmischungen — searchable by the German name, the English
 name, the botanical name, the scent family, the note, the effect tags, how the

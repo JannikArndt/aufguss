@@ -49,7 +49,7 @@ const HOST = {
 };
 
 eq('oils: the Aromen range arrived', OILS.length, 135);
-eq('oils: and the RBM range, singles and Mischungen', OILS_RBM.length, 104);
+eq('oils: and the RBM range, singles and Mischungen', OILS_RBM.length, 105);
 eq('oils: and Purelia\'s, singles and Ölmischungen', OILS_PURELIA.length, 47);
 eq('oils: 23 of RBM\'s entries are Mischungen', OILS_RBM.filter((o) => o.blend).length, 23);
 eq('oils: 7 of Purelia\'s are', OILS_PURELIA.filter((o) => o.blend).length, 7);
@@ -69,7 +69,12 @@ ok('oils: no Aromen entry claims to be a Mischung', !OILS.some((o) => o.blend));
        for anything at all. Both exceptions are pinned to exactly those
        entries below, so neither can quietly spread to a range that does
        publish. */
-    const mayBeSilent = o.blend || o.supplier === 'Purelia';
+    /* A third silence, and the narrowest: one entry is known only from a
+       safety data sheet, because RBM sells a second thyme (Thymus serpyllum)
+       that has a sheet and no product page. A sheet carries no Duftgruppe and
+       no Duftnote, and neither is borrowed from the thyme that does have a
+       page. */
+    const mayBeSilent = o.blend || o.supplier === 'Purelia' || o.sdbOnly;
     if (!mayBeSilent && !o.family) bad.push('no family: ' + o.de);
     if (!mayBeSilent && !o.familyDe) bad.push('no German family: ' + o.de);
     if (!mayBeSilent && !o.notes.length) bad.push('no note: ' + o.de);
@@ -117,11 +122,12 @@ ok('oils: no Aromen entry claims to be a Mischung', !OILS.some((o) => o.blend));
     OILS.concat(OILS_RBM).filter((o) => !o.blend && !o.latin).length, 0);
   eq('oils: and Purelia has no botanical name for any of its 40',
     OILS_PURELIA.filter((o) => !o.blend && !o.latin).length, 40);
-  /* One entry has no page to link to — RBM's Ringelblume, which is on their
-     price list and not in their shop (sources/open-questions.md). Everything
-     else is checkable against a URL, and that is the point of pinning this. */
-  eq('oils: exactly one entry has no URL to check it against',
-    ALL_OILS.filter((o) => !o.url).length, 1);
+  /* Two entries have no page to link to: RBM's Ringelblume, which is on their
+     price list and not in their shop, and their second thyme, which exists
+     only as a safety data sheet (sources/open-questions.md). Everything else
+     is checkable against a URL, and that is the point of pinning this. */
+  eq('oils: exactly two entries have no URL to check them against',
+    ALL_OILS.filter((o) => !o.url).length, 2);
   /* Purelia has no per-product page at all: one portfolio page lists the whole
      line, so all 47 point at the same link and that is the honest answer. */
   eq('oils: Purelia points all 47 at the one page there is',
@@ -237,11 +243,11 @@ ok('search: the range itself is a search term',
    moved with it and the note in sources/ has to move too. */
 {
   eq('plants: the catalogue is entries, not bottles', cat.all().length, 147);
-  eq('plants: and every bottle is still reachable', cat.bottles().length, 286);
+  eq('plants: and every bottle is still reachable', cat.bottles().length, 287);
   const plants = cat.all().filter((o) => o.isPlant);
   eq('plants: sixty-three names gather more than one bottle', plants.length, 63);
   eq('plants: built out of this many bottles',
-    plants.reduce((n, p) => n + p.bottles.length, 0), 202);
+    plants.reduce((n, p) => n + p.bottles.length, 0), 203);
   ok('plants: no Mischung was ever folded into one',
     !plants.some((p) => p.bottles.some((b) => b.blend)));
   /* The grouping is declared in the data, not read off the name. Every bottle
@@ -256,7 +262,7 @@ ok('search: the range itself is a search term',
   const split = (k) => plants.filter((p) => p.split && p.split[k]).length;
   eq('plants: twenty-six disagree about the note', split('note'), 26);
   eq('plants: twenty-one about the scent family', split('family'), 21);
-  eq('plants: twenty-one about the botanical name', split('latin'), 21);
+  eq('plants: twenty-two about the botanical name', split('latin'), 22);
 
   /* Twenty-five botanical names this repository supplies rather than the shop:
      RBM filed its Chinese cedarwood under Boswellia carteri, which is
@@ -274,6 +280,16 @@ ok('search: the range itself is a search term',
      bottle at one per cent or more. Four entries have no sheet. */
   eq('data: a hundred RBM entries carry their safety sheet',
     OILS_RBM.filter((o) => o.sdb).length, 100);
+  /* RBM sells two thymes: Thymus vulgaris has a product page and no sheet,
+     Thymus serpyllum has a sheet and no page. They are two articles, so they
+     are two bottles of one plant, and the plant reports the disagreement
+     rather than picking one. */
+  eq('data: exactly one entry is known only from a safety sheet',
+    OILS_RBM.filter((o) => o.sdbOnly).length, 1);
+  eq('data: RBM\'s two thymes are two species under one name',
+    cat.byId('art:thymian').bottles.filter((b) => b.supplier === 'RBM')
+      .map((b) => b.latin).sort().join(' / '), 'Thymus serpyllum / Thymus vulgaris');
+  ok('data: and the plant says so rather than choosing', !cat.byId('art:thymian').latin);
   ok('data: and a Mischung finally says what is in it',
     (cat.byId('rbm:Advent-Mix').main || []).some((x) => /Zimtaldehyd/.test(x)));
   ok('data: the sheet named the species the product page left blank',

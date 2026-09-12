@@ -138,8 +138,10 @@ knows there are three.
   Three more are on that list with sourced exceptions, and every exception is
   pinned to exactly the entries that earn it so it cannot spread: `family` and
   `familyDe`, and at least one `notes` entry, on everything except a Mischung
-  (nobody publishes either for one) and everything except Purelia (which
-  publishes neither for anything in its Professional line); and `latin` on
+  (nobody publishes either for one), everything except Purelia (which publishes
+  neither for anything in its Professional line), and the one entry marked
+  `sdbOnly` (an article RBM sells with a safety data sheet and no product page —
+  a sheet carries neither); and `latin` on
   every Aromen and RBM single oil — the last gap, RBM's Bergamottminze, was
   closed by their own safety data sheet — and on nothing of Purelia's.
 - **A supplier bottle declares which plant it is.** `plant` is a folded slug
@@ -173,7 +175,11 @@ knows there are three.
   one plant, not a duplicate to clean up.
 - **An RBM entry may carry what its safety data sheet says.** `cas`, `colour`,
   `main` (the constituents at 1 % or more, with the band as printed) and `sdb`
-  (which sheet, revised when). 100 of the 104 have one. It is supplier data
+  (which sheet, revised when). 100 of the 105 have one, and one entry —
+  `sdbOnly: true` — is known from nothing else: RBM sells two thymes, *Thymus
+  vulgaris* with a product page and no sheet, *Thymus serpyllum* with a sheet
+  and no page. Two articles, so two bottles of one plant, and the plant reports
+  the disagreement rather than choosing. Nothing is borrowed between them. It is supplier data
   like any other and follows §1: `sources/oils-rbm-sdb.md` has the method and
   the four entries with no sheet. `main` and `colour` are searchable at the
   weakest weight — "menthol" is a real question in front of a shelf, but half
@@ -280,7 +286,7 @@ The scripts that read the sources are not in the repository; the *method* is, in
   every re-cut spelled out one line at a time, and the spelling slips on the
   page that were corrected — with the page's own spelling kept next to each.
 - **Oils, RBM, the safety data sheets** — RBM publishes a
-  Sicherheitsdatenblatt next to the shop for 100 of its 104 entries, and those
+  Sicherheitsdatenblatt next to the shop for 100 of its 105 entries, and those
   PDFs say things the product pages do not: a CAS number, a colour, and an
   ABSCHNITT 3 list of what is in the bottle with percentage bands. Fetch the
   PDFs, cut each to ABSCHNITT 1, 3 and 9, and read the labelled lines off them
@@ -308,12 +314,12 @@ The scripts that read the sources are not in the repository; the *method* is, in
   nearest time label. `sources/aufgussplan.md` has the colour values.
 
 When the data changes, the matching `sources/*.md` changes in the same commit.
-`tools/smoke.mjs` pins the counts on purpose — 135 Aromen oils, 104 RBM entries
-of which 23 are Mischungen, 47 Purelia entries of which 7 are, ten scent
+`tools/smoke.mjs` pins the counts on purpose — 135 Aromen oils, 105 RBM entries
+of which 23 are Mischungen and one is known only from a safety data sheet, 47 Purelia entries of which 7 are, ten scent
 families plus Mischungen plus the gap Purelia leaves, eight estimated Aromen
 notes, one estimated RBM note, no Aromen-or-RBM single oil without a botanical
-name and all 40 of Purelia's, one entry with no URL, 63 plants over 202 of the
-286 bottles, and 25 corrected botanical names — so a regeneration that moves
+name and all 40 of Purelia's, two entries with no URL, 63 plants over 203 of
+the 287 bottles, and 25 corrected botanical names — so a regeneration that moves
 any of them fails until the source file is brought along.
 
 ## 6. Testing
@@ -322,7 +328,7 @@ any of them fails until the source file is brought along.
 node tools/smoke.mjs
 ```
 
-200 checks. It loads the whole app — `src/main.js` and everything under it —
+203 checks. It loads the whole app — `src/main.js` and everything under it —
 against the stub DOM in `tools/stub/`, and drives it the way a finger does: open
 a new Aufguss, pick a theme off the plan, type three oil names in three
 different languages, read what the screen says back, tap Fertig, reopen it,

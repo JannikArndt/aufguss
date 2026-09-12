@@ -59,8 +59,9 @@ CLP, and it carries three things the product page does not:
 
 ## What was found
 
-- **100 of RBM's 104 entries have a sheet.** The four without are *1001 Nacht*,
-  *Beifuß*, *Blue Ice* and *Orange Sprizz*.
+- **100 of RBM's 105 entries have a sheet.** The five without are *1001 Nacht*,
+  *Beifuß*, *Blue Ice*, *Orange Sprizz* and the Thymian that does have a
+  product page — see below.
 - **Every sheet lists constituents**, the Mischungen included — which is the
   first thing any of them has said about itself beyond a Zusammensetzung line.
   Only the bands at 1 % or more are kept; below that it is a list of trace
@@ -72,19 +73,40 @@ CLP, and it carries three things the product page does not:
 - **Ringelblume has a sheet**, which is more than its product page has — it is
   on the price list and not in the shop at all.
 
-## What the sheets leave open
+## The second thyme
 
-- **Thymian.** RBM's product page says *Thymus vulgaris*. Their safety data
-  sheet is headed *"Thymianöl (ex Thymus serpyllum)"*, which is a different
-  species — Quendel, wild thyme. Nothing has been changed on the strength of
-  it: the two documents are both theirs and they disagree. **What would settle
-  it:** RBM saying which one the current batch is.
-- **Origins the sheets know and the shop does not.** *Teebaumöl chinesisch*,
-  *Ingweröl CHINA*, *Rosmarinöl tunesisch*, *Salbeiöl dalmat.*, *Wintergrünöl
-  chinesisch*, *Basilikumöl indisch* — six origins printed on a sheet where the
-  product name carries none. They are not in `variety` yet, because a variety
-  chip changes how a plant groups and that is worth doing deliberately rather
-  than as a side effect of reading a PDF.
+RBM's product page sells *Thymus vulgaris* and says nothing about a serpyllum.
+Their safety data sheet is headed *"Thymianöl (ex Thymus serpyllum)"* — wild
+thyme, Quendel, a different species. A safety data sheet is issued per article,
+so the reading taken here, and the owner's own (12 September 2026), is that
+these are **two articles**: one with a product page and no sheet, one with a
+sheet and no page.
+
+So the catalogue carries both, as two bottles of the plant *Thymian*:
+
+| entry | species | page | sheet |
+|---|---|---|---|
+| `rbm:Thymian` | *Thymus vulgaris* | yes | no |
+| `rbm:Thymian-serpyllum` | *Thymus serpyllum* | no | yes |
+
+The second carries `sdbOnly: true`. Everything known about it is on that one
+PDF, and a PDF carries no Duftgruppe and no Duftnote — so it has neither, and
+neither is borrowed from the thyme beside it. Its own page in the app says so.
+The plant *Thymian* therefore has no agreed botanical name and shows both.
+
+**What would settle it:** RBM listing the serpyllum on their shop, or saying
+that the two sheets describe one article after all.
+
+## What the sheets leave open
+- **Origins that are in the sheet's title and not on the shop's page.** The
+  shop sells *Teebaum*; the sheet for it is headed *Teebaumöl chinesisch*. Same
+  for *Ingweröl CHINA*, *Rosmarinöl tunesisch*, *Salbeiöl dalmat.*,
+  *Wintergrünöl chinesisch* and *Basilikumöl indisch* — six origins RBM prints
+  in the name of a document but not in the name of a product. They are not in
+  `variety`, because a variety becomes a chip and changes how a plant groups,
+  and that is worth doing deliberately rather than as a side effect of reading a
+  PDF. The `sdb` field on each entry names the sheet, so the origin is one line
+  away on the oil's own page.
 - **A CAS number is not a species.** It narrows an oil a great deal and it is
   worth having, but resolving one to a plant is a lookup this repository has not
   done. The corrections in [`corrections.md`](corrections.md) were made on the
