@@ -7,6 +7,16 @@ cache-first, so the change lands on the next cold start, unless it is taken
 early from Mehr → **Update jetzt laden**. Mehr also shows the last few
 entries below this list in short; this file is the whole history.
 
+## 0.9.2 — 2026-09-18
+
+- **The app checks for an update on its own.** Registering the service worker
+  used to leave the update check to the browser's own schedule, which an
+  installed icon opened from the Home Screen rarely triggers — a phone could
+  sit on an old version for days with a newer one already on GitHub Pages.
+  The app now asks explicitly, on open and every time it comes back to the
+  front. Applying the update still waits for a tap on Mehr → **Update jetzt
+  laden**, so a version change can never land mid-Aufguss.
+
 ## 0.9.1 — 2026-09-12
 
 - **Dasselbe Öl darf auf mehrere Kugeln.** Drei Güsse mit derselben Mischung

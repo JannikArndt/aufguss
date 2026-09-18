@@ -9,6 +9,13 @@
 
    Write each note for someone who has never read the code. */
 export var RELEASES = [
+  { v: '0.9.2', date: '2026-09-18',
+    text: 'Ein installiertes Icon prüft jetzt selbst nach einer neuen Version, ' +
+          'statt darauf zu warten, dass der Browser irgendwann von selbst nachsieht ' +
+          '— beim Öffnen und jedes Mal, wenn du zurück in die App kommst. Geladen ' +
+          'wird sie damit zuverlässiger; übernommen wird sie weiterhin erst, wenn ' +
+          'du unter Mehr auf „Update jetzt laden“ tippst, damit kein Aufguss mitten ' +
+          'im Schreiben unter dir wechselt.' },
   { v: '0.9.1', date: '2026-09-12',
     text: 'Dasselbe Öl darf jetzt auf mehrere Kugeln. Wer drei Güsse mit ' +
           'derselben Mischung macht, sucht es einfach auf jeder Kugel wieder ' +

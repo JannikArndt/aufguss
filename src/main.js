@@ -203,7 +203,21 @@ function registerWorker() {
      hostname check gets wrong and did. */
   if (window.isSecureContext === false) return;
   navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
-    .then(watchForUpdate)
+    .then(function (reg) {
+      watchForUpdate(reg);
+      /* A phone opened from the Home Screen rarely does the navigation a
+         browser tab does, so its own "check every so often" heuristic can go
+         a long time without firing. Checking here, and again whenever the
+         app comes back to the front, is what makes the update actually turn
+         up instead of sitting on GitHub Pages unseen. Still just a check —
+         installing and applying stay exactly as cautious as before. */
+      reg.update().catch(function () { /* offline; try again next time */ });
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') {
+          reg.update().catch(function () { /* offline; try again next time */ });
+        }
+      });
+    })
     .catch(function () { /* no offline copy; nothing else changes */ });
 
   /* Reloading is the only way a tab actually starts running the new worker's
