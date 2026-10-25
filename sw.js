@@ -13,11 +13,11 @@
    analytics, no CDN — and this file adds none. The journal lives in
    localStorage and is not touched here.
 
-   VERSION must match RELEASE.v in src/release.js. There is no build step to
+   VERSION must match RELEASES[0].v in src/release.js. There is no build step to
    keep them in step, so tools/smoke.mjs asserts it, along with SHELL listing
    exactly the files on disk. */
 
-const VERSION = '0.9.2';
+const VERSION = '0.9.3';
 const CACHE = 'aufguss-' + VERSION;
 
 const SHELL = [
@@ -84,6 +84,12 @@ self.addEventListener('fetch', (e) => {
         caches.open(CACHE).then((c) => c.put(e.request, copy));
       }
       return res;
-    }).catch(() => caches.match('./index.html')))
+    }).catch((err) => {
+      /* Offline, a page that is opened gets the app. A script or stylesheet
+         that fails must fail: answering it with HTML would turn a missing
+         file into a syntax error somewhere else. */
+      if (e.request.mode === 'navigate') return caches.match('./index.html');
+      throw err;
+    }))
   );
 });

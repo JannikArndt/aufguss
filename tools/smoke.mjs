@@ -15,7 +15,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { install } from './stub/dom.mjs';
+import { install, makeServiceWorker } from './stub/dom.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -414,7 +414,46 @@ eq('catalogue: and the exact id still wins', cat.byId('m4-bio-grune-minze').code
 }
 
 /* ── 3. The app, driven ──────────────────────────────────────────────────── */
+const sws = makeServiceWorker();
+navigator.serviceWorker = sws.container;
 const main = await import('../src/main.js');
+const { AppUpdate } = await import('../src/core/util.js');
+await new Promise((r) => setTimeout(r, 0));
+
+/* The update flow, driven the way the browser drives it. */
+{
+  const { container, reg, worker } = sws;
+  eq('update: the worker is registered relatively and without the HTTP cache',
+    JSON.stringify(container.registered), JSON.stringify({ url: './sw.js', opts: { updateViaCache: 'none' } }));
+  ok('update: it asks for a newer one on opening', reg.updates >= 1);
+  const before = reg.updates;
+  document.dispatch('visibilitychange');
+  ok('update: and again whenever the app comes back to the front', reg.updates === before + 1);
+
+  /* First visit: the new worker claims a page that had none. Nothing is
+     stale, so nothing may reload under the person's finger. */
+  container.emit('controllerchange');
+  eq('update: a first visit claimed by the worker does not reload', location.reloads, 0);
+
+  /* A later version arrives while the page is open. */
+  const w = worker();
+  reg.installing = w;
+  reg.emit('updatefound');
+  container.controller = {};
+  w.state = 'installed';
+  w.emit('statechange');
+  ok('update: a finished download is offered', AppUpdate.ready === true);
+  container.emit('controllerchange');
+  eq('update: and taking control by itself still does not reload', location.reloads, 0);
+
+  reg.waiting = w;
+  AppUpdate.apply();
+  eq('update: the tap asks the waiting worker to skip its wait', JSON.stringify(w.posted), '["skipWaiting"]');
+  container.emit('controllerchange');
+  eq('update: the handover reloads', location.reloads, 1);
+  container.emit('controllerchange');
+  eq('update: but only once', location.reloads, 1);
+}
 const $ = (id) => document.getElementById(id);
 const text = (id) => $(id).textContent;
 const visible = (id) => !$(id).hidden;
@@ -804,6 +843,8 @@ ok('more: it points at the sources', text('moreBody').includes('Aromen') &&
   ok('shell: sw.js precaches every module on disk', !missing.length, missing.join(', '));
   const ghosts = listed.filter((f) => !fs.existsSync(path.join(ROOT, f)));
   ok('shell: and nothing it lists is gone', !ghosts.length, ghosts.join(', '));
+  ok('shell: offline, only a page load falls back to index.html',
+    /mode === 'navigate'/.test(sw) && !/catch\(\(\) => caches\.match\('\.\/index\.html'\)\)/.test(sw));
   ok('shell: the worker only ever fetches this origin',
     sw.includes('url.origin !== self.location.origin'));
   {

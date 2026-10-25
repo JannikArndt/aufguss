@@ -221,16 +221,21 @@ function registerWorker() {
     .catch(function () { /* no offline copy; nothing else changes */ });
 
   /* Reloading is the only way a tab actually starts running the new worker's
-     files, and it only happens once someone has asked for it — either just
-     now, or on an earlier visit that downloaded the update but never applied
-     it, in which case it is still sitting there the next time this runs. */
-  var reloaded = false;
+     files, and it only happens once someone has asked for it: handingOver is
+     set by the "Update jetzt laden" tap and by nothing else. controllerchange
+     fires in a second situation that must not reload — on the very first
+     visit the worker installs, activates and claims the page a moment after
+     it opened, with nothing stale to replace, and reloading there would
+     restart the app under a finger, possibly halfway through an Aufguss. */
   navigator.serviceWorker.addEventListener('controllerchange', function () {
-    if (reloaded) return;
+    if (!handingOver || reloaded) return;
     reloaded = true;
     location.reload();
   });
 }
+
+var handingOver = false;
+var reloaded = false;
 
 /* Sees a new worker finish installing and offers it, instead of taking it —
    sw.js never calls skipWaiting() on its own, which is what keeps a version
@@ -247,7 +252,9 @@ function watchForUpdate(reg) {
     });
   });
   AppUpdate.apply = function () {
-    if (reg.waiting) reg.waiting.postMessage('skipWaiting');
+    if (!reg.waiting) return;
+    handingOver = true;
+    reg.waiting.postMessage('skipWaiting');
   };
 }
 

@@ -252,6 +252,10 @@ export function install(htmlPath) {
        exists so code that reads it (entry.js's focusout handler) doesn't
        throw for want of the property. */
     activeElement: null,
+    visibilityState: 'visible',
+    _listeners: {},
+    addEventListener(t, fn) { (this._listeners[t] = this._listeners[t] || []).push(fn); },
+    dispatch(t) { (this._listeners[t] || []).slice().forEach((fn) => fn({ type: t })); },
     /* The markup's own ids are in the map; anything the app creates and gives
        an id to has to be found by walking, because that is what a browser
        does and the app relies on it (#setCard and #lastTime are built at
@@ -278,7 +282,7 @@ export function install(htmlPath) {
     document: doc,
     innerHeight: 844,
     visualViewport: null,
-    location: { hash: '', protocol: 'http:', hostname: 'localhost', pathname: '/' },
+    location: { hash: '', protocol: 'http:', hostname: 'localhost', pathname: '/', reloads: 0, reload() { this.reloads++; } },
     localStorage: makeStorage(),
     navigator: {},
     addEventListener(t, fn) { (listeners[t] = listeners[t] || []).push(fn); },
@@ -337,4 +341,24 @@ export function install(htmlPath) {
   };
 
   return { win, doc, byId };
+}
+
+/* A service worker container with just enough of the real thing to drive the
+   update flow: register() hands back a registration whose waiting and
+   installing workers the test moves by hand, and every event is fired only
+   when the test says so. */
+function makeEmitter() {
+  const l = {};
+  return {
+    addEventListener(t, fn) { (l[t] = l[t] || []).push(fn); },
+    emit(t) { (l[t] || []).slice().forEach((fn) => fn({ type: t })); },
+  };
+}
+export function makeServiceWorker() {
+  const container = Object.assign(makeEmitter(), { controller: null });
+  const reg = Object.assign(makeEmitter(), { waiting: null, installing: null, updates: 0 });
+  reg.update = () => { reg.updates++; return Promise.resolve(); };
+  container.register = (url, opts) => { container.registered = { url, opts }; return Promise.resolve(reg); };
+  const worker = () => Object.assign(makeEmitter(), { state: 'installing', posted: [], postMessage(m) { this.posted.push(m); } });
+  return { container, reg, worker };
 }

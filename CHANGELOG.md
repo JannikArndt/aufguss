@@ -7,6 +7,17 @@ cache-first, so the change lands on the next cold start, unless it is taken
 early from Mehr → **Update jetzt laden**. Mehr also shows the last few
 entries below this list in short; this file is the whole history.
 
+## 0.9.3 — 2026-10-25
+
+- **No reload on the very first visit.** The `controllerchange` handler
+  reloaded the page whenever the worker took control, and on a first visit
+  the new worker claims a page that had none — so the app restarted itself a
+  moment after opening, possibly under a finger. The reload now happens only
+  after a tap on Mehr → **Update jetzt laden**.
+- **Offline, only page loads fall back to `index.html`.** A script or
+  stylesheet that fails to load used to be answered with the HTML page; it
+  now fails as itself.
+
 ## 0.9.2 — 2026-09-18
 
 - **The app checks for an update on its own.** Registering the service worker

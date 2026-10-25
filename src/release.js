@@ -9,6 +9,12 @@
 
    Write each note for someone who has never read the code. */
 export var RELEASES = [
+  { v: '0.9.3', date: '2026-10-25',
+    text: 'Beim allerersten Öffnen lädt sich die App nicht mehr von selbst ' +
+          'neu, sobald sie für den Offline-Betrieb bereit ist — das konnte ' +
+          'dich mitten im Schreiben unterbrechen. Eine neue Version wird ' +
+          'weiterhin nur übernommen, wenn du unter Mehr auf „Update jetzt ' +
+          'laden“ tippst.' },
   { v: '0.9.2', date: '2026-09-18',
     text: 'Ein installiertes Icon prüft jetzt selbst nach einer neuen Version, ' +
           'statt darauf zu warten, dass der Browser irgendwann von selbst nachsieht ' +
