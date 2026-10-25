@@ -1,10 +1,11 @@
-# Runs the smoke test on every push and pull request.
+# Tests every push and pull request, then waits until the push is live.
 #
 # This is NOT a deploy workflow and must not become one: GitHub Pages publishes
 # the repository root exactly as it is committed, with nothing generated. See
-# CLAUDE.md §8. The only thing here is `node tools/smoke.mjs`, which is what a
-# contributor runs locally anyway — the point is that a push breaking the wiring
-# says so, rather than being found on a phone in a sauna corridor.
+# CLAUDE.md §8. `test` runs tools/verify.mjs, which is what a contributor runs
+# locally anyway; `live` then polls the published sw.js until it carries this
+# commit's VERSION, so a push that Pages never published is noticed here and
+# not on a phone in a sauna corridor.
 #
 # tools/check-sources.mjs is deliberately not run here. It talks to aromen.be
 # and baederland.de, so it would fail on a bad day at either rather than on a
@@ -15,25 +16,52 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '22'
+          node-version: 24
 
       # No install step: the app and its tools have no dependencies, which is
       # the constraint this job exists partly to keep honest.
       - name: no dependencies crept in
         run: |
           if [ -f package.json ] || [ -f package-lock.json ] || [ -d node_modules ]; then
-            echo "This project has no dependencies and no build step (CLAUDE.md §2)."
+            echo "::error::This project has no dependencies and no build step (CLAUDE.md §2)."
             exit 1
           fi
 
       - name: the whole app, in Node
-        run: node tools/smoke.mjs
+        run: node tools/verify.mjs
+
+  live:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      # Pages builds on its own after the push; give it ten minutes.
+      - name: Confirm this commit is live
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: node tools/live.mjs --wait --url "${APP_URL:-https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/}"

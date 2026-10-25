@@ -134,7 +134,8 @@ There is nothing to build. It is static files, served as committed.
 
 ```bash
 python3 -m http.server 8000      # then open http://localhost:8000
-node tools/smoke.mjs             # the whole app, in Node, 171 checks
+node tools/verify.mjs            # the whole app in Node, plus the deploy contract
+node tools/live.mjs              # is this version what GitHub Pages serves?
 node tools/check-sources.mjs     # go and look at the sources again
 ```
 
@@ -162,9 +163,12 @@ src/core/blend.js     what can be said about a set
 src/core/suggest.js   what would go with it, and why
 src/ui/*.js           one file per screen
 src/main.js           routing and wiring
+tools/verify.mjs      what CI runs: smoke + the deploy contract
+tools/live.mjs        is this version live on GitHub Pages?
 tools/smoke.mjs       the whole app, in Node
 tools/stub/dom.mjs    the DOM it runs against
 tools/check-sources.mjs
+test/deploy-contract.test.mjs   workflows, pins and docs held to the house rules
 sources/              where every fact came from
 ```
 
@@ -177,7 +181,8 @@ is committed and must stay: Jekyll ignores paths beginning with an underscore.
 Every path in the app is relative, so it works at the repository root or under
 `/aufguss/`.
 
-A push is live when the version stamp under **Mehr → Diese Version** changes on
+The app is at <https://jannikarndt.github.io/aufguss/>. A push is live when
+`node tools/live.mjs` says `LIVE:` and the version stamp under **Mehr → Diese Version** changes on
 the phone. Because the service worker serves cache-first, the first load after
 a push still shows the old version and takes the new one on the next cold
 start — that is the design, not a failed deploy.

@@ -2,6 +2,26 @@
 
 Operating notes for anyone — person or agent — changing **aufguss**. Read this
 before editing. `README.md` says what the app is; this file is the contract.
+Live at <https://jannikarndt.github.io/aufguss/> (GitHub Pages, served from
+`main` as committed).
+
+## Ship loop
+
+Work on `main`. A change isn't done until it is live, and "live" is proven by
+the site, not by a green job.
+
+| command | does | last line |
+|---|---|---|
+| `node tools/verify.mjs` | what CI's `test` job runs: `tools/smoke.mjs`, then `test/deploy-contract.test.mjs`; every step even after a failure | `VERIFY: PASS` / `VERIFY: FAIL (smoke contract)` |
+| `node tools/live.mjs` | does the published `sw.js` carry this tree's `VERSION`? `--wait` polls up to 10 minutes, `--url` points elsewhere | `LIVE: <VERSION>` / `NOT LIVE: want <a>, <url> serves <b>` |
+
+`verify` → commit → push `main` → `node tools/live.mjs --wait`. There is no
+`package.json` (§2), so these are plain `node` commands, not npm scripts. CI
+runs the same `verify` on every push and pull request and then waits for the
+same live check (§8). `test/deploy-contract.test.mjs` holds the workflows to
+the house rules (actions pinned by SHA, permissions, a timeout on every job,
+no dependency or build step) and fails when a script in `tools/` is not named
+in this file.
 
 ---
 
@@ -88,7 +108,7 @@ base notes in it gets a remark, not an error.
 | Constraint | Why |
 |---|---|
 | Zero dependencies, no build step, static files at the repository root | What GitHub Pages serves is exactly what is committed. No npm, no bundler, no TypeScript, no CSS preprocessor, no CDN import. The cost is that `file://` does not work — ES modules are blocked there — so it must be served over http(s). |
-| Everything the app is made of is listed in `sw.js`'s `SHELL`, and `VERSION` there matches `RELEASE.v` in `src/release.js` | There is no build step to generate either. A file missing from the precache list vanishes offline; a stale `VERSION` means the update never installs. `tools/smoke.mjs` asserts both. |
+| Everything the app is made of is listed in `sw.js`'s `SHELL`, and `VERSION` there matches `RELEASES[0].v` in `src/release.js` | There is no build step to generate either. A file missing from the precache list vanishes offline; a stale `VERSION` means the update never installs. `tools/smoke.mjs` asserts both. |
 | No network call to any origin but this app's own | "Alles steht nur auf diesem Gerät" is on the Mehr screen, and it has to stay literally true. No fonts, no analytics, no error reporting. `sw.js` is the only file that may call `fetch()`, and only for this app's own files. `tools/smoke.mjs` greps `src/` for `fetch`, `XMLHttpRequest` and `sendBeacon`. |
 | `localStorage` is the store, and every read tolerates it being gone | A journal is text; a thousand Aufgüsse is well under a megabyte, and a synchronous read that cannot fail halfway is worth more here than IndexedDB's headroom. `Store.available` goes false and every method returns empty when storage is blocked — writing an Aufguss down must never throw. |
 | Export exists and is honest about why | Nothing leaves the phone, so nothing is anywhere else. Mehr → Sichern is the whole backup story and the screen says so. |
@@ -325,14 +345,18 @@ any of them fails until the source file is brought along.
 ## 6. Testing
 
 ```bash
-node tools/smoke.mjs
+node tools/verify.mjs     # smoke + the deploy contract; ends VERIFY: PASS
+node tools/smoke.mjs      # the smoke test alone
 ```
 
-208 checks. It loads the whole app — `src/main.js` and everything under it —
+`verify` is the push bar. `tools/smoke.mjs` loads the whole app — `src/main.js` and everything under it —
 against the stub DOM in `tools/stub/`, and drives it the way a finger does: open
 a new Aufguss, pick a theme off the plan, type three oil names in three
 different languages, read what the screen says back, tap Fertig, reopen it,
-check the store agrees.
+check the store agrees. The update flow is driven too, through a stub service
+worker (`makeServiceWorker()` in `tools/stub/dom.mjs`): a first visit that the
+worker claims must not reload, a finished download is offered, and only the tap
+on "Update jetzt laden" lets the next `controllerchange` reload, once.
 
 The stub is deliberately strict and deliberately small. `getElementById` returns
 `null` for an id `index.html` does not carry, so `$('gone').textContent` throws
@@ -341,7 +365,7 @@ implemented, on purpose: a loud failure beats a stub quietly returning the wrong
 thing.
 
 Some checks are structural rather than behavioural, and those are the ones
-holding the no-build-step arrangement together: `VERSION` matching `RELEASE.v`,
+holding the no-build-step arrangement together: `VERSION` matching `RELEASES[0].v`,
 `SHELL` listing exactly the modules on disk, every `$('id')` existing in the
 markup, no hex colour outside `:root`, nothing under `src/` importing `main.js`,
 nothing under `src/` calling the network.
@@ -382,10 +406,20 @@ checkable on a phone. Before calling a change done:
 
 Settings → Pages → **Deploy from a branch** → `main`, root folder. There is no
 deploy workflow and there should not be one unless a build step appears.
-`.github/workflows/test.yml` is not a deploy workflow: it runs
-`node tools/smoke.mjs` and fails the build if a `package.json`, a lockfile or a
-`node_modules` appears — the one constraint a CI job can usefully hold that a
-reviewer forgets.
+`.github/workflows/test.yml` is not a deploy workflow. It has two jobs: `test`
+runs `node tools/verify.mjs` and fails the build if a `package.json`, a
+lockfile or a `node_modules` appears — the one constraint a CI job can usefully
+hold that a reviewer forgets — and `live`, on pushes only, polls
+`https://jannikarndt.github.io/aufguss/sw.js?t=…` until it serves the
+`VERSION` committed in `sw.js` (up to ten minutes; the query string gets
+around Pages' CDN cache). `node tools/live.mjs` asks the same question
+locally. The optional repository variable `APP_URL` overrides the address.
+
+Dependabot (`.github/dependabot.yml`) proposes updates to the pinned action
+SHAs weekly, majors ignored; `.github/workflows/dependabot-merge.yml` runs
+`verify` on those pull requests and merges them. It starts no deploy, because
+a merge to `main` is published by Pages itself and an action bump changes
+nothing the site serves.
 
 `.nojekyll` at the root is committed. Keep it: Jekyll ignores paths beginning
 with an underscore, and that is a trap waiting for the first `_something.js`.
@@ -395,9 +429,34 @@ at `user.github.io` or at `user.github.io/aufguss/`. Keep them relative — a
 leading slash puts the service worker's scope at the domain root, where a
 project page cannot register it.
 
-A deploy is finished when the version stamp on the phone changes. Because the
-worker serves cache-first, the first load after a push still shows the old
-version and takes the new one on the next cold start. That is the design.
+**Versions.** `VERSION` in `sw.js` is the build id: the cache is named for it,
+so a phone only takes a new copy when it moves. It must equal
+`RELEASES[0].v` in `src/release.js`, the entry Mehr shows in full. Both move in
+the same commit as any change under `sw.js`'s `SHELL`, and the same commit adds
+the entry to `CHANGELOG.md`. `CHANGELOG.md` is the whole history in English,
+for whoever reads the repository; `RELEASES` is the short German note for
+whoever holds the phone, and Mehr shows only the latest few. Neither is
+generated from the other and `tools/smoke.mjs` only checks that `sw.js` and
+`RELEASES[0].v` agree, so the changelog is kept in step by hand.
+
+**How a phone takes a new version.** The worker's `install` precaches the new
+`SHELL` and does not skip waiting. `reg.update()` runs on opening and every
+time the app comes back to the front (an installed icon rarely triggers the
+browser's own check), and `updateViaCache: 'none'` keeps the HTTP cache from
+answering for `sw.js`. A finished download is offered as "Update jetzt laden"
+under Mehr; the tap posts `skipWaiting`, and the following `controllerchange`
+reloads — only then (`handingOver` in `src/main.js`), because on a first visit
+the worker claims the page too and reloading there would restart the app under
+a finger. Without a tap, the waiting worker takes over on the next cold start.
+Offline, only a page load falls back to the cached `index.html`; a failed
+script or stylesheet stays failed. Open gaps, deliberately left: a failed
+install is not reported, there is no toast when an update is ready, and there
+is no `?r=` reload for browsers without a service worker.
+
+A deploy is finished when `node tools/live.mjs` says `LIVE:` and, on a phone,
+the version stamp changes after one cold start. Because the worker serves
+cache-first, the first load after a push still shows the old version. That is
+the design.
 
 ## 9. Do not
 
