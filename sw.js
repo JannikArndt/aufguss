@@ -17,7 +17,7 @@
    keep them in step, so tools/smoke.mjs asserts it, along with SHELL listing
    exactly the files on disk. */
 
-const VERSION = '0.9.3';
+const VERSION = '0.9.4';
 const CACHE = 'aufguss-' + VERSION;
 
 const SHELL = [
@@ -25,9 +25,11 @@ const SHELL = [
   './index.html',
   './app.css',
   './manifest.webmanifest',
-  './icon.svg',
-  './icon.png',
-  './icon-maskable.png',
+  './icons/apple-touch-icon.png',
+  './icons/favicon-32.png',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-512.png',
   './src/main.js',
   './src/release.js',
   './src/core/util.js',

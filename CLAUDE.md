@@ -14,6 +14,7 @@ the site, not by a green job.
 |---|---|---|
 | `node tools/verify.mjs` | what CI's `test` job runs: `tools/smoke.mjs`, then `test/deploy-contract.test.mjs`; every step even after a failure | `VERIFY: PASS` / `VERIFY: FAIL (smoke contract)` |
 | `node tools/live.mjs` | does the published `sw.js` carry this tree's `VERSION`? `--wait` polls up to 10 minutes, `--url` points elsewhere | `LIVE: <VERSION>` / `NOT LIVE: want <a>, <url> serves <b>` |
+| `node tools/make-icons.mjs` | redraws `icons/` (180 apple-touch-icon, 192, 512, maskable 512, favicon 32) from one function: the ladle and steam, full bleed and opaque, in the app's dark `--bg`. The PNGs are committed and listed in `sw.js`'s `SHELL` | the five paths |
 
 `verify` → commit → push `main` → `node tools/live.mjs --wait`. There is no
 `package.json` (§2), so these are plain `node` commands, not npm scripts. CI

@@ -9,6 +9,11 @@
 
    Write each note for someone who has never read the code. */
 export var RELEASES = [
+  { v: '0.9.4', date: '2026-10-26',
+    text: 'Das Icon auf dem Home-Bildschirm füllt jetzt die ganze Kachel aus: ' +
+          'dieselbe Kelle mit Dampf, aber ohne die weißen Ecken. Um es zu ' +
+          'sehen, entfernst du das alte Icon und legst die App neu auf den ' +
+          'Home-Bildschirm.' },
   { v: '0.9.3', date: '2026-10-25',
     text: 'Beim allerersten Öffnen lädt sich die App nicht mehr von selbst ' +
           'neu, sobald sie für den Offline-Betrieb bereit ist — das konnte ' +

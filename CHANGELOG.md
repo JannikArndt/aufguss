@@ -7,6 +7,16 @@ cache-first, so the change lands on the next cold start, unless it is taken
 early from Mehr → **Update jetzt laden**. Mehr also shows the last few
 entries below this list in short; this file is the whole history.
 
+## 0.9.4 — 2026-10-26
+
+- **The Home Screen icon is full bleed.** `icon.png` had rounded corners
+  drawn on white, and iOS rounds the corners itself, so white showed at the
+  edge. The icons are now drawn by `tools/make-icons.mjs` (the ladle and
+  steam of the old `icon.svg`) into `icons/`: 180 for `apple-touch-icon`, 192,
+  512, a maskable 512 and a 32 px favicon, all opaque. `icon.svg`, `icon.png`
+  and `icon-maskable.png` are gone; the manifest lists only PNGs. A phone that
+  already has the app needs the icon removed and added again to show it.
+
 ## 0.9.3 — 2026-10-25
 
 - **No reload on the very first visit.** The `controllerchange` handler

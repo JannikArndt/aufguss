@@ -967,7 +967,7 @@ ok('more: it points at the sources', text('moreBody').includes('Aromen') &&
   /* Every source file the docs point at is really there. */
   const missing = ['README.md', 'CHANGELOG.md', 'sources/README.md', 'sources/oils.md', 'sources/blending.md',
     'sources/aufgussplan.md', 'sources/botanical-names.md', '.nojekyll', 'manifest.webmanifest',
-    'icon.svg', 'icon.png'].filter((f) => !fs.existsSync(path.join(ROOT, f)));
+    'icons/apple-touch-icon.png', 'tools/make-icons.mjs'].filter((f) => !fs.existsSync(path.join(ROOT, f)));
   ok('repo: the files the app and the docs promise exist', !missing.length, missing.join(', '));
 }
 
